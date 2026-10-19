@@ -1,0 +1,60 @@
+{
+  "layers": {
+    "domain": [
+      "domain"
+    ],
+    "typesetting": [
+      "domain",
+      "typesetting"
+    ],
+    "render": [
+      "domain",
+      "render"
+    ],
+    "io": [
+      "domain",
+      "render",
+      "io"
+    ],
+    "ui": [
+      "domain",
+      "typesetting",
+      "render",
+      "io",
+      "ui"
+    ],
+    "app": [
+      "domain",
+      "typesetting",
+      "render",
+      "io",
+      "ui",
+      "app"
+    ]
+  },
+  "pureLayers": [
+    "domain",
+    "typesetting"
+  ],
+  "forbiddenGlobals": [
+    "window",
+    "document",
+    "navigator",
+    "localStorage",
+    "indexedDB",
+    "fetch",
+    "XMLHttpRequest",
+    "globalThis",
+    "FileReader",
+    "Worker"
+  ],
+  "allowedExternalImports": {
+    "domain": [],
+    "typesetting": []
+  },
+  "bundledModules": {
+    "vendor/pdf-lib.js": "io",
+    "vendor/fflate.js": "io",
+    "vendor/pdfjs/pdf.mjs": "io"
+  }
+}

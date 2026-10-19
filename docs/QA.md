@@ -1,0 +1,40 @@
+# 検証結果と証拠の読み方
+
+この文書は証拠の索引と鮮度の読み方を持つ。最新の件数・終了コード・pass/failを手書きで再掲せず、**実行した結果ファイル**を読む。合格条件は [ACCEPTANCE](ACCEPTANCE.md)、操作手順は [HARNESS](HARNESS.md)。
+
+## 最新状態の確認
+
+1. `npm run status` で現在のソース指紋、phase、結果/目視の鮮度を確認する。
+2. harness.json（`output/verification/harness.json`） / product.json（`output/verification/product.json`） のstatus、sourceFingerprint、startedAt/finishedAt、工程ごとのcommand/exitCodeを読む。
+3. 現在の指紋・phaseと一致するpassだけを現在の合格とする。ファイルがない、古い、途中で失敗した場合はその状態を報告する。
+4. 実出力と目視はmanifest / manual-reviewの証拠へ進む。
+
+`npm run status` も最新の実行証拠を表示する入口で、プロダクトを新たに検査したことにはならない。個別検査の成功も全13工程の成功ではない。
+
+## 証拠の所在
+
+| 場所 | 内容 |
+| --- | --- |
+| `output/verification/` | 最新ゲートの機械可読レポート。再実行で更新される |
+| `output/exports/` / `exports-b6/` | A6標準/B6範囲の実ダウンロードとmanifest |
+| `output/foundation/` / `book/` / `exceptions/` | 構造・混在・A5例外の実出力、各改修時の報告/画像/目視 |
+| `output/editing-refinement/` | 2026-10-13の範囲/書式/構成/自由ページ改修、修正前の失敗、個別の画面差分と基準変更理由、実PNG一括保存、PDF目視、最終報告 |
+| `output/ux/` | 原稿中心の改修の変更前後・寸法測定・操作監査 |
+| `output/qa/` | 初期/モデル段階の手動画像・PDF描画・ローカル処理レビュー |
+| `output/documentation/` | 今回の文書整理、旧版スナップショット、実装不変の比較、検査ログと報告 |
+| [manual-review.json](../harness/manual-review.json) | 5目視項目と指紋・証拠・レビュー者・環境 |
+| [回帰記録](history/README.md) | 修正前の失敗と原因・検証への接続 |
+
+outputの画像やPDFは生成物で、Gitにすべて含めるものではない。新しいcheckoutに証拠がなければ生成し直す。ファイル名の存在だけで合格としない。要件や文書整合検査の成功と、証拠が揃ったプロダクト合格を分ける。
+
+## 証拠の種類を分ける
+
+モデル/組版テストは文字と構造の不変条件。E2Eは固定Chromiumの操作・保存・ダウンロード。visualは固定環境の画像差分。出力検査は実ファイルの寸法/DPI/全頁対応。目視は読みやすさ・操作・PDFを独立rendererで描画した見え方の確認。
+
+AIによる目視/操作と人間の利用者調査、ブラウザ幅と実機スマホ、アプリ内ブラウザの保存リンクとChromiumの実保存を区別する。画像PDF一致をフォント埋め込みや印刷所の合格へ広げない。
+
+## 履歴
+
+段階ごとの成功や当時の未実装を残した旧QAは [VERIFICATION_HISTORY](history/VERIFICATION_HISTORY.md)。その文中の「現在」「今回」は各段階を指す。現在の機能は [CAPABILITIES](CAPABILITIES.md)、今後の候補は [ROADMAP](ROADMAP.md)。
+
+実行後の報告はoutputに、再利用する契約はdocsに置く。完了したタスクの成功件数を複数の仕様書へ追記して、どれが現在か曖昧にしない。

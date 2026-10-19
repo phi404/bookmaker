@@ -1,0 +1,17 @@
+{
+  "phase": "mvp",
+  "adapterPath": "tests/product/adapter.mjs",
+  "appUrl": "http://127.0.0.1:5174",
+  "pdfProfile": "raster",
+  "pngDpi": 300,
+  "exportDirectory": "output/exports",
+  "exportManifest": "output/exports/manifest.json",
+  "additionalExportManifests": [
+    "output/exports-b6/manifest.json",
+    "output/foundation/manifest.json",
+    "output/book/manifest.json",
+    "output/exceptions/manifest.json",
+    "output/ux-spread/manifest.json"
+  ],
+  "manualReview": "harness/manual-review.json"
+}

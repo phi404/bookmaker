@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "fixtures": [
+    {
+      "id": "model-sections",
+      "file": "fixtures/model/sections.md",
+      "sourceSha256": "024a6facf9b98cd49b65a904c3592cfb4247deaa00720894bf79644bf6b905a2"
+    },
+    {
+      "id": "model-nested",
+      "file": "fixtures/model/nested.md",
+      "sourceSha256": "3d5da9217a5dad096a577acdf7d9d4dae9c46491d0819d6bcaead86b085e4d16"
+    },
+    {
+      "id": "model-duplicate-chapters",
+      "file": "fixtures/model/duplicate-chapters.md",
+      "sourceSha256": "5bfb8ee176381d5f27400df0d289c940bcab91033948fb5087b5ab082d54b60b"
+    },
+    {
+      "id": "model-style-range",
+      "file": "fixtures/model/style-range.md",
+      "sourceSha256": "620bb84da28210a2e6994efc0e21bb4dea407522e6ea144d6ca266d76e66d953"
+    },
+    {
+      "id": "model-running",
+      "file": "fixtures/model/running.md",
+      "sourceSha256": "9a25385ec109354c97c589c1a88b871b7e9ab1d99862583b8f0688f9bbdff040"
+    },
+    {
+      "id": "model-unsupported",
+      "file": "fixtures/model/unsupported.json",
+      "sourceSha256": "bfc2f26df75a71903debed6729b65e0ec8690b2767a88a0a4f905c67749b5af0"
+    }
+  ]
+}

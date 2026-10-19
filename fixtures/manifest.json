@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "fixtures": [
+    {
+      "id": "basic",
+      "phase": "slice-1",
+      "file": "fixtures/basic.txt",
+      "sourceSha256": "93a4d57ec1ef4a00f7f20e58c0240b98b043758685d22d5e55093218831017a6",
+      "bodySha256": "00e0089004de9306ec80917bbaf81a7842a9eb3178b9f37c6652570df845a306",
+      "bodyLength": 1310,
+      "readingsSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "minPages": 2,
+      "checks": [
+        "text-preservation",
+        "indent",
+        "visual",
+        "export"
+      ]
+    },
+    {
+      "id": "punctuation",
+      "phase": "slice-1",
+      "file": "fixtures/punctuation.txt",
+      "sourceSha256": "eef5f8f568ff0d7ae5e37c132d25c160e5cccef24873e6472668de0452ff23da",
+      "bodySha256": "42e4e1d214ca07b5344e19440aa82e59b607af6f9f4a6a6ff8e98a322de59bff",
+      "bodyLength": 304,
+      "readingsSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "checks": [
+        "text-preservation",
+        "kinsoku",
+        "paired-marks",
+        "visual"
+      ],
+      "grid": {
+        "maxCharsPerLine": 10
+      }
+    },
+    {
+      "id": "mixed-text",
+      "phase": "slice-1",
+      "file": "fixtures/mixed-text.txt",
+      "sourceSha256": "06bc57347cfbd21fc901d6d2e5ae1a8e22ae1ea9e35d92e71324d45778616ce9",
+      "bodySha256": "cab88dfc8c13e2f803fad321b45adaa3c4401b382a9bc3b7f54ce971cee434ed",
+      "bodyLength": 107,
+      "readingsSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "checks": [
+        "text-preservation",
+        "visual"
+      ]
+    },
+    {
+      "id": "unicode",
+      "phase": "slice-1",
+      "file": "fixtures/unicode.txt",
+      "sourceSha256": "8b1fc2a06f03c991031b9d923c55a1eb9769667d1168c8e8f6b45f5489bfdabe",
+      "bodySha256": "09e6695c18712328623cd241127000212ebe1ed12a7afaaf69e4e498cb824d80",
+      "bodyLength": 97,
+      "readingsSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "checks": [
+        "text-preservation",
+        "escaping",
+        "visual"
+      ]
+    },
+    {
+      "id": "long-chapter",
+      "phase": "slice-1",
+      "file": "fixtures/long-chapter.txt",
+      "sourceSha256": "79a2ec27d03b380a41f0920df29e61d91d61b6ddbfd551649d1bab4c98e7f4ba",
+      "bodySha256": "79a2ec27d03b380a41f0920df29e61d91d61b6ddbfd551649d1bab4c98e7f4ba",
+      "bodyLength": 100000,
+      "readingsSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "minPages": 2,
+      "checks": [
+        "text-preservation",
+        "determinism",
+        "geometry"
+      ]
+    },
+    {
+      "id": "empty",
+      "phase": "slice-1",
+      "file": "fixtures/empty.txt",
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bodyLength": 0,
+      "readingsSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exactPages": 1,
+      "checks": [
+        "text-preservation"
+      ]
+    },
+    {
+      "id": "malformed-markup",
+      "phase": "slice-1",
+      "file": "fixtures/malformed-markup.txt",
+      "sourceSha256": "7517a295d9f7d69fec7185395af4bb2d0e596d0b843b193e29f91cfe3fba1d5a",
+      "bodySha256": "972fde4b30d8b49cf827adbdba6210c8b91d609a8750cae6246e4c26b5884b6e",
+      "bodyLength": 48,
+      "readingsSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "checks": [
+        "text-preservation"
+      ]
+    },
+    {
+      "id": "page-breaks",
+      "phase": "mvp",
+      "file": "fixtures/page-breaks.txt",
+      "sourceSha256": "b5e0b32e906ac1c99bc21f4155c146719f8cf654b4f48aad484669d255bbccdf",
+      "bodySha256": "fb2d8b19d92322632476a7ec552d2a78754757a0f752e16f9ac78df53596be32",
+      "bodyLength": 2,
+      "readingsSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exactPages": 4,
+      "blockKinds": [
+        "paragraph",
+        "pageBreak",
+        "pageBreak",
+        "paragraph",
+        "pageBreak"
+      ],
+      "checks": [
+        "text-preservation",
+        "blank-pages"
+      ]
+    },
+    {
+      "id": "heading",
+      "phase": "mvp",
+      "file": "fixtures/heading.txt",
+      "sourceSha256": "ce6578de783b526c0548f4b5d9d29e9d8914f0f3a0d4d0702bfe26ace7de6544",
+      "bodySha256": "2fe4edca90e850f41845a7df1aff8552e1e2a8a1399c47a02af2f710b9c3c724",
+      "bodyLength": 20,
+      "readingsSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "blockKinds": [
+        "paragraph",
+        "paragraph",
+        "paragraph",
+        "paragraph",
+        "heading",
+        "paragraph"
+      ],
+      "grid": {
+        "maxLinesPerPage": 5
+      },
+      "checks": [
+        "text-preservation",
+        "keep-with-next"
+      ]
+    },
+    {
+      "id": "ruby",
+      "phase": "mvp",
+      "file": "fixtures/ruby.txt",
+      "sourceSha256": "7bfb66f05491969dc0f1d5c29e260e6483ea25ed2fb5209f086602ca8b839778",
+      "bodySha256": "ae980c53730467b536a744f0e76ce0149fd14d6eb80b9f3351045036827033c3",
+      "bodyLength": 39,
+      "readingsSha256": "338f799f7bdf879637e9f2b07951e34224377b130a539a8ec24fa14645d49789",
+      "grid": {
+        "maxCharsPerLine": 10
+      },
+      "checks": [
+        "text-preservation",
+        "ruby",
+        "visual"
+      ]
+    }
+  ]
+}

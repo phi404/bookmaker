@@ -1,0 +1,4 @@
+{
+  "bookOverride": { "unknownFutureAttribute": 12 },
+  "extraSection": { "kind": "section", "id": "s-100", "role": "body", "children": [] }
+}

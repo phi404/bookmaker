@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "owners": {
+    "entry": "README.md",
+    "development": "AGENTS.md",
+    "navigation": "docs/INDEX.md",
+    "product": "docs/PRODUCT.md",
+    "principles": "docs/PRINCIPLES.md",
+    "capabilities": "docs/CAPABILITIES.md",
+    "roadmap": "docs/ROADMAP.md",
+    "architecture": "docs/ARCHITECTURE.md",
+    "book-model": "docs/PUBLISHING_MODEL.md",
+    "typography": "docs/TYPOGRAPHY.md",
+    "source-format": "docs/SOURCE_FORMAT.md",
+    "interaction": "docs/UI.md",
+    "acceptance": "docs/ACCEPTANCE.md",
+    "harness": "docs/HARNESS.md",
+    "evidence": "docs/QA.md",
+    "decisions": "docs/DECISIONS.md",
+    "cases": "docs/CASE_CATALOG.md",
+    "provenance": "sources/README.md",
+    "history-navigation": "docs/history/README.md",
+    "deployment": "docs/DEPLOYMENT.md"
+  },
+  "documents": [
+    {
+      "path": "AGENTS.md",
+      "purpose": "development",
+      "kind": "current"
+    },
+    {
+      "path": "README.md",
+      "purpose": "entry",
+      "kind": "current"
+    },
+    {
+      "path": "docs/ACCEPTANCE.md",
+      "purpose": "acceptance",
+      "kind": "current"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "purpose": "architecture",
+      "kind": "current"
+    },
+    {
+      "path": "docs/CAPABILITIES.md",
+      "purpose": "capabilities",
+      "kind": "current"
+    },
+    {
+      "path": "docs/CASE_CATALOG.md",
+      "purpose": "cases",
+      "kind": "current"
+    },
+    {
+      "path": "docs/DECISIONS.md",
+      "purpose": "decisions",
+      "kind": "current"
+    },
+    {
+      "path": "docs/HARNESS.md",
+      "purpose": "harness",
+      "kind": "current"
+    },
+    {
+      "path": "docs/INDEX.md",
+      "purpose": "navigation",
+      "kind": "current"
+    },
+    {
+      "path": "docs/PRINCIPLES.md",
+      "purpose": "principles",
+      "kind": "current"
+    },
+    {
+      "path": "docs/PRODUCT.md",
+      "purpose": "product",
+      "kind": "current"
+    },
+    {
+      "path": "docs/PRODUCT_OVERVIEW.md",
+      "purpose": "shared-original",
+      "kind": "source"
+    },
+    {
+      "path": "docs/PUBLISHING_MODEL.md",
+      "purpose": "book-model",
+      "kind": "current"
+    },
+    {
+      "path": "docs/QA.md",
+      "purpose": "evidence",
+      "kind": "current"
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "purpose": "roadmap",
+      "kind": "current"
+    },
+    {
+      "path": "docs/SOURCE_FORMAT.md",
+      "purpose": "source-format",
+      "kind": "current"
+    },
+    {
+      "path": "docs/TYPOGRAPHY.md",
+      "purpose": "typography",
+      "kind": "current"
+    },
+    {
+      "path": "docs/UI.md",
+      "purpose": "interaction",
+      "kind": "current"
+    },
+    {
+      "path": "docs/design/BOOK_WORKSPACE.md",
+      "purpose": "design-study",
+      "kind": "history"
+    },
+    {
+      "path": "docs/design/INTERACTION_MODEL.md",
+      "purpose": "design-study",
+      "kind": "history"
+    },
+    {
+      "path": "docs/design/VIEW_EXPLORATION.md",
+      "purpose": "design-study",
+      "kind": "history"
+    },
+    {
+      "path": "docs/history/DECISION_HISTORY.md",
+      "purpose": "historical-record",
+      "kind": "history"
+    },
+    {
+      "path": "docs/history/README.md",
+      "purpose": "history-navigation",
+      "kind": "current"
+    },
+    {
+      "path": "docs/history/VERIFICATION_HISTORY.md",
+      "purpose": "historical-record",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/H-001-boundary-windows.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/H-002-browser-server-lifecycle.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/P-001-pdf-module.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/P-002-draft-reload.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/P-003-damaged-draft-message.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/P-004-decoration-and-heading-overlap.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/P-005-zoom-reading-start.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/P-006-uniform-position-choices.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/P-007-export-name-during-reflow.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/P-008-model-reference-and-mark-nesting.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/P-009-book-workspace-boundaries.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/P-010-manuscript-first-ux.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/P-011-exception-styles.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/TEMPLATE.md",
+      "purpose": "regression-template",
+      "kind": "template"
+    },
+    {
+      "path": "docs/regressions/P-012-workbench-keyboard-and-history.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/tasks/BOOK_WORKSPACE.md",
+      "purpose": "stage-plan",
+      "kind": "history"
+    },
+    {
+      "path": "docs/tasks/EXCEPTION_STYLES.md",
+      "purpose": "stage-plan",
+      "kind": "history"
+    },
+    {
+      "path": "docs/tasks/FIRST_SLICE.md",
+      "purpose": "stage-plan",
+      "kind": "history"
+    },
+    {
+      "path": "docs/tasks/MANUSCRIPT_UX.md",
+      "purpose": "stage-plan",
+      "kind": "history"
+    },
+    {
+      "path": "docs/tasks/MODEL_FOUNDATION.md",
+      "purpose": "stage-plan",
+      "kind": "history"
+    },
+    {
+      "path": "docs/tasks/PAGE_CONTROLS.md",
+      "purpose": "stage-plan",
+      "kind": "history"
+    },
+    {
+      "path": "sources/README.md",
+      "purpose": "provenance",
+      "kind": "current"
+    },
+    {
+      "path": "docs/regressions/P-013-visible-format-and-import-readiness.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/DEPLOYMENT.md",
+      "purpose": "deployment",
+      "kind": "current"
+    },
+    {
+      "path": "docs/regressions/P-014-project-prefix-resources.md",
+      "purpose": "regression",
+      "kind": "history"
+    },
+    {
+      "path": "docs/regressions/P-015-use-case-audit.md",
+      "purpose": "regression",
+      "kind": "history"
+    }
+  ]
+}

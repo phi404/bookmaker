@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "fixtures": [
+    {
+      "id": "book-mixed",
+      "file": "fixtures/book/mixed.md",
+      "sourceSha256": "c9f3c363e79f1bc983edd5dbcaa24f4cccd142ca3c9ad28fd7970230baa4288b"
+    },
+    {
+      "id": "book-special-break",
+      "file": "fixtures/book/special-break.md",
+      "sourceSha256": "b70a09cabbc1b1a0d21fc8a3fafde13ce1321c4df3c5fbf5068df54c585659a2"
+    },
+    {
+      "id": "book-local-page",
+      "file": "fixtures/book/local-page.svg",
+      "sourceSha256": "3ff14179dca61f4258c74e3f5c15c15ce9ffe9162f7315e11b5eb2abc1c461b4"
+    },
+    {
+      "id": "book-unsafe",
+      "file": "fixtures/book/unsafe.svg",
+      "sourceSha256": "c609bd919bf2f4d7c7e7ca54bd6ab5cf6eca3e317a32e3fae9f711e1a2ca0447"
+    },
+    {
+      "id": "book-move-before-chapter",
+      "file": "fixtures/book/move-before-chapter.md",
+      "sourceSha256": "06ddc988c21c7cb55318f088e9896144d642468c03009adf1914771bcbac004d"
+    },
+    {
+      "id": "book-modern-notation",
+      "file": "fixtures/book/modern-notation.md",
+      "sourceSha256": "e662b34a375ba09b9cce82e9e78f46cd41837049e8bc8e10cf177b6502d7a07d"
+    },
+    {
+      "id": "book-style-exceptions",
+      "file": "fixtures/book/style-exceptions.md",
+      "sourceSha256": "fecccf9ba75ae6bf5544327f63dd2a543902254409001155f561dcb8b211e31c"
+    },
+    {
+      "id": "book-range-format",
+      "file": "fixtures/book/range-format.md",
+      "sourceSha256": "54c4fae4629c478d484ed98574176aab3d2774d5831e00a9cc4569c1f19146a0"
+    },
+    {
+      "id": "book-page-transitions",
+      "file": "fixtures/book/page-transitions.md",
+      "sourceSha256": "26de4cd44c2e27ea5672e2a31f6b6f9162ae5ae6e5ebb9c6bcfa140e10e8d48f"
+    },
+    {
+      "id": "book-toc-many",
+      "file": "fixtures/book/toc-many.md",
+      "sourceSha256": "d29d27ddccf9d193f63d80c5d343081e9e44bc0d51191f5347b7fde09565fbc1"
+    },
+    {
+      "id": "book-spread-colors",
+      "file": "fixtures/book/spread-colors.svg",
+      "sourceSha256": "1e43ed23f36aae27d797872e3b28367044f56041a3cdf8d9d8576ab375c6bd15"
+    }
+  ]
+}

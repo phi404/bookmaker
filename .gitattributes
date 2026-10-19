@@ -1,0 +1,9 @@
+* text=auto eol=lf
+fixtures/** -text
+public/vendor/** -text
+public/fonts/** -text
+sources/conversation.json -text
+docs/PRODUCT_OVERVIEW.md -text
+*.png -text
+*.pdf -text
+*.docx -text

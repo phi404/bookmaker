@@ -1,0 +1,35 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { once } from 'node:events';
+import { absolute } from '../../scripts/lib.mjs';
+import { createStaticServer, normalizeBasePath } from '../../scripts/static-server.mjs';
+
+async function withSite(action) {
+  const server = await createStaticServer(absolute('dist'), { basePath: '/bookmaker/' });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  try { await action(`http://127.0.0.1:${server.address().port}`); }
+  finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
+}
+test('static deployment serves HTML, modules, fonts and PDF resources beneath a project prefix', () => withSite(async origin => {
+  for (const [file, mime] of [['index.html', 'text/html'], ['ui/main.js', 'text/javascript'], ['fonts/NotoSerifJP-Regular.otf', 'font/otf'], ['vendor/pdfjs/pdf.worker.mjs', 'text/javascript'], ['vendor/pdfjs/wasm/openjpeg.wasm', 'application/wasm']]) {
+    const response = await globalThis.fetch(`${origin}/bookmaker/${file}`);
+    assert.equal(response.status, 200, file); assert.ok(response.headers.get('content-type').startsWith(mime), file);
+    assert.ok((await response.arrayBuffer()).byteLength > 0, file);
+  }
+  const html = await (await globalThis.fetch(`${origin}/bookmaker/`)).text();
+  assert.ok(html.includes('src="./ui/main.js"')); assert.ok(html.includes("default-src 'self'")); assert.ok(!html.includes('{{CONTENT_SECURITY_POLICY}}'));
+  assert.equal((await globalThis.fetch(`${origin}/ui/main.js`)).status, 404);
+}));
+test('static serving preserves HEAD, redirects the project root and rejects traversal and writes', () => withSite(async origin => {
+  const canonical = await globalThis.fetch(`${origin}/bookmaker`, { redirect: 'manual' });
+  assert.equal(canonical.status, 301); assert.equal(canonical.headers.get('location'), '/bookmaker/');
+  const head = await globalThis.fetch(`${origin}/bookmaker/app.css`, { method: 'HEAD' });
+  assert.equal(head.status, 200); assert.ok(Number(head.headers.get('content-length')) > 0); assert.equal(await head.text(), '');
+  assert.ok(head.headers.get('content-security-policy').includes("frame-ancestors 'none'"));
+  for (const route of ['/bookmaker/../../package.json', '/bookmaker/%2e%2e/package.json', '/bookmaker/%5c..%5cpackage.json', '/bookmaker/%00']) assert.equal((await globalThis.fetch(origin + route)).status, 404, route);
+  assert.equal((await globalThis.fetch(`${origin}/bookmaker/`, { method: 'POST' })).status, 405);
+}));
+test('deployment base paths cannot contain another origin, query, fragment or traversal', () => {
+  assert.equal(normalizeBasePath('/bookmaker'), '/bookmaker/'); assert.equal(normalizeBasePath('/'), '/');
+  for (const value of ['https://example.com/', '/a/../', '/./', '//example.com/', '/a?x=1', '/a#x', '/%2e%2e/', '/a\\b']) assert.throws(() => normalizeBasePath(value), /Invalid site base path/u);
+});

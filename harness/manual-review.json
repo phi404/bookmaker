@@ -1,0 +1,32 @@
+{
+  "revision": "0b0d99ce3e4128b364a85aa9a3312e0e1fa309d938bd727b7481ffb264483c3a",
+  "environment": "Windows; Node 24.19.0; Playwright 1.63.0 / Chromium 153.0.8010.12; ja-JP; Asia/Tokyo; Codex in-app browser; Poppler 120 dpi; Python 3.12.14 / Pillow 12.3.0 / pypdf 6.10.0",
+  "reviewer": "NOEMA; AI UI/code/visual review on 2026-10-20; not a human usability study",
+  "items": {
+    "default-page-quality": {
+      "status": "pass",
+      "evidence": "output/ux-improvements-2026-10-19/screenshots/14-final-workspace-1440.png",
+      "notes": "Reviewed the actual current build at 1440, 1024, 375 and 320 px: manuscript, shared styles, structure, multiple canvas elements, long TOC and output. All 60 operation flows and 7 ordinary visual cases / 15 screenshots passed at this revision. The 13 intentional reference changes were inspected individually with diffs and recorded in baseline-review.json; the zero-pixel tolerance was retained."
+    },
+    "vertical-glyphs-and-spacing": {
+      "status": "pass",
+      "evidence": "output/ux-improvements-2026-10-19/pdf-review/exceptions/page-1.png",
+      "notes": "Fresh current-revision PDFs were independently rendered with Poppler at 120 dpi. All 21 pages were inspected in six contact sheets, plus native foundation page 2, A5 exceptions page 1 and book page 1. Ruby, emphasis, bold, Latin rotation, numerals, dashes and mixed writing directions show no observed accidental clipping, overlap or mirroring. This is bounded fixture review, not full JLREQ compliance."
+    },
+    "mobile-usability": {
+      "status": "pass",
+      "evidence": "output/ux-improvements-2026-10-19/screenshots/16-final-mobile-export-320.png",
+      "notes": "Actual current build reviewed at 320 and 375 px: source, preview, output and visible close action. 1024 px inspector reserves paper space. Automated flows include touch-size layer checkboxes, formatting range, palette, save/reopen and compact-pane reload. Real phones, software keyboards, Safari/Firefox, screen readers and human user testing remain untested."
+    },
+    "export-appearance": {
+      "status": "pass",
+      "evidence": "output/ux-improvements-2026-10-19/pdf-review/ux-spread/contact.png",
+      "notes": "All six current-revision output cases / 21 pages passed MediaBox, 300 dpi, PNG/ZIP/PDF bitmap checks. Independent RGB samples also establish blue/right on physical even page 2 and red/left on odd page 3. Inspected all six Poppler contacts and native glyph examples. A manually saved 1080x1080 SNS PNG was also opened and inspected. Rendering commands, exit codes, environment and hashes are preserved in pdf-review/*/render.json. Raster RGB only: text/font embedding, PDF/X, CMYK and print-shop acceptance are outside current support."
+    },
+    "local-first": {
+      "status": "pass",
+      "evidence": "output/ux-improvements-2026-10-19/automated-pass-manual-pending.log",
+      "notes": "Reviewed shared resource resolution, canonical BookModel updates, stored incomplete source, atomic asset replacement and project recovery. All operation flows passed, including deployment under a project prefix with PDF.js Worker and real exports, without external/root-origin resource requests. Only static application sources/assets are prepared for GitHub. Runtime manuscripts/assets remain in browser storage. Actions are gated by automated checks; Release/tag publication is absent. Public-host deployment and browser validation are recorded separately after local verification."
+    }
+  }
+}

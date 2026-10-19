@@ -1,0 +1,3 @@
+が と が は入力されたまま保持する。
+𠮷と葛󠄀、👩‍💻を欠落させない。
+<script>alert("test")</script> & <img src=x onerror=alert(1)>

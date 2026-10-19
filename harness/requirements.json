@@ -1,0 +1,820 @@
+{
+  "schemaVersion": 1,
+  "requirements": [
+    {
+      "id": "R-01",
+      "phase": "slice-1",
+      "summary": "貼り付けとTXTから原稿を取り込み、軽微に編集できる",
+      "fixtures": [
+        "basic",
+        "mixed-text"
+      ],
+      "automated": [
+        "e2e",
+        "product"
+      ],
+      "manual": [
+        "mobile-usability"
+      ],
+      "specification": "docs/SOURCE_FORMAT.md"
+    },
+    {
+      "id": "R-02",
+      "phase": "slice-1",
+      "summary": "原稿・文書・設定・ページ・描画を分離する",
+      "fixtures": [
+        "basic"
+      ],
+      "automated": [
+        "boundary",
+        "product"
+      ],
+      "manual": [
+        "default-page-quality"
+      ],
+      "specification": "docs/ARCHITECTURE.md"
+    },
+    {
+      "id": "R-03",
+      "phase": "slice-1",
+      "summary": "A6 105x148mmの縦書き一段として複数ページへ組版する",
+      "fixtures": [
+        "basic",
+        "long-chapter"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "vertical-glyphs-and-spacing"
+      ],
+      "specification": "docs/TYPOGRAPHY.md"
+    },
+    {
+      "id": "R-04",
+      "phase": "slice-1",
+      "summary": "基本禁則、段落字下げ、括弧・リーダ・ダッシュを自然に扱う",
+      "fixtures": [
+        "punctuation",
+        "basic"
+      ],
+      "automated": [
+        "product",
+        "visual"
+      ],
+      "manual": [
+        "vertical-glyphs-and-spacing"
+      ],
+      "specification": "docs/TYPOGRAPHY.md"
+    },
+    {
+      "id": "R-05",
+      "phase": "slice-1",
+      "summary": "文字サイズ・行間・余白変更で原稿を失わず再組版する",
+      "fixtures": [
+        "basic",
+        "long-chapter"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-06",
+      "phase": "slice-1",
+      "summary": "長文、結合文字、未知の記法を欠落・重複させない",
+      "fixtures": [
+        "long-chapter",
+        "unicode",
+        "malformed-markup",
+        "empty"
+      ],
+      "automated": [
+        "product"
+      ],
+      "manual": [
+        "vertical-glyphs-and-spacing"
+      ],
+      "specification": "docs/TYPOGRAPHY.md"
+    },
+    {
+      "id": "R-07",
+      "phase": "slice-1",
+      "summary": "PCで右綴じの見開きを確認できる",
+      "fixtures": [
+        "basic"
+      ],
+      "automated": [
+        "e2e",
+        "visual"
+      ],
+      "manual": [
+        "default-page-quality"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-08",
+      "phase": "slice-1",
+      "summary": "PNGとA6単ページPDFを同じ組版結果から出力する",
+      "fixtures": [
+        "basic"
+      ],
+      "automated": [
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "export-appearance"
+      ],
+      "specification": "docs/CAPABILITIES.md"
+    },
+    {
+      "id": "R-09",
+      "phase": "slice-1",
+      "summary": "スマホの原稿・設定・プレビュー・PNG出力が操作できる",
+      "fixtures": [
+        "basic"
+      ],
+      "automated": [
+        "e2e",
+        "visual"
+      ],
+      "manual": [
+        "mobile-usability"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-10",
+      "phase": "slice-1",
+      "summary": "ローカル処理し、原稿を外部送信しない",
+      "fixtures": [
+        "basic",
+        "unicode"
+      ],
+      "automated": [
+        "boundary",
+        "e2e"
+      ],
+      "manual": [
+        "local-first"
+      ],
+      "specification": "docs/PRINCIPLES.md"
+    },
+    {
+      "id": "R-11",
+      "phase": "mvp",
+      "summary": "ルビを構造として保持し、縦書きで表示する",
+      "fixtures": [
+        "ruby"
+      ],
+      "automated": [
+        "product",
+        "visual"
+      ],
+      "manual": [
+        "vertical-glyphs-and-spacing"
+      ],
+      "specification": "docs/TYPOGRAPHY.md"
+    },
+    {
+      "id": "R-12",
+      "phase": "mvp",
+      "summary": "見出し、明示改ページ、意図した白ページを扱う",
+      "fixtures": [
+        "heading",
+        "page-breaks"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-13",
+      "phase": "mvp",
+      "summary": "ページ番号を本文と重ならない位置に表示する",
+      "fixtures": [
+        "basic"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "visual"
+      ],
+      "manual": [
+        "vertical-glyphs-and-spacing",
+        "export-appearance"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-14",
+      "phase": "mvp",
+      "summary": "再読み込みで保存原稿・設定を復元できる",
+      "fixtures": [
+        "basic",
+        "ruby",
+        "page-breaks"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "local-first"
+      ],
+      "specification": "docs/ARCHITECTURE.md"
+    },
+    {
+      "id": "R-15",
+      "phase": "mvp",
+      "summary": "複数ページPNGと見開きPNGを保存できる",
+      "fixtures": [
+        "basic"
+      ],
+      "automated": [
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "export-appearance",
+        "mobile-usability"
+      ],
+      "specification": "docs/CAPABILITIES.md"
+    },
+    {
+      "id": "R-16",
+      "phase": "mvp",
+      "summary": "一枚/見開きと本/左右共通を区別し、読書順で移動・拡大できる",
+      "fixtures": [
+        "basic",
+        "page-breaks"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "visual"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-17",
+      "phase": "mvp",
+      "summary": "判型・pt/mm・字数/行数の詳細を調整できる",
+      "fixtures": [
+        "basic"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "default-page-quality",
+        "export-appearance"
+      ],
+      "specification": "docs/CAPABILITIES.md"
+    },
+    {
+      "id": "R-18",
+      "phase": "mvp",
+      "summary": "圏点、連続ダッシュ、原稿側の字下げを扱う",
+      "fixtures": [
+        "ruby",
+        "punctuation",
+        "basic"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "vertical-glyphs-and-spacing"
+      ],
+      "specification": "docs/TYPOGRAPHY.md"
+    },
+    {
+      "id": "R-19",
+      "phase": "mvp",
+      "summary": "番号の開始ページ/値/位置と範囲の例外を詳細で指定できる",
+      "fixtures": [
+        "page-breaks"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "vertical-glyphs-and-spacing",
+        "export-appearance"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-20",
+      "phase": "mvp",
+      "summary": "ページ範囲と意味のある位置に柱を設定し復元できる",
+      "fixtures": [
+        "heading",
+        "page-breaks"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality",
+        "export-appearance"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-21",
+      "phase": "mvp",
+      "summary": "DOCX/Markdown/JSONを取り込み、作業状態を往復できる",
+      "fixtures": [
+        "ruby",
+        "heading",
+        "page-breaks"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "boundary"
+      ],
+      "manual": [
+        "mobile-usability",
+        "local-first"
+      ],
+      "specification": "docs/SOURCE_FORMAT.md"
+    },
+    {
+      "id": "R-22",
+      "phase": "mvp",
+      "summary": "正本ASTをSection/Block/Inlineで保存し、旧形式とキャッシュ不一致を保護して復元する",
+      "fixtures": [
+        "model-sections",
+        "model-unsupported",
+        "unicode"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "boundary"
+      ],
+      "manual": [
+        "local-first"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-23",
+      "phase": "mvp",
+      "summary": "前への挿入・見出し改名・一意な移動でIDを維持し、削除・曖昧な章を別章へ付け替えない",
+      "fixtures": [
+        "model-sections",
+        "model-duplicate-chapters"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-24",
+      "phase": "mvp",
+      "summary": "名前付き書式の継承と局所上書きを解決し、解除しても本文を変えない",
+      "fixtures": [
+        "model-style-range",
+        "model-sections"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-25",
+      "phase": "mvp",
+      "summary": "意味的Scopeと上/下のRunning Elementを組版結果と出力へ反映する",
+      "fixtures": [
+        "model-running"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "export-appearance"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-26",
+      "phase": "mvp",
+      "summary": "明示したMarkdownの見出し/強調/引用/揃えと日本語ルビ/圏点を構造化し、未知の記法を保持する",
+      "fixtures": [
+        "model-sections",
+        "model-nested"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "vertical-glyphs-and-spacing"
+      ],
+      "specification": "docs/SOURCE_FORMAT.md"
+    },
+    {
+      "id": "R-27",
+      "phase": "mvp",
+      "summary": "選択段落の書式を必要なときだけ開き、PC/スマホで保存・変更・解除できる",
+      "fixtures": [
+        "model-sections"
+      ],
+      "automated": [
+        "e2e",
+        "visual"
+      ],
+      "manual": [
+        "mobile-usability"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-28",
+      "phase": "mvp",
+      "summary": "Book Model v3を正本にして特殊ページの参照と詳細を分離し、IDを保持してソース/GUI/JSONを往復する",
+      "fixtures": [
+        "book-mixed"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "boundary"
+      ],
+      "manual": [
+        "local-first"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-29",
+      "phase": "mvp",
+      "summary": "入力途中の参照を保存し最後の確定モデルを表示し、GUIで未確定ソースを上書きしない",
+      "fixtures": [
+        "book-mixed"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "local-first"
+      ],
+      "specification": "docs/SOURCE_FORMAT.md"
+    },
+    {
+      "id": "R-30",
+      "phase": "mvp",
+      "summary": "原稿/構成/素材の左ビュー、左右ペインの端で開閉/リサイズ、共通Undo/Redo、本文全体と明示的な対象設定を操作できる",
+      "fixtures": [
+        "book-mixed"
+      ],
+      "automated": [
+        "e2e",
+        "visual"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-31",
+      "phase": "mvp",
+      "summary": "構成から章と特殊ページを追加/削除/移動/複製し、現在のページ範囲を組版結果から導出する",
+      "fixtures": [
+        "book-mixed",
+        "book-special-break",
+        "book-move-before-chapter"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-32",
+      "phase": "mvp",
+      "summary": "テンプレート/自由/外部ページを同じページ列に組み、変換で意味/ID/内容を保持し、枠外や素材不足を診断する",
+      "fixtures": [
+        "book-mixed",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "export-appearance"
+      ],
+      "specification": "docs/CAPABILITIES.md"
+    },
+    {
+      "id": "R-33",
+      "phase": "mvp",
+      "summary": "章開始/章柱の意味的Scopeと、一覧の疎な複数選択による位置固定の装飾Overrideを区別する",
+      "fixtures": [
+        "book-mixed"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-34",
+      "phase": "mvp",
+      "summary": "PNG/JPEG/SVG/PDF素材をローカルで読み込み、危険SVGを拒否しIndexedDB/JSON復元/PNG/PDF出力へ渡す",
+      "fixtures": [
+        "book-local-page",
+        "book-unsafe"
+      ],
+      "automated": [
+        "e2e",
+        "exports",
+        "boundary"
+      ],
+      "manual": [
+        "local-first",
+        "export-appearance"
+      ],
+      "specification": "docs/ARCHITECTURE.md"
+    },
+    {
+      "id": "R-35",
+      "phase": "mvp",
+      "summary": "初回原稿表示・16px折返し・パネル端操作・本文全体と明示局所編集・Markdown記法への内容不変の移行",
+      "fixtures": [
+        "book-modern-notation",
+        "model-sections",
+        "basic"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "visual"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "local-first"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-36",
+      "phase": "mvp",
+      "summary": "全スタイル階層の継承・部分余白・局所変更とリセット、正本と原稿の往復",
+      "fixtures": [
+        "book-style-exceptions",
+        "model-sections",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "boundary"
+      ],
+      "manual": [
+        "local-first"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-37",
+      "phase": "mvp",
+      "summary": "文字の字間・方向・数字処理・4種圏点・ルビを原文不変で生成",
+      "fixtures": [
+        "book-style-exceptions",
+        "model-sections",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "vertical-glyphs-and-spacing"
+      ],
+      "specification": "docs/TYPOGRAPHY.md"
+    },
+    {
+      "id": "R-38",
+      "phase": "mvp",
+      "summary": "構造範囲の版面、縦横一二段、実寸での見出しと次段落の結合",
+      "fixtures": [
+        "book-style-exceptions",
+        "model-sections",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "default-page-quality",
+        "vertical-glyphs-and-spacing"
+      ],
+      "specification": "docs/TYPOGRAPHY.md"
+    },
+    {
+      "id": "R-39",
+      "phase": "mvp",
+      "summary": "フロー・独立・見開き・裁ち落とし・外部画像の配置と実効解像度、自由ページ整列",
+      "fixtures": [
+        "book-style-exceptions",
+        "model-sections",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "export-appearance"
+      ],
+      "specification": "docs/CAPABILITIES.md"
+    },
+    {
+      "id": "R-40",
+      "phase": "mvp",
+      "summary": "章・セクション・構造アンカーのGUI、柱と物理ページ例外の区別、再組版への追従",
+      "fixtures": [
+        "book-style-exceptions",
+        "model-sections",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "visual"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-41",
+      "phase": "mvp",
+      "summary": "別判型・SNS用途・深い共通書式、PC/スマホ操作、A5混在ページの共通出力",
+      "fixtures": [
+        "book-style-exceptions",
+        "model-sections",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "visual",
+        "exports"
+      ],
+      "manual": [
+        "mobile-usability",
+        "export-appearance"
+      ],
+      "specification": "docs/CAPABILITIES.md"
+    },
+    {
+      "id": "R-42",
+      "phase": "mvp",
+      "summary": "作業ビュー・操作検索・集中表示・UIテーマ・可逆なドロップ導入をPC/スマホから操作し、原稿と版面と保存互換を保つ",
+      "fixtures": [
+        "basic",
+        "book-mixed"
+      ],
+      "automated": [
+        "e2e",
+        "visual"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "local-first"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-43",
+      "phase": "mvp",
+      "summary": "共通書式と範囲書式を原稿/GUIで共有し、改丁・構成ドラッグ/キー・自由ページテンプレート/ハンドル/レイヤー/固定・全ページPNGを同じ履歴と出力で扱う",
+      "fixtures": [
+        "book-range-format",
+        "book-page-transitions",
+        "book-mixed",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "visual",
+        "exports"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-44",
+      "phase": "mvp",
+      "summary": "静的配布とローカル起動を共有し、プロジェクト配下URLの同梱フォント/Worker/ライブラリ/PDF素材・端末保存・実出力を外部原稿送信なく扱う。mainの検証後に試用環境へ配置しリリースは作らない",
+      "fixtures": [
+        "basic",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "boundary"
+      ],
+      "manual": [
+        "local-first",
+        "export-appearance"
+      ],
+      "specification": "docs/DEPLOYMENT.md"
+    },
+    {
+      "id": "R-45",
+      "phase": "mvp",
+      "summary": "用途別の画像初期値・作業保存/再開・複数素材/ページ範囲/参照を保つ差し替え・自由ページ複数選択・目次の自動多頁・混在書式・実出力の左右と鮮度/欠落確認をPCとスマホで扱う",
+      "fixtures": [
+        "book-toc-many",
+        "book-spread-colors",
+        "book-local-page",
+        "book-range-format"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "visual",
+        "exports"
+      ],
+      "manual": [
+        "default-page-quality",
+        "vertical-glyphs-and-spacing",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/UI.md"
+    }
+  ]
+}

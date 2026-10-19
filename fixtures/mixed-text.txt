@@ -1,0 +1,4 @@
+2026年9月30日。
+ChatGPTやHTML、CSS、PDFなどの英数字が文章中に入る。
+ABC123と日本語が混在する。
+URL https://example.invalid/path と 3.14 を確認する。
