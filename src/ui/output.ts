@@ -1,6 +1,7 @@
 import type { BookStyle, BookPage, ViewMode, Diagnostic } from '../domain/contracts.js';
 import type { Publication } from '../domain/model.js';
 import { serializeProject } from '../domain/project.js';
+import { bookNavigation } from '../domain/navigation.js';
 import { spreadPages } from '../domain/page-order.js';
 import { rasterize, rasterizeSpread, pngBlob } from '../io/raster.js';
 import { exportPDF } from '../io/pdf.js';
@@ -72,12 +73,12 @@ export function output(host: OutputHost) {
         blob = new Blob([serializeProject({ ...s.project, metadata: { filename: s.filename, viewMode: s.viewMode, selected: s.selected } })], { type: 'application/json' }); name = `${safeName}.book.json`;
       } else if (format === 'source') { blob = new Blob([s.source], { type: 'text/plain;charset=utf-8' }); name = `${safeName}.${s.project.syntax === 'markdown' ? 'md' : 'txt'}`; }
       else if (format === 'png' || format === 'spread') {
-        const spread = spreadPages(s.selected, s.pages.length), canvas = format === 'png' ? await rasterize(s.pages[s.selected - 1]!, s.style) : await rasterizeSpread(spread.left ? s.pages[spread.left - 1] : undefined, spread.right ? s.pages[spread.right - 1] : undefined, s.style);
+        const spread = spreadPages(s.selected, s.pages.length, s.style.binding), canvas = format === 'png' ? await rasterize(s.pages[s.selected - 1]!, s.style) : await rasterizeSpread(spread.left ? s.pages[spread.left - 1] : undefined, spread.right ? s.pages[spread.right - 1] : undefined, s.style);
         try { current.signal.throwIfAborted(); blob = await pngBlob(canvas); } finally { canvas.width = 0; canvas.height = 0; }
         name = `${safeName}-${format === 'spread' ? '見開き-' : ''}${String(s.selected).padStart(3, '0')}.png`;
       } else {
         const pages = range(s), span = pages.length === s.pages.length ? '' : `-${pages[0]!.number}-${pages.at(-1)!.number}`;
-        if (format === 'pdf') { blob = await exportPDF(pages, s.style, s.filename, current.signal, count => { el('export-progress-text').textContent = `${count} / ${pages.length} ページを準備しました`; }); name = `${safeName}${span}.pdf`; }
+        if (format === 'pdf') { blob = await exportPDF(pages, s.style, s.filename, current.signal, count => { el('export-progress-text').textContent = `${count} / ${pages.length} ページを準備しました`; }, bookNavigation(s.project, s.pages, pages)); name = `${safeName}${span}.pdf`; }
         else {
           const files: Record<string, Uint8Array> = {}; let total = 0;
           for (const [i, page] of pages.entries()) {

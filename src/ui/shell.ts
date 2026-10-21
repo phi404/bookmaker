@@ -53,7 +53,7 @@ export function workbenchShell(host: ShellHost): void {
     { label: 'ページ一覧を表示', keywords: 'view gallery プレビュー 複数選択', icon: 'grid-2x2', run: () => view('view-gallery') },
     { label: '紙面に集中', keywords: 'focus 表示 パネル', icon: 'maximize-2', desktopOnly: true, run: () => { host.showPreview(); host.focusPaper(); } },
     { label: '章・ページを追加', keywords: '表題紙 目次 奥付 扉 構成', icon: 'plus', run: () => { host.showLeft('structure'); click('add-book-item'); } },
-    { label: '版面の詳細', keywords: '字数 行数 段組 横書き pt mm', icon: 'type', run: () => host.showSettings('detail-layout') },
+    { label: '版面の詳細', keywords: '字数 行数 段組 横書き 綴じ方 左綴じ 右綴じ 白 紙色 pt mm', icon: 'type', run: () => host.showSettings('detail-layout') },
     { label: 'ページ番号', keywords: 'ノンブル folio 設定', icon: 'file', run: () => host.showSettings('detail-folio') },
     { label: '柱を設定', keywords: '見出し ページ上部 header', icon: 'pilcrow', run: () => host.showSettings('detail-heads') },
     { label: '共通スタイルを編集', keywords: '段落 文字 見出し 書式 style', icon: 'type', run: () => {

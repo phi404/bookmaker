@@ -15,10 +15,12 @@ test('@flow simple/spread navigation, uniform margins and progressively revealed
   const positions = await page.getByTestId('folio-position').evaluate(select => [...select.options].filter(option => !option.hidden).map(option => option.text));
   expect(positions).toHaveLength(6); expect(new Set(positions).size).toBe(6);
   await expect(page.getByTestId('folio-position')).toHaveValue('bottom-left');
+  await expect(page.getByTestId('folio-enabled')).toBeChecked(); await expect(ui.preview().getByTestId('folio')).toHaveText('2');
+  await page.locator('#detail-folio summary').first().click(); await page.getByTestId('folio-enabled').uncheck(); await ui.ready();
   await expect(ui.preview().getByTestId('folio')).toHaveCount(0);
   const firstX = await ui.preview().locator('[data-body=text]').first().getAttribute('x');
   await page.getByRole('button', { name: '次のページ', exact: true }).click(); expect(await ui.preview().locator('[data-body=text]').first().getAttribute('x')).toBe(firstX);
-  await page.locator('#detail-folio summary').first().click(); await page.getByTestId('folio-enabled').check(); await page.getByTestId('folio-from').fill('2'); await page.getByTestId('folio-from').blur(); await page.getByTestId('folio-start').fill('42'); await page.getByTestId('folio-start').blur();
+  await page.getByTestId('folio-enabled').check(); await page.getByTestId('folio-from').fill('2'); await page.getByTestId('folio-from').blur(); await page.getByTestId('folio-start').fill('42'); await page.getByTestId('folio-start').blur();
   await page.getByTestId('folio-position').selectOption('bottom-center'); await ui.ready();
   await expect(ui.preview().getByTestId('folio')).toHaveText('43'); await page.getByRole('button', { name: '前のページ', exact: true }).click(); await expect(ui.preview().getByTestId('folio')).toHaveText('42');
   await page.locator('#detail-folio .nested-details summary').click(); await page.locator('#add-folio-rule').click();

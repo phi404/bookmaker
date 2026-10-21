@@ -11,7 +11,8 @@
     "output/foundation/manifest.json",
     "output/book/manifest.json",
     "output/exceptions/manifest.json",
-    "output/ux-spread/manifest.json"
+    "output/ux-spread/manifest.json",
+    "output/book-finishing/manifest.json"
   ],
   "manualReview": "harness/manual-review.json"
 }

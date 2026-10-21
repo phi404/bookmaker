@@ -18,6 +18,7 @@ export function settings(host: SettingsHost) {
   numeric('font-pt', (s, v) => ({ ...s, fontPt: v }));
   numeric('column-gap', (s,v)=>({...s,columnGapMm:v}));
   el('page-writing').addEventListener('change',()=>changed({...host.getStyle(),writingMode:el<HTMLSelectElement>('page-writing').value as BookStyle['writingMode']}));
+  el('page-binding').addEventListener('change',()=>changed({...host.getStyle(),binding:el<HTMLSelectElement>('page-binding').value as BookStyle['binding']}));
   el('page-columns').addEventListener('change',()=>changed({...host.getStyle(),columns:Number(el<HTMLSelectElement>('page-columns').value) as 1|2}));
   numeric('line-mm', (s, v) => ({ ...s, lineHeight: v / (s.fontPt * 25.4 / 72) }));
   for (const [id, key] of [['margin-top', 'topMm'], ['margin-bottom', 'bottomMm'], ['margin-inner', 'innerMm'], ['margin-outer', 'outerMm']] as const) numeric(id, (s, v) => { host.setOffset(0); return { ...s, margins: { ...s.margins, [key]: v } }; });
@@ -33,8 +34,7 @@ export function settings(host: SettingsHost) {
   el<HTMLSelectElement>('paper-color').addEventListener('change', event => changed({ ...host.getStyle(), paperColor: (event.currentTarget as HTMLSelectElement).value as 'warm' | 'white' }));
   el<HTMLSelectElement>('page-layout').addEventListener('change', event => {
     const s = host.getStyle(), uniform = (event.currentTarget as HTMLSelectElement).value === 'uniform';
-    host.setOffset(0); if (uniform) host.singleView();
-    changed({ ...s, pageLayout: uniform ? 'uniform' : 'book', margins: { ...s.margins, topMm: uniform ? s.margins.topMm : Math.max(s.margins.topMm, PRESETS.standard.margins.topMm), bottomMm: uniform ? s.margins.bottomMm : Math.max(s.margins.bottomMm, PRESETS.standard.margins.bottomMm), innerMm: uniform ? 15 : 17, outerMm: uniform ? 15 : 13 }, paperColor: uniform ? 'white' : 'warm', folio: { ...s.folio!, enabled: !uniform } });
+    changed({ ...s, pageLayout: uniform ? 'uniform' : 'book' });
   });
   el<HTMLSelectElement>('page-size').addEventListener('change', event => {
     const key = (event.currentTarget as HTMLSelectElement).value;
@@ -95,19 +95,19 @@ export function settings(host: SettingsHost) {
   }
   function sync(): void {
     const s = host.getStyle(), grid = geometry(s), uniform = s.pageLayout === 'uniform';
-    setValue('page-writing',s.writingMode);setValue('page-columns',s.columns);setValue('column-gap',s.columnGapMm??6);
+    setValue('page-binding',s.binding);setValue('page-writing',s.writingMode);setValue('page-columns',s.columns);setValue('column-gap',s.columnGapMm??6);
     setValue('font-size', s.fontPt); el('font-size-value').textContent = `${s.fontPt} pt`;
     setValue('line-height', s.lineHeight); el('line-height-value').textContent = s.lineHeight.toFixed(2);
     const marginsMatch = (base: typeof PRESETS[Preset]) => Object.entries(base.margins).every(([key, value]) => s.margins[key as keyof typeof s.margins] === (uniform && (key === 'innerMm' || key === 'outerMm') ? (base.margins.innerMm + base.margins.outerMm) / 2 : value));
     setValue('margin', host.getOffset()); el('margin-value').textContent = host.getOffset() ? `${host.getOffset() > 0 ? '+' : ''}${host.getOffset()} mm` : Object.values(PRESETS).some(marginsMatch) ? '標準' : '個別の値';
-    setValue('page-layout', s.pageLayout ?? 'book'); el('purpose-caption').textContent = uniform ? 'すべてのページを、左右共通の余白で組みます。' : '見開きの左右で、ノドと小口を入れ替えます。';
+    setValue('page-layout', s.pageLayout ?? 'book'); el('page-layout-caption').textContent = uniform ? '余白を固定し、左右を合わせる白ページは入れません。' : 'ノドと小口を入れ替え、章や改丁の開始面をそろえます。';
     el('image-preset-row').hidden = !uniform;
     const key = Object.entries(PAGE_SIZES).find(([, p]) => p.widthMm === s.page.widthMm && p.heightMm === s.page.heightMm)?.[0] ?? 'custom';
     if (!el('custom-size').hidden && el<HTMLSelectElement>('page-size').value === 'custom') { /* Keep custom editing open even at a preset dimension. */ } else { setValue('page-size', key); el('custom-size').hidden = key !== 'custom'; }
     setValue('page-width', s.page.widthMm); setValue('page-height', s.page.heightMm); setValue('font-pt', s.fontPt); setValue('line-mm', Number(grid.lineMm.toFixed(3)));
     for (const [id, value] of [['margin-top', s.margins.topMm], ['margin-bottom', s.margins.bottomMm], ['margin-inner', s.margins.innerMm], ['margin-outer', s.margins.outerMm], ['grid-chars', s.maxCharsPerLine ?? ''], ['grid-lines', s.maxLinesPerPage ?? '']] as const) setValue(id, value);
     el('inner-label').textContent = uniform ? '右 / mm' : 'ノド / mm'; el('outer-label').textContent = uniform ? '左 / mm' : '小口 / mm';
-    input('auto-indent').checked = !!s.paragraphIndent; setValue('paper-color', s.paperColor ?? 'warm');
+    input('auto-indent').checked = !!s.paragraphIndent; setValue('paper-color', s.paperColor ?? 'white');
     el('grid-size').textContent = `${grid.chars}字 × ${grid.lines}行${s.columns===2?' × 2段':''}`; el('layout-info').textContent = el('grid-size').textContent;
     const format = key === 'custom' ? '自由寸法' : PAGE_SIZES[key as keyof typeof PAGE_SIZES].label;
     el('format-label').textContent = uniform ? `${Math.round(s.page.widthMm/25.4*300)} × ${Math.round(s.page.heightMm/25.4*300)} px` : format; const dimensions = document.createElement('span'); dimensions.textContent = `${s.page.widthMm} × ${s.page.heightMm} mm`; el('format-label').append(dimensions); el('edition').textContent = `${format} · ${s.writingMode==='vertical-rl'?'縦書き':'横書き'}`;

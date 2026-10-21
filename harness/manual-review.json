@@ -1,32 +1,32 @@
 {
-  "revision": "7cb59f2cbeb693eb07ec165235043265d9c22b9865430e545ec6b3e0c0eaa447",
+  "revision": "47ce58e8eed51be056936399b7b6621757284d70e8a52f2c2a011ee611631e6a",
   "environment": "Windows; Node 24.19.0; Playwright 1.63.0 / Chromium 153.0.8010.12; ja-JP; Asia/Tokyo; Codex in-app browser; Poppler 120 dpi; Python 3.12.14 / Pillow 12.3.0 / pypdf 6.10.0",
   "reviewer": "NOEMA; AI UI/code/visual review on 2026-10-21; not a human usability study",
   "items": {
     "default-page-quality": {
       "status": "pass",
-      "evidence": "output/roadmap-implementation-2026-10-21/final-workspace.png",
-      "notes": "Reviewed the current build in IAB at 1280 x 720 and 320 x 800, including manuscript search, explicit paper navigation, a precise ruby-base source selection and settings template preview. All 71 operation flows and 7 visual cases / 15 screenshots passed at this revision. The 12 intentional reference changes were inspected individually with expected/actual/diff evidence recorded in baseline-review.json; existing zero-pixel tolerance was retained."
+      "evidence": "output/roadmap-continuation-2026-10-21/final-workspace.png",
+      "notes": "Reviewed the current interface in IAB at 1280 x 720 and 320 x 800: page composition labels, white paper, left binding and hierarchical TOC. Four changed reference files were individually inspected for white paper and final label changes; expected/actual/diff paths and hashes are in baseline-review.json. The existing maxDiffPixels 0 contract is retained. The final complete operation/image gate is recorded separately in output/verification/product.json."
     },
     "vertical-glyphs-and-spacing": {
       "status": "pass",
-      "evidence": "output/roadmap-implementation-2026-10-21/pdf-review/exceptions/page-1.png",
-      "notes": "Fresh current-revision PDFs were independently rendered with Poppler at 120 dpi. All 21 pages were inspected in six contact sheets, plus native foundation page 2, A5 exceptions page 1 and book page 1. Ruby, emphasis, bold, Latin rotation, numerals, dashes and mixed writing directions show no observed accidental clipping, overlap or mirroring in these fixtures. This bounded review does not establish full JLREQ compliance."
+      "evidence": "output/roadmap-continuation-2026-10-21/pdf-review/exceptions/page-1.png",
+      "notes": "Current-revision PDFs were independently rendered with Poppler at 120 dpi. Inspected all main and excerpt pages in nine contact sheets plus native foundation, A5 exceptions, mixed-book body and new hierarchical TOC/body views. Ruby, emphasis, bold, rotated Latin, numbers, dashes, horizontal columns and left-bound page sequence show no observed unintended clipping, overlap or mirroring in these fixtures. This does not establish full JLREQ compliance."
     },
     "mobile-usability": {
       "status": "pass",
-      "evidence": "output/roadmap-implementation-2026-10-21/final-mobile-search-320.png",
-      "notes": "Reviewed the current build at 320 x 800: search count and controls, explicit paper view, one-page preview and source jump to the selected ruby-base character. Current automated 375 px and existing compact-pane flows also passed. Real phones, software keyboards, Safari/Firefox, screen readers and human user testing remain untested."
+      "evidence": "output/roadmap-continuation-2026-10-21/final-mobile-settings-320.png",
+      "notes": "Reviewed composition settings and TOC preview at 320 x 800. Notification captures at desktop and 320 px retain exactly the same workspace/editor/paper bounds before and after a validation message. Import success notices yield to resumed work. Real phones, software keyboards, Safari/Firefox, screen readers and human user evaluation remain untested."
     },
     "export-appearance": {
       "status": "pass",
-      "evidence": "output/roadmap-implementation-2026-10-21/pdf-review/ux-spread/contact.png",
-      "notes": "Six current-revision output cases / 21 pages passed dimensions, page counts, 300 dpi and PNG/ZIP/PDF bitmap checks using bundled Python. Inspected six independent Poppler contact sheets and native glyph examples. Rendering commands, exit codes, environment and hashes are preserved in pdf-review/*/render.json. Raster RGB output only: text/font embedding, PDF/X, CMYK and print-shop acceptance remain outside current support."
+      "evidence": "output/roadmap-continuation-2026-10-21/pdf-review/final-review.json",
+      "notes": "Reviewed all current-revision full-book and excerpt output cases with independent Poppler images, commands, exit codes and hashes in pdf-review/*/render.json. TOC indentation, final numbers, intentional blanks and original excerpt folios match the canonical pages. Separate pypdf completion checks verify bitmap identity, hierarchy, link targets/rectangles and reading direction. Raster RGB output only; searchable text/font embedding, PDF/X, CMYK and print-shop acceptance remain outside support."
     },
     "local-first": {
       "status": "pass",
-      "evidence": "output/roadmap-implementation-2026-10-21/final-complete-verify.log",
-      "notes": "Reviewed canonical source mapping, settings-only serialization, local draft compare-and-save, immutable asset snapshots and the per-tab pagehide recovery journal. All 71 operation flows passed, including stale-tab conflict, quota failure, pointer failure, immediate reload, recovery, prefixed static deployment and real exports. Final complete gate evidence is recorded separately from human testing. GitHub receives reviewed application sources, documentation, artificial fixtures and reference images; runtime manuscripts/assets stay in browser storage. No release or tag is created. Public-host validation is recorded separately after deployment."
+      "evidence": "output/roadmap-continuation-2026-10-21/ui-review.json",
+      "notes": "Reviewed changes to the canonical model, margins/binding, structured TOC, final-page navigation and local notifications. Existing local storage conflict/recovery and source-preservation flows stay in the completion gate. No production dependency or external manuscript service was added. GitHub publication contains application code, docs, artificial fixtures and reviewed reference images; it excludes runtime manuscripts/assets, storage values, output and release/tag creation."
     }
   }
 }

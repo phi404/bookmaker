@@ -1,5 +1,6 @@
 import type { Diagnostic, Block, BookStyle, BookPage, FlowPage, FlowLine, Inline, RenderedPages, SpecialRenderedPage } from '../domain/contracts.js';
 import { advance, geometry, graphemes, validateStyle } from '../domain/style.js';
+import { matchesPageStart } from '../domain/page-order.js';
 import { paginateAdvanced } from './flow.js';
 
 const NO_START = new Set(graphemes('、。，．・：；？！ー〜～ゝゞ々ヽヾぁぃぅぇぉっゃゅょァィゥェォッャュョ）〕］｝〉》」』】〙〗’”)]},.!?:;'));
@@ -79,7 +80,7 @@ export function paginate(doc: { schemaVersion: 1; title: string; blocks: readonl
       afterSpecial = false;
       if (block.start !== 'next') {
         if (style.pageLayout === 'uniform') diagnostics.push({ code: 'uniform-page-start', blockId: block.id, message: '左右共通のページでは、左右からの開始指定を通常のページ開始として扱います。' });
-        else { const odd = block.start === 'left'; if ((page.number % 2 === 1) !== odd) newPage(); }
+        else if (!matchesPageStart(block.start, page.number, style)) newPage();
       }
       continue;
     }

@@ -1,11 +1,11 @@
 import type { BookStyle } from './contracts.js';
 import type { PageElement, SpecialPageDefinition } from './model.js';
 import { elementTextLines } from './element-layout.js';
-export interface TocEntry { title: string; page: number | string }
+export interface TocEntry { title: string; page: number | string; level?: 1 | 2 | 3; blockId?: string }
 /** Entry geometry depends on titles, not the final folio values, so pagination is stable. */
 export function templatePages(page: SpecialPageDefinition, style: BookStyle, toc: readonly TocEntry[] = []): PageElement[][] {
   if (page.role !== 'toc') return [templateElements(page, style, toc)];
-  const w = style.page.widthMm, h = style.page.heightMm, width = Math.max(20, w - 30), fontMm = 9 * 25.4 / 72, pitch = fontMm * 1.65;
+  const w = style.page.widthMm, h = style.page.heightMm, width = Math.max(20, w - 30), fontPt = page.toc?.fontPt ?? 9, fontMm = fontPt * 25.4 / 72, pitch = fontMm * 1.65;
   const bottom = h - 15, start = Math.max(Math.min(39, h * .3), Math.min(20, h * .15) + 16), perPage = Math.max(1, Math.floor((bottom - start - fontMm - .2) / pitch) + 1);
   const pages: PageElement[][] = []; let elements: PageElement[] = [], y = start;
   const fresh = () => {
@@ -14,14 +14,15 @@ export function templatePages(page: SpecialPageDefinition, style: BookStyle, toc
   };
   fresh();
   for (const [index, entry] of toc.entries()) {
-    const lines = elementTextLines(entry.title, Math.max(1, (width - 15) / fontMm));
+    const inset = Math.min(width - 15 - fontMm, ((entry.level ?? 1) - 1) * (page.toc?.indentMm ?? 3));
+    const lines = elementTextLines(entry.title, Math.max(1, (width - 15 - inset) / fontMm));
     for (let at = 0; at < lines.length;) {
       const available = bottom - y < 9 ? 0 : Math.max(0, Math.floor((bottom - y - fontMm - .2) / pitch) + 1);
       if (!available) { fresh(); continue; }
       const count = Math.min(lines.length - at, available, perPage), part = lines.slice(at, at + count).join('\n'), height = Math.max(9, fontMm + (count - 1) * pitch + .2), suffix = at ? `-${at}` : '';
-      elements.push({id:`t-toc-${index}${suffix}`,kind:'text',xMm:15,yMm:y,widthMm:width-15,heightMm:height,text:part,fontPt:9,fontWeight:400,alignment:'start',direction:'horizontal'});
-      if (!at) elements.push({id:`t-num-${index}`,kind:'text',xMm:w-25,yMm:y,widthMm:10,heightMm:9,text:String(entry.page),fontPt:9,fontWeight:400,alignment:'end',direction:'horizontal'});
-      const ruleWidth = count === 1 ? Math.max(0, width - Math.min(width - 12, Array.from(part).length * 3.2) - 15) : 0;
+      elements.push({id:`t-toc-${index}${suffix}`,kind:'text',xMm:15+inset,yMm:y,widthMm:width-15-inset,heightMm:height,text:part,fontPt,fontWeight:400,alignment:'start',direction:'horizontal'});
+      if (!at) elements.push({id:`t-num-${index}`,kind:'text',xMm:w-25,yMm:y,widthMm:10,heightMm:9,text:String(entry.page),fontPt,fontWeight:400,alignment:'end',direction:'horizontal'});
+      const ruleWidth = count === 1 ? Math.max(0, width - Math.min(width - 12, inset + Array.from(part).length * 3.2 * fontPt / 9) - 15) : 0;
       if (ruleWidth > 3) elements.push({id:`t-leader-${index}${suffix}`,kind:'line',xMm:w-28-ruleWidth,yMm:y+5,widthMm:ruleWidth,heightMm:.1,color:'#b3b3aa',strokeMm:.1});
       y += height + 3; at += count;
       if (at < lines.length) fresh();

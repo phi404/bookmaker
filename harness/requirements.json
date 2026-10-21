@@ -909,6 +909,89 @@
         "mobile-usability"
       ],
       "specification": "docs/ARCHITECTURE.md"
+    },
+    {
+      "id": "R-51",
+      "phase": "mvp",
+      "summary": "通知と入力途中表示で編集領域を動かさず、白い紙を標準にし、ページの組み方を用途や紙色・番号から独立して選ぶ",
+      "fixtures": [
+        "basic",
+        "book-finishing"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "visual"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-52",
+      "phase": "mvp",
+      "summary": "綴じ方向を組方向と独立して選び、左右余白・開始面・柱・見開き・移動・画像/出力へ反映する",
+      "fixtures": [
+        "book-finishing",
+        "book-spread-colors"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-53",
+      "phase": "mvp",
+      "summary": "見出し1〜3の深さと目次の文字/字下げを選び、確定番号・改名・保存・自由化を保持する",
+      "fixtures": [
+        "book-finishing",
+        "book-toc-many"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-54",
+      "phase": "mvp",
+      "summary": "同じ確定ページからPDFの階層しおりと内部目次リンクを作り、範囲外の宛先を除く",
+      "fixtures": [
+        "book-finishing"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/ARCHITECTURE.md"
     }
   ]
 }

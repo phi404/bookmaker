@@ -1,3 +1,4 @@
+import { tocEntries } from '../domain/navigation.js';
 import type { CharacterProperties, Diagnostic, ParagraphProperties, RenderedPages, ResolvedRunningElement, RenderElement } from '../domain/contracts.js';
 import type { Publication, Scope, PageProperties } from '../domain/model.js';
 import { flattenDocument } from '../domain/publication.js';
@@ -86,14 +87,10 @@ export function typesetPublication(project: Publication): RenderedPages {
     const inlines = block.inlines.map(run => ({ ...run,numbers:'auto' as const,...baseCharacter,...(run.styleId?characterStyles.get(run.styleId):{}),...(run.strong?{fontWeight:characterStyles.get('strong')?.fontWeight??700}:{}),...(run.emphasis?{emphasis:run.emphasis}:{}),...character,...run.localStyle }));
     return { ...block, ...paragraph, inlines,...metadata };
   });
-  const chapterTitles = tree.children.filter(s => s.role === 'chapter').map(s => {
-    const heading = s.children.find(b => b.id === s.headingId);
-    return {title: heading?.kind === 'heading' ? heading.inlines.map(i => i.kind === 'ruby' ? i.base : i.text).join('') : '', page:''};
-  });
   const expanded = blocks.flatMap((block): PaginationBlock[] => {
     const definition = block.kind === 'specialPage' ? project.specialPages?.find(p => p.id === block.page.pageId) : undefined;
     return definition?.role === 'toc' && definition.representation === 'template' && block.kind === 'specialPage'
-      ? templatePages(definition, block.layoutStyle ?? style, chapterTitles).map(elements => ({...block,page:{...block.page,elements}})) : [block];
+      ? templatePages(definition, block.layoutStyle ?? style, tocEntries(project, definition)).map(elements => ({...block,page:{...block.page,elements}})) : [block];
   });
   const withStarts: PaginationBlock[] = [];
   for (const block of expanded) {
@@ -103,16 +100,12 @@ export function typesetPublication(project: Publication): RenderedPages {
     withStarts.push(block);
   }
   const result = paginate({ schemaVersion: 1, title: tree.title, blocks: withStarts }, style), firstPages = new Map<string, number>();
-  const chapterPages = tree.children.filter(s => s.role === 'chapter').map(s => {
-    const heading = s.children.find(b => b.id === s.headingId), page = result.pages.find(p => p.lines.some(l => l.blockId === s.headingId));
-    return { title: heading?.kind === 'heading' ? heading.inlines.map(i => i.kind === 'ruby' ? i.base : i.text).join('') : '', page: page ? folioNumber(style.folio, page.number) ?? page.number : '—' };
-  });
   const tocParts = new Map<string, number>();
   for (const page of result.pages) if (page.kind === 'structured') {
     const definition = project.specialPages?.find(p => p.id === page.pageId);
     if (definition?.role === 'toc') {
       const part = tocParts.get(page.pageId) ?? 0; tocParts.set(page.pageId, part + 1);
-      page.elements = templatePages(definition, page.style??style, chapterPages)[part]!;
+      page.elements = templatePages(definition, page.style??style, tocEntries(project, definition, result.pages))[part]!;
     }
   }
   for (const page of result.pages) if (page.kind !== 'flow') for (const e of page.elements) {
@@ -139,13 +132,13 @@ export function typesetPublication(project: Publication): RenderedPages {
       if (hiddenHeads || !exists(e.scope) || !onPage(e.scope) || e.side !== 'both' && (page.number % 2 === 1) !== (e.side === 'odd') || e.hideOnSectionFirst && firstPages.get(sectionId ?? '') === page.number) continue;
       validateRunningElement(e,resolvedStyle);
       const text = e.content.kind === 'text' ? e.content.text : e.content.kind === 'title' ? tree.title : e.content.kind === 'author' ? tree.author : e.content.kind === 'chapter' ? chapter?.kind === 'heading' ? chapter.inlines.map(i => i.kind === 'text' ? i.text : i.base).join('') : '' : e.content.kind === 'heading' ? page.heading ?? '' : String(folioNumber(style.folio, page.number) ?? page.number);
-      const location = `${e.position.split('-')[0]}-${decorationSide(style.pageLayout, page.number, e.position)}`;
+      const location = `${e.position.split('-')[0]}-${decorationSide(style.pageLayout, page.number, e.position, style.binding)}`;
       elements.set(location, { id: e.id, text, position: e.position, fontPt: e.fontPt, insetMm: e.insetMm });
     }
     for (const element of elements.values()) {
-      const side = decorationSide(style.pageLayout, page.number, element.position), f = style.folio;
-      if (visibleFolio && f && folioNumber(f, page.number) !== null && element.position.split('-')[0] === f.position.split('-')[0] && side === decorationSide(style.pageLayout, page.number, f.position)) throw new Error('柱とページ番号が同じ位置にあります。配置を変更してください。');
-      if (element.position.startsWith('top-') && headsForPage(style, page.number).some(h => decorationSide(style.pageLayout, page.number, h.position) === side)) throw new Error('既存の柱と章の柱が同じ位置にあります。どちらかの配置を変更してください。');
+      const side = decorationSide(style.pageLayout, page.number, element.position, style.binding), f = style.folio;
+      if (visibleFolio && f && folioNumber(f, page.number) !== null && element.position.split('-')[0] === f.position.split('-')[0] && side === decorationSide(style.pageLayout, page.number, f.position, style.binding)) throw new Error('柱とページ番号が同じ位置にあります。配置を変更してください。');
+      if (element.position.startsWith('top-') && headsForPage(style, page.number).some(h => decorationSide(style.pageLayout, page.number, h.position, style.binding) === side)) throw new Error('既存の柱と章の柱が同じ位置にあります。どちらかの配置を変更してください。');
     }
     const decorated = { ...page, style:resolvedStyle, ...(sectionId ? { sectionId } : {}), runningElements: [...elements.values()],...(hiddenHeads?{hideHeads:true}:{}),...(!visibleFolio?{folioVisible:false}:{}) };
     for (const rule of project.pageOverrides ?? []) if (rule.pages.includes(page.number)) {

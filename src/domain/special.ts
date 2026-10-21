@@ -35,10 +35,11 @@ export function validateSpecialPages(value: unknown): SpecialPageDefinition[] {
   if (!Array.isArray(value) || value.length > 200) throw new Error('特殊ページは200件以内にしてください。');
   const ids = new Set<string>();
   for (const p of value) {
-    object(p, ['id', 'role', 'name', 'representation', 'template', 'fields', 'elements', 'assetId', 'assetPage', 'fit', 'originalTemplate', 'imageMode', 'bleedMm', 'snapMm', 'pageStyleId', 'localStyle'], '特殊ページ'); identifier(p.id);
+    object(p, ['id', 'role', 'name', 'representation', 'template', 'fields', 'elements', 'assetId', 'assetPage', 'fit', 'originalTemplate', 'imageMode', 'bleedMm', 'snapMm', 'pageStyleId', 'localStyle', 'toc'], '特殊ページ'); identifier(p.id);
     if (p.imageMode !== undefined && (!['flow', 'page', 'spread', 'bleed', 'external'].includes(p.imageMode as string) || p.representation !== 'asset')) throw new Error('画像の挿入方法を確認してください。');
     if (p.bleedMm !== undefined) finite(p.bleedMm, '塗り足し', 0, 10);
     if (p.pageStyleId !== undefined) identifier(p.pageStyleId); if (p.localStyle !== undefined) validatePage(p.localStyle);
+    if (p.toc !== undefined) { object(p.toc, ['depth', 'fontPt', 'indentMm'], '目次の設定'); if (p.role !== 'toc' || ![1, 2, 3].includes(p.toc.depth as number)) throw new Error('目次の見出し階層を確認してください。'); finite(p.toc.fontPt, '目次の文字サイズ', 7, 14); finite(p.toc.indentMm, '目次の字下げ', 0, 8); }
     if (p.snapMm !== undefined) finite(p.snapMm, 'スナップ', 0, 10);
     if (ids.has(p.id)) throw new Error('特殊ページIDが重複しています。'); ids.add(p.id); textValue(p.name, 100, 'ページ名');
     if (!SPECIAL_ROLES.includes(p.role as SpecialRole) || !['template', 'layout', 'asset'].includes(p.representation as string) || !['standard', 'minimal'].includes(p.template as string) || !['contain', 'cover'].includes(p.fit as string)) throw new Error('特殊ページの種類を確認してください。');

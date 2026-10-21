@@ -61,7 +61,10 @@ let layoutTimer: ReturnType<typeof setTimeout> | undefined, saveTimer: ReturnTyp
 const history: Draft[] = [], future: Draft[] = [], selectedPages = new Set<number>(); let galleryAnchor = 1;
 let galleryObserver: IntersectionObserver | undefined;
 const fontReady = document.fonts.load("16px 'Book Mincho'").then(fonts => { if (!fonts.length) throw new Error('本文フォントを読み込めません。'); });
-function notify(message: string, allowUndo = false): void { el('notice-text').textContent = message; el('notice').hidden = false; el('undo-import').hidden = !allowUndo; }
+function notify(message: string, allowUndo = false, kind: 'info' | 'error' = allowUndo ? 'info' : 'error'): void { el('notice-text').textContent = message; el('notice').dataset.kind = kind; el('notice').hidden = false; el('undo-import').hidden = !allowUndo; }
+function resumeAfterNotice(event: Event): void { const notice = el('notice'); if (notice.dataset.kind === 'info' && event.target instanceof Node && !notice.contains(event.target)) notice.hidden = true; }
+document.addEventListener('pointerdown', resumeAfterNotice, true);
+document.addEventListener('keydown', resumeAfterNotice, true);
 function activePanel(name: string): void {
   if (name === 'output') { exports.open(); return; } previousPanel = name; document.body.dataset.activePanel = name;
   document.querySelectorAll<HTMLElement>('.mobile-tabs [role=tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.target === name))); resizePaper(); if (name === 'preview') resetReadingPosition();
@@ -105,7 +108,7 @@ function syncSource(): void {
   source = project.sourceDraft ?? project.source;
   if (manuscript.value !== source) { const start = manuscript.selectionStart, end = manuscript.selectionEnd, scroll = manuscript.scrollTop; manuscript.value = source; manuscript.setSelectionRange(Math.min(start, source.length), Math.min(end, source.length)); manuscript.scrollTop = scroll; }
   el('sample-manuscript').hidden = !!source || !!project.assets.length;
-  el('source-draft-status').hidden = project.sourceDraft === undefined; el('source-draft-status').textContent = project.sourceDraft !== undefined ? '書式・構造を入力中 · 紙面は最後の確定状態です。入力内容も端末に保存します。' : '';
+  el('source-draft-status').hidden = project.sourceDraft === undefined; el('source-draft-status').textContent = project.sourceDraft !== undefined ? '指定を入力中' : '';
   setValue('source-syntax', project.syntax); el('character-count').textContent = `${Array.from(source).length.toLocaleString('ja-JP')} 字`; el('project-name').textContent = filename;
   el('syntax-label').textContent = project.syntax === 'markdown' ? 'Markdown' : '旧形式';
   const empty = project.source.length === 0; el('preview-empty').hidden = !empty; spread.hidden = empty; panel.dataset.empty = String(empty);
@@ -148,7 +151,7 @@ const exports = output({
 });
 function commit(next: BookModel, message?: string): void {
   if (project.sourceDraft !== undefined) { notify('原稿の参照指定を完成させてから構成や書式を変更してください。入力内容は保存されています。'); return; }
-  try { const valid = asBook(validatePublication(next)); snapshot(); project = valid; style = valid.style; followSelection = true; if (canSave) el('notice').hidden = true; syncSource(); reflow(); if (message) notify(message); }
+  try { const valid = asBook(validatePublication(next)); snapshot(); project = valid; style = valid.style; followSelection = true; if (canSave) el('notice').hidden = true; syncSource(); reflow(); if (message) notify(message, false, 'info'); }
   catch (error) { notify(error instanceof Error ? error.message : '変更を適用できません。'); controls.sync(); inspector.sync(); views.sync(true); }
 }
 const controls = settings({ getStyle: () => style, update(next) {
@@ -279,11 +282,11 @@ function attachDrag(paper: HTMLElement, page: Exclude<BookPage, { kind: 'flow' }
 function showPages(): void {
   const paperFocused = document.activeElement instanceof HTMLElement && !!document.activeElement.closest('.paper');
   if (!result) return; selected = Math.min(Math.max(1, selected), result.pages.length);
-  const pair = spreadPages(selected, result.pages.length), gallery = viewMode === 'gallery', numbers = gallery ? result.pages.map(p => p.number) : single() ? [selected] : [pair.left, pair.right];
-  panel.dataset.view = gallery ? 'gallery' : single() ? 'single' : 'spread'; panel.dataset.layout = style.pageLayout ?? 'book'; panel.dataset.zoom = String(!gallery && zoomed);
+  const pair = spreadPages(selected, result.pages.length, style.binding), gallery = viewMode === 'gallery', numbers = gallery ? result.pages.map(p => p.number) : single() ? [selected] : [pair.left, pair.right];
+  panel.dataset.binding = style.binding; panel.dataset.view = gallery ? 'gallery' : single() ? 'single' : 'spread'; panel.dataset.layout = style.pageLayout ?? 'book'; panel.dataset.zoom = String(!gallery && zoomed);
   for (const [id, mode] of [['view-single', 'single'], ['view-spread', 'spread'], ['view-gallery', 'gallery']] as const) el(id).setAttribute('aria-pressed', String(gallery ? mode === 'gallery' : single() ? mode === 'single' : mode === 'spread'));
-  el('preview-zoom').hidden = gallery; el('previous-arrow').dataset.icon = single() ? 'chevron-up' : 'chevron-right'; el('next-arrow').dataset.icon = single() ? 'chevron-down' : 'chevron-left'; el('page-navigation').dataset.direction = single() ? 'vertical' : 'horizontal';
-  el('preview-purpose').textContent = gallery ? 'Shiftで連続選択 · Ctrl / Cmdで追加選択' : style.pageLayout === 'uniform' ? '全ページ共通の版面' : single() ? '一枚ずつ、下へ進む' : '右綴じ · 次のページへは左に';
+  el('preview-zoom').hidden = gallery; el('previous-arrow').dataset.icon = single() ? 'chevron-up' : style.binding === 'left' ? 'chevron-left' : 'chevron-right'; el('next-arrow').dataset.icon = single() ? 'chevron-down' : style.binding === 'left' ? 'chevron-right' : 'chevron-left'; el('page-navigation').dataset.binding = style.binding; el('page-navigation').dataset.direction = single() ? 'vertical' : 'horizontal';
+  el('preview-purpose').textContent = gallery ? 'Shiftで連続選択 · Ctrl / Cmdで追加選択' : style.pageLayout === 'uniform' ? '全ページ共通の版面' : single() ? '一枚ずつ、下へ進む' : style.binding === 'left' ? '左綴じ · 次のページへは右に' : '右綴じ · 次のページへは左に';
   const oldScroll = preview.scrollTop; galleryObserver?.disconnect(); spread.replaceChildren();
   if (gallery) galleryObserver = new IntersectionObserver(entries => {
     for (const entry of entries) if (entry.isIntersecting) { const paper = entry.target as HTMLElement, page = result?.pages[Number(paper.dataset.pageNumber) - 1]; if (page) paper.innerHTML = renderPageSVG(page, style); galleryObserver?.unobserve(paper); }
@@ -298,7 +301,7 @@ function showPages(): void {
   el('page-count').textContent = String(result.pages.length); input('page-select').value = String(selected); input('page-select').max = String(result.pages.length);
   el('workbench-page-count').textContent = project.source.length ? `${result.pages.length} ページ` : '';
   const visibleStyle=result.pages[selected-1]?.style??style,grid=geometry(visibleStyle);el('layout-info').textContent=`${visibleStyle.writingMode==='vertical-rl'?'縦書き':'横書き'} · ${grid.chars}字 × ${grid.lines}行${visibleStyle.columns===2?' × 2段':''}`;
-  el<HTMLButtonElement>('previous-page').disabled = selected <= 1; el<HTMLButtonElement>('next-page').disabled = selected >= result.pages.length || (!single() && pair.left === result.pages.length);
+  el<HTMLButtonElement>('previous-page').disabled = selected <= 1; el<HTMLButtonElement>('next-page').disabled = selected >= result.pages.length || (!single() && Math.max(pair.left ?? 0, pair.right ?? 0) === result.pages.length);
   resizePaper(); if (gallery) preview.scrollTop = oldScroll; else resetReadingPosition(); exports.sync(); highlightElements(); views.sync();
   if (paperFocused) spread.querySelector<HTMLElement>(`[data-page-number="${selected}"]`)?.focus({ preventScroll: true });
 }
@@ -452,7 +455,7 @@ workbenchShell({ showLeft, showPreview() { if (mobile.matches) activePanel('prev
 function move(direction: -1 | 1): void { if (!result) return; selected = adjacentPage(selected, result.pages.length, direction, single()); showPages(); scheduleSave(); }
 el('previous-page').addEventListener('click', () => move(-1)); el('next-page').addEventListener('click', () => move(1));
 input('page-select').addEventListener('input', () => { const next = Number(input('page-select').value); if (!Number.isInteger(next) || next < 1) return; selected = next; showPages(); scheduleSave(); });
-panel.addEventListener('keydown', e => { if (e.target instanceof HTMLInputElement || (e.target as Element).closest('.paper')) return; if ((single() && e.key === 'ArrowDown') || (!single() && e.key === 'ArrowLeft')) { e.preventDefault(); move(1); } else if ((single() && e.key === 'ArrowUp') || (!single() && e.key === 'ArrowRight')) { e.preventDefault(); move(-1); } });
+panel.addEventListener('keydown', e => { if (e.target instanceof HTMLInputElement || (e.target as Element).closest('.paper')) return; if ((single() && e.key === 'ArrowDown') || (!single() && e.key === (style.binding === 'left' ? 'ArrowRight' : 'ArrowLeft'))) { e.preventDefault(); move(1); } else if ((single() && e.key === 'ArrowUp') || (!single() && e.key === (style.binding === 'left' ? 'ArrowLeft' : 'ArrowRight'))) { e.preventDefault(); move(-1); } });
 let touchStart: { x: number; y: number } | undefined;
 preview.addEventListener('touchstart', e => { if (mobile.matches && !zoomed && viewMode !== 'gallery' && selection.kind !== 'special') touchStart = { x: e.touches[0]!.clientX, y: e.touches[0]!.clientY }; }, { passive: true });
 preview.addEventListener('touchend', e => { if (!touchStart) return; const dy = e.changedTouches[0]!.clientY - touchStart.y, dx = e.changedTouches[0]!.clientX - touchStart.x; touchStart = undefined; if (Math.abs(dy) > 50 && Math.abs(dy) > Math.abs(dx)) move(dy < 0 ? 1 : -1); }, { passive: true });

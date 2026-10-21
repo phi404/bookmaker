@@ -30,7 +30,7 @@ export async function rasterize(page: BookPage, style: BookStyle): Promise<HTMLC
 export async function rasterizeSpread(left: BookPage | undefined, right: BookPage | undefined, style: BookStyle): Promise<HTMLCanvasElement> {
   const pixels = pagePixels(style), canvas = document.createElement('canvas'); canvas.width = pixels.width * 2; canvas.height = pixels.height;
   const context = canvas.getContext('2d'); if (!context) throw new Error('画像を生成できません。');
-  context.fillStyle = style.paperColor === 'white' ? '#ffffff' : '#fffefa'; context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = style.paperColor === 'warm' ? '#fffefa' : '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height);
   try {
     for (const [index, page] of [left, right].entries()) if (page) {
       const single = await rasterize(page, style); try { context.drawImage(single, pixels.width * index, 0); } finally { single.width = 0; single.height = 0; }

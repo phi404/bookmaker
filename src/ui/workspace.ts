@@ -117,7 +117,14 @@ export function workspaceViews(host: Host) {
     field(parent, 'テンプレート', 'special-template', p.template, v => update(id, { template: v as 'standard' | 'minimal' }), [['standard', '標準'], ['minimal', '余白を広く']]);
     const keys = p.role === 'colophon' ? [['title', '書名'], ['author', '著者'], ['circle', 'サークル / 制作'], ['date', '発行日'], ['printer', '印刷所'], ['url', 'URL'], ['note', '注意書き']] : p.role === 'toc' ? [['title', '表題']] : [['title', p.role === 'chapter-title' ? '章名' : '書名'], ['subtitle', '副題'], ['author', '著者']];
     for (const [key, name] of keys) field(parent, name!, `special-${key}`, p.fields[key!] ?? '', v => update(id, { fields: { ...special(id).fields, [key!]: v } }), undefined, key === 'note');
-    if (p.role === 'toc') caption('章名とページ番号を自動更新し、必要なページ数に分割します。', parent);
+    if (p.role === 'toc') {
+      const toc = () => special(id).toc ?? { depth: 1 as const, fontPt: 9, indentMm: 3 };
+      field(parent, '含める見出し', 'toc-depth', toc().depth, v => update(id, { toc: { ...toc(), depth: Number(v) as 1 | 2 | 3 } }), [['1', '見出し1'], ['2', '見出し1・2'], ['3', '見出し1・2・3']]);
+      const item = details('目次の文字と字下げ', parent);
+      field(item, '文字サイズ / pt', 'toc-font', toc().fontPt, v => update(id, { toc: { ...toc(), fontPt: Number(v) } }));
+      field(item, '階層ごとの字下げ / mm', 'toc-indent', toc().indentMm, v => update(id, { toc: { ...toc(), indentMm: Number(v) } }));
+      caption('見出しとページ番号を自動更新します。', parent);
+    }
     pageDecorations(parent,id);
     const d = details('詳細 / 自由ページへ', parent);
     caption('このページだけ配置を編集します。本文の組版とは分離します。目次を変換すると、その時点の項目と番号が固定されます。元のテンプレート内容も保持します。', d);
@@ -138,7 +145,7 @@ export function workspaceViews(host: Host) {
   }
   function assetPicker(parent: HTMLElement, p: SpecialPageDefinition): void {
     field(parent,'配置','special-image-mode',p.imageMode??(p.role==='external'?'external':'page'),v=>{const local={...special(p.id).localStyle};if(v==='external'){local.showHeads??=false;local.showFolio??=false;}update(p.id,{imageMode:v as SpecialPageDefinition['imageMode'],localStyle:local});sync(true);},[['page','独立した挿絵ページ'],['flow','本文の途中に入れる'],['spread','見開きでつなげる'],['bleed','端まで広げる（裁ち落とし）'],['external','外部の完成ページ']]);
-    if(p.imageMode==='spread')caption('右の偶数ページから配置します。必要なら前に空白ページを挿入します。',parent);
+    if(p.imageMode==='spread')caption('偶数ページから見開き全体へ配置します。必要なら前に空白ページを挿入します。',parent);
     field(parent, '素材', 'special-asset', p.assetId ?? '', v => { update(p.id, { assetId: v || null, assetPage: 1 }); sync(true); }, [['', '素材を選ぶ'], ...host.book().assets.map(a => [a.id, a.name] as const)]);
     const asset = host.book().assets.find(a => a.id === p.assetId);
     if (asset && asset.images.length > 1) field(parent, '素材内のページ', 'special-asset-page', p.assetPage, v => update(p.id, { assetPage: Number(v) }), asset.images.map((_, i) => [String(i + 1), `${i + 1}ページ`]));
@@ -211,7 +218,7 @@ export function workspaceViews(host: Host) {
     field(parent, '内容', 'running-content', e.content.kind, v => { edit({ content: v === 'text' ? { kind: 'text', text: '' } : { kind: v as 'title' | 'author' | 'chapter' | 'heading' | 'pageNumber' } }); sync(true); }, [['title', '書名'], ['chapter', '現在の章名'], ['heading', '現在の見出し'], ['author', '著者'], ['text', '固定の文字']]);
     if (e.content.kind === 'text') field(parent, '文字', 'running-text', e.content.text, v => edit({ content: { kind: 'text', text: v } }));
     field(parent, '配置', 'running-position', e.position, v => edit({ position: v as DecorationPosition }), [['top-outer', '上・小口'], ['top-center', '上・中央'], ['top-inner', '上・ノド'], ['bottom-outer', '下・小口'], ['bottom-center', '下・中央'], ['bottom-inner', '下・ノド']]);
-    field(parent, '左右ページ', 'running-side', e.side, v => edit({ side: v as RunningElement['side'] }), [['both', '両方'], ['odd', '奇数ページ（左）'], ['even', '偶数ページ（右）']]);
+    field(parent, '左右ページ', 'running-side', e.side, v => edit({ side: v as RunningElement['side'] }), [['both', '両方'], ['odd', '奇数ページ'], ['even', '偶数ページ']]);
     field(parent, '章の最初のページ', 'running-first', String(e.hideOnSectionFirst), v => edit({ hideOnSectionFirst: v === 'true' }), [['false', '表示する'], ['true', '非表示にする']]);
     const d = details('詳細', parent); field(d, '大きさ / pt', 'running-size', e.fontPt, v => edit({ fontPt: Number(v) })); field(d, '端から / mm', 'running-inset', e.insetMm, v => edit({ insetMm: Number(v) }));
     button(actions(parent), 'この柱を削除', () => { change(b => ({ ...b, runningElements: b.runningElements.filter(e => e.id !== id) })); host.select({ kind: 'book' }); });
@@ -235,7 +242,7 @@ export function workspaceViews(host: Host) {
     const section = host.book().document.children.find(s => s.id === id)!;
     const heading = section.children.find(b => b.id === section.headingId);
     field(parent, '章名', 'chapter-title', heading?.kind === 'heading' ? heading.inlines.map(i => i.kind === 'ruby' ? i.base : i.text).join('') : '', v => change(b => renameChapter(b, id, v.slice(0, 200))));
-    field(parent, '開始ページ', 'chapter-start', section.start ?? section.localStyle?.start ?? '', v => change(b => ({ ...b, document: { ...b.document, children: b.document.children.map(s => {if(s.id!==id)return s;const next={...s,localStyle:{...s.localStyle}};delete next.start;if(v)next.localStyle.start=v as 'continuous'|'next'|'left'|'right'|'recto';else delete next.localStyle.start;return next;}) } })), [['','章スタイルに従う（通常は本文の続き）'],['continuous', '本文の続き'], ['next', '改ページ'], ['recto', '改丁（奇数ページ）'], ['left', '左ページ（奇数）'], ['right', '右ページ（偶数）']]);
+    field(parent, '開始ページ', 'chapter-start', section.start ?? section.localStyle?.start ?? '', v => change(b => ({ ...b, document: { ...b.document, children: b.document.children.map(s => {if(s.id!==id)return s;const next={...s,localStyle:{...s.localStyle}};delete next.start;if(v)next.localStyle.start=v as 'continuous'|'next'|'left'|'right'|'recto';else delete next.localStyle.start;return next;}) } })), [['','章スタイルに従う（通常は本文の続き）'],['continuous', '本文の続き'], ['next', '改ページ'], ['recto', '改丁（奇数ページ）'], ['left', '左ページ'], ['right', '右ページ']]);
     caption('開始位置は章に保存します。前の文章が増えても追従します。', parent);
     if (heading) button(actions(parent), '見出しの書式を調整', () => host.select({ kind: 'block', id: heading.id }));
     button(actions(parent), 'この章の柱を設定', () => addRunning({ kind: 'section', sectionId: id }));

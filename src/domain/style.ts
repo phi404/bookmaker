@@ -1,4 +1,5 @@
 import type { BookStyle, DecorationPosition, FolioRule, PageRange, RunningHead } from './contracts.js';
+import { pageSide } from './page-order.js';
 import { ASCII_ADVANCES } from './font-metrics.js';
 import { decorationSide, folioNumber, headsForPage } from './decoration.js';
 
@@ -30,7 +31,7 @@ export function defaultStyle(): BookStyle { return presetStyle('standard'); }
 export function presetStyle(name: Preset): BookStyle {
   return { page: { widthMm: 105, heightMm: 148 }, writingMode: 'vertical-rl', binding: 'right', columns: 1,
     fontFamily: 'Book Mincho', ...PRESETS[name], margins: { ...PRESETS[name].margins }, pageLayout: 'book', paragraphIndent: false,
-    paperColor: 'warm', folio: { enabled: true, fromPage: 1, startNumber: 1, position: 'bottom-outer', fontPt: 7, insetMm: 8, rules: [] }, runningHeads: [] };
+    paperColor: 'white', folio: { enabled: true, fromPage: 1, startNumber: 1, position: 'bottom-outer', fontPt: 7, insetMm: 8, rules: [] }, runningHeads: [] };
 }
 export const segmenter = new Intl.Segmenter('ja', { granularity: 'grapheme' });
 export const graphemes = (text: string): string[] => Array.from(segmenter.segment(text), item => item.segment);
@@ -51,8 +52,8 @@ export const DECORATION_POSITIONS: readonly DecorationPosition[] = ['top-left', 
 export function validateStyle(value: unknown): BookStyle {
   if (!value || typeof value !== 'object') throw new Error('組版設定を読み込めません。');
   const v = value as BookStyle, style = defaultStyle();
-  if (!['vertical-rl', 'horizontal-tb'].includes(v.writingMode) || v.binding !== 'right' || ![1, 2].includes(v.columns) || v.fontFamily !== 'Book Mincho') throw new Error('書字方向・段数・同梱明朝の設定を確認してください。');
-  style.writingMode = v.writingMode; style.columns = v.columns;
+  if (!['vertical-rl', 'horizontal-tb'].includes(v.writingMode) || !['right', 'left'].includes(v.binding) || ![1, 2].includes(v.columns) || v.fontFamily !== 'Book Mincho') throw new Error('書字方向・段数・同梱明朝の設定を確認してください。');
+  style.writingMode = v.writingMode; style.columns = v.columns; style.binding = v.binding;
   if (v.columnGapMm !== undefined) style.columnGapMm = finite(v.columnGapMm, '段間', 2, 30);
   style.page = { widthMm: finite(v.page?.widthMm, '用紙の幅', 60, 350), heightMm: finite(v.page?.heightMm, '用紙の高さ', 60, 500) };
   style.fontPt = finite(v.fontPt, '文字サイズ', 7, 18); style.lineHeight = finite(v.lineHeight, '行間', 1.55, 3);
@@ -62,12 +63,12 @@ export function validateStyle(value: unknown): BookStyle {
   if (style.page.widthMm - style.margins.innerMm - style.margins.outerMm < fontMm * style.lineHeight || style.page.heightMm - style.margins.topMm - style.margins.bottomMm < fontMm) throw new Error('余白が大きすぎて本文が入りません。用紙か余白を調整してください。');
   const area = geometry(style); if (area.inlineMm < fontMm || area.blockMm < fontMm * style.lineHeight) throw new Error('段間か余白が大きすぎて本文が入りません。');
   for (const key of ['maxCharsPerLine', 'maxLinesPerPage'] as const) if (v[key] !== undefined) style[key] = integer(v[key], '字数・行数', 1, 200);
-  if (v.pageLayout !== undefined && v.pageLayout !== 'book' && v.pageLayout !== 'uniform') throw new Error('ページ用途を確認してください。');
+  if (v.pageLayout !== undefined && v.pageLayout !== 'book' && v.pageLayout !== 'uniform') throw new Error('ページの組み方を確認してください。');
   style.pageLayout = v.pageLayout ?? 'book';
   if (v.paragraphIndent !== undefined && typeof v.paragraphIndent !== 'boolean') throw new Error('字下げを確認してください。');
   style.paragraphIndent = v.paragraphIndent ?? false;
   if (v.paperColor !== undefined && v.paperColor !== 'warm' && v.paperColor !== 'white') throw new Error('紙の色を確認してください。');
-  style.paperColor = v.paperColor ?? 'warm';
+  style.paperColor = v.paperColor ?? 'white';
   if (v.folio) {
     const f = v.folio;
     if (typeof f.enabled !== 'boolean' || !DECORATION_POSITIONS.includes(f.position) || !Array.isArray(f.rules) || f.rules.length > 50) throw new Error('ページ番号の設定を確認してください。');
@@ -93,7 +94,7 @@ export function validateStyle(value: unknown): BookStyle {
   if (style.folio?.position.startsWith('top-')) {
     // Every range/parity state changes only at a boundary. Check it and the next parity.
     const bounds = [1, style.folio.fromPage, ...style.folio.rules.flatMap(r => [r.from, ...(r.to === null ? [] : [r.to + 1])]), ...style.runningHeads!.flatMap(h => [h.from, ...(h.to === null ? [] : [h.to + 1])])];
-    for (const page of new Set(bounds.flatMap(p => [p, p + 1]))) if (folioNumber(style.folio, page) !== null && headsForPage(style, page).some(h => decorationSide(style.pageLayout, page, h.position) === decorationSide(style.pageLayout, page, style.folio!.position))) throw new Error('柱とページ番号が同じ上部の位置にあります。どちらかの位置や対象範囲を変更してください。');
+    for (const page of new Set(bounds.flatMap(p => [p, p + 1]))) if (folioNumber(style.folio, page) !== null && headsForPage(style, page).some(h => decorationSide(style.pageLayout, page, h.position, style.binding) === decorationSide(style.pageLayout, page, style.folio!.position, style.binding))) throw new Error('柱とページ番号が同じ上部の位置にあります。どちらかの位置や対象範囲を変更してください。');
   }
   return style;
 }
@@ -106,5 +107,5 @@ export function geometry(style: BookStyle) {
 }
 /** In uniform mode outerMm is physical left, innerMm physical right, on every page. */
 export function pageMargins(style: BookStyle, number: number): { left: number; right: number } {
-  return style.pageLayout === 'uniform' || number % 2 === 1 ? { left: style.margins.outerMm, right: style.margins.innerMm } : { left: style.margins.innerMm, right: style.margins.outerMm };
+  return style.pageLayout === 'uniform' || pageSide(number, style.binding) === 'left' ? { left: style.margins.outerMm, right: style.margins.innerMm } : { left: style.margins.innerMm, right: style.margins.outerMm };
 }

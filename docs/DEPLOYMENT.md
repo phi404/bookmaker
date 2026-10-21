@@ -22,7 +22,7 @@ PowerShellで BOOKMAKER_BASE_PATH に /bookmaker/、BOOKMAKER_PORT に5175を設
 
 ## GitHub Actions
 
-.github/workflows/preview.yml はmainへのpush、mainへのPull Request、手動実行を扱う。harness・型・境界・モデル/組版の検査、2分割した全操作検査を実行する。操作検査は通常のルートとプロジェクト配下URLで同じ本・フォント・Worker・PDF素材・実出力を確認する。
+.github/workflows/preview.yml はmainへのpush、mainへのPull Request、手動実行を扱う。harness・型・境界・モデル/組版の検査、3分割した全操作検査を実行する。操作検査は通常のルートとプロジェクト配下URLで同じ本・フォント・Worker・PDF素材・実出力を確認する。
 
 main/手動の検査が通れば dist/ のみをPagesのartifactとして配置する。Pull Requestは検証だけ。deployジョブだけがpages:write / id-token:writeを持ち、github-pages環境へ出す。releaseイベント、タグ作成、Release作成、npm publishは設定しない。
 

@@ -282,6 +282,11 @@
       "path": "docs/history/2026-10-21-roadmap-implementation.md",
       "purpose": "stage-record",
       "kind": "history"
+    },
+    {
+      "path": "docs/history/2026-10-21-book-finishing.md",
+      "purpose": "stage-record",
+      "kind": "history"
     }
   ]
 }

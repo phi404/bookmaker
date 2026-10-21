@@ -39,8 +39,10 @@ export type PageElement = ElementBox & (
   | { kind: 'image'; assetId: string; assetPage: number; fit: 'contain' | 'cover' }
   | { kind: 'line' | 'rect'; color: string; strokeMm: number }
 );
+export interface TocOptions { depth: 1 | 2 | 3; fontPt: number; indentMm: number }
 export interface SpecialPageDefinition {
   id: string; role: SpecialRole; name: string; representation: 'template' | 'layout' | 'asset';
+  toc?: TocOptions;
   template: 'standard' | 'minimal'; fields: Record<string, string>; elements: PageElement[];
   assetId: string | null; assetPage: number; fit: 'contain' | 'cover';
   originalTemplate?: { template: 'standard' | 'minimal'; fields: Record<string, string> };

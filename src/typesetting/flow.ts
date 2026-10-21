@@ -1,6 +1,7 @@
 import type { BookStyle, BookPage, FlowPage, FlowLine, Inline, RenderedPages, Diagnostic } from '../domain/contracts.js';
 import { advance, geometry, graphemes, pageMargins, validateStyle } from '../domain/style.js';
 import type { PaginationBlock } from './paginator.js';
+import { matchesPageStart, pageSide } from '../domain/page-order.js';
 import { imagePrintInfo } from '../domain/image-print.js';
 
 type Atom = Inline & { advanceEm: number; sizeMm: number; tcy?: boolean; displayText?: string; textFrom: number; textTo: number };
@@ -71,12 +72,12 @@ export function paginateAdvanced(blocks: readonly PaginationBlock[], baseStyle: 
       if(occupied())next();
       if(info?.placement==='spread'&&page.number%2===1)next();
       const count=info?.placement==='spread'?2:1;
-      for(let side=0;side<count;side++)pages.push({...b.page,number:pages.length+1,style,...(b.sectionId?{sectionId:b.sectionId}:{}),elements:count===2?b.page.elements.map(e=>({...e,xMm:side===0?-style.page.widthMm:0,widthMm:style.page.widthMm*2})):b.page.elements});
+      for(let side=0;side<count;side++)pages.push({...b.page,number:pages.length+1,style,...(b.sectionId?{sectionId:b.sectionId}:{}),elements:count===2?b.page.elements.map(e=>({...e,xMm:pageSide(pages.length+1,style.binding)==='right'?-style.page.widthMm:0,widthMm:style.page.widthMm*2})):b.page.elements});
       fresh();afterSpecial=true;continue;
     }
     if(b.kind==='pageBreak'){
       if(occupied()||b.start==='next'&&!afterSpecial)next();afterSpecial=false;
-      if(b.start!=='next'&&style.pageLayout!=='uniform'&&(page.number%2===1)!==(b.start==='left'||b.start==='recto'))next();
+      if(!matchesPageStart(b.start,page.number,style))next();
       if(b.start!=='next'&&style.pageLayout==='uniform')diagnostics.push({code:'uniform-page-start',blockId:b.id,message:'左右共通のページでは左右開始を通常の改ページとして扱います。'});
       continue;
     }

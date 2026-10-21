@@ -1,16 +1,18 @@
 import type { BookStyle, BookPage } from '../domain/contracts.js';
+import type { BookNavigation } from '../domain/navigation.js';
+import { addPDFNavigation, type NavigationPDF, type NavigationPDFPage, type NavigationPDFLibrary } from './pdf-navigation.js';
 import { rasterize } from './raster.js';
 
 interface RawStream { getContentsSize(): number }
-interface PDFPage { node: { newXObject(tag: string, reference: unknown): unknown }; pushOperators(...operators: unknown[]): void }
-interface PDFDocument {
-  context: { flateStream(bytes: Uint8Array, dictionary: Record<string, string | number>): RawStream; register(stream: RawStream): unknown };
+interface PDFPage extends NavigationPDFPage { node: NavigationPDFPage['node'] & { newXObject(tag: string, reference: unknown): unknown }; pushOperators(...operators: unknown[]): void }
+interface PDFDocument extends NavigationPDF {
+  context: NavigationPDF['context'] & { flateStream(bytes: Uint8Array, dictionary: Record<string, string | number>): RawStream; register(stream: RawStream): unknown };
   addPage(size: [number, number]): PDFPage;
   setTitle(title: string): void;
   setProducer(name: string): void;
   save(): Promise<Uint8Array>;
 }
-interface PDFLibrary {
+interface PDFLibrary extends NavigationPDFLibrary {
   PDFDocument: { create(): Promise<PDFDocument> };
   pushGraphicsState(): unknown;
   popGraphicsState(): unknown;
@@ -22,10 +24,10 @@ async function loadLibrary(): Promise<PDFLibrary> {
   return library ??= import('../vendor/pdf-lib.js').then(module => module as unknown as PDFLibrary).catch(() => { library = undefined; throw new Error('PDFライブラリを読み込めません。'); });
 }
 /** Retain compressed RGB streams, not an uncompressed image for every book page. */
-export async function exportPDF(pages: readonly BookPage[], style: BookStyle, title: string, signal: AbortSignal, progress: (count: number) => void): Promise<Blob> {
+export async function exportPDF(pages: readonly BookPage[], style: BookStyle, title: string, signal: AbortSignal, progress: (count: number) => void, navigation: BookNavigation = { headings: [], links: [] }): Promise<Blob> {
   const lib = await loadLibrary(), pdf = await lib.PDFDocument.create();
   const width = style.page.widthMm * 72 / 25.4, height = style.page.heightMm * 72 / 25.4;
-  let total = 0;
+  let total = 0; const destinations = new Map<number, PDFPage>();
   pdf.setTitle(title); pdf.setProducer('Bookmaker / local prototype');
   for (let index = 0; index < pages.length; index++) {
     signal.throwIfAborted();
@@ -39,6 +41,7 @@ export async function exportPDF(pages: readonly BookPage[], style: BookStyle, ti
       total += stream.getContentsSize();
       if (total > 128 * 1024 * 1024) throw new Error('PDFの画像が128MBを超えました。原稿を分けて書き出してください。');
       const reference = pdf.context.register(stream), page = pdf.addPage([width, height]);
+      destinations.set(pages[index]!.number, page);
       const name = page.node.newXObject('BookPage', reference);
       page.pushOperators(lib.pushGraphicsState(), lib.concatTransformationMatrix(width, 0, 0, height, 0, 0), lib.drawObject(name), lib.popGraphicsState());
       progress(index + 1);
@@ -46,5 +49,6 @@ export async function exportPDF(pages: readonly BookPage[], style: BookStyle, ti
     await new Promise<void>(resolve => setTimeout(resolve, 0));
   }
   signal.throwIfAborted();
+  addPDFNavigation(pdf, destinations, navigation, style.page.heightMm, style.binding, lib);
   return new Blob([new Uint8Array(await pdf.save())], { type: 'application/pdf' });
 }

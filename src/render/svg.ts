@@ -24,7 +24,7 @@ function emphasis(run: Inline, text: string, x: number, y: number, size: number)
   }).join('');
 }
 function position(style: BookStyle, number: number, value: DecorationPosition, inset: number) {
-  const margins = pageMargins(style, number), side = decorationSide(style.pageLayout, number, value);
+  const margins = pageMargins(style, number), side = decorationSide(style.pageLayout, number, value, style.binding);
   return { x: side === 'center' ? style.page.widthMm / 2 : side === 'left' ? margins.left : style.page.widthMm - margins.right,
     y: value.startsWith('top-') ? inset : style.page.heightMm - inset, anchor: side === 'center' ? 'middle' : side === 'left' ? 'start' : 'end' };
 }
@@ -78,5 +78,5 @@ export function renderPageSVG(page: BookPage, style: BookStyle, fontData?: strin
   }
   const fontCSS = fontData ? `<style>@font-face{font-family:'Book Mincho';src:url('${fontData}') format('opentype');font-weight:400}</style>` : '';
   const { widthMm: w, heightMm: h } = style.page;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" role="img" aria-label="${page.number}ページ" lang="ja">${fontCSS}<rect width="${w}" height="${h}" fill="${(page.paperColor ?? style.paperColor) === 'white' ? '#ffffff' : '#fffefa'}"/><g fill="#282b28" color="#282b28" font-family="'Book Mincho',serif" font-weight="400" style="font-kerning:none;font-feature-settings:'palt' 0,'vpal' 0">${pieces.join('')}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" role="img" aria-label="${page.number}ページ" lang="ja">${fontCSS}<rect width="${w}" height="${h}" fill="${(page.paperColor ?? style.paperColor) === 'warm' ? '#fffefa' : '#ffffff'}"/><g fill="#282b28" color="#282b28" font-family="'Book Mincho',serif" font-weight="400" style="font-kerning:none;font-feature-settings:'palt' 0,'vpal' 0">${pieces.join('')}</g></svg>`;
 }

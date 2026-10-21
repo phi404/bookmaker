@@ -46,7 +46,7 @@ test('@flow SNS presets export at the chosen pixel size and the close action sta
   const file=absolute('output/ux-improvements-2026-10-19/sns-test.png');await ui.download('export-png',file);const png=await readFile(file);expect([png.readUInt32BE(16),png.readUInt32BE(20)]).toEqual([1080,1350]);
   await page.locator('#open-export').click();await page.locator('#export-dialog').evaluate(e=>{e.scrollTop=e.scrollHeight;});await expect(page.locator('#close-export')).toBeInViewport();
   const bounds=await page.locator('#close-export').boundingBox();expect(bounds.y).toBeGreaterThanOrEqual(0);expect(bounds.y+bounds.height).toBeLessThan(812);await page.locator('#close-export').click();
-  await ui.tab('設定');await page.locator('#page-layout').selectOption('book');await ui.ready();await expect(page.locator('#page-layout')).toHaveValue('book');await expect(page.locator('#folio-enabled')).toBeChecked();await ui.tab('原稿');await expect(ui.manuscript()).toHaveValue('雨の朝。\n小さな本の一頁。');
+  await ui.tab('設定');await page.locator('#page-layout').selectOption('book');await ui.ready();await expect(page.locator('#page-layout')).toHaveValue('book');await expect(page.locator('#folio-enabled')).not.toBeChecked();await ui.tab('原稿');await expect(ui.manuscript()).toHaveValue('雨の朝。\n小さな本の一頁。');
 });
 
 test('@flow project menu saves before new work and the saved file restores the original book', async ({page}) => {

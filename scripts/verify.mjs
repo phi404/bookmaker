@@ -14,8 +14,9 @@ const steps = [
 if (!harnessOnly) steps.push(
   ['build', ['scripts/build.mjs']],
   ['product-tests', ['--test', ...(await walk('tests/product')).filter(file => file.endsWith('.test.mjs'))]],
-  ['e2e-1', ['scripts/browser-test.mjs', '--grep', '@flow', '--shard', '1/2']],
-  ['e2e-2', ['scripts/browser-test.mjs', '--grep', '@flow', '--shard', '2/2']],
+  ['e2e-1', ['scripts/browser-test.mjs', '--grep', '@flow', '--shard', '1/3']],
+  ['e2e-2', ['scripts/browser-test.mjs', '--grep', '@flow', '--shard', '2/3']],
+  ['e2e-3', ['scripts/browser-test.mjs', '--grep', '@flow', '--shard', '3/3']],
   ['visual', ['scripts/browser-test.mjs', '--grep', '@visual']],
   ['exports', ['scripts/run-export-check.mjs']],
   ['manual-review', ['scripts/check-manual.mjs']],
