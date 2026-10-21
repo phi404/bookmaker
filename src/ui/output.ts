@@ -13,13 +13,14 @@ interface OutputState { revision: number; diagnostics: readonly Diagnostic[]; so
 interface OutputHost { state(): OutputState; ready(): boolean; rename(name: string): void; active(open: boolean): void; revealIssue(blockId?: string, elementId?: string, pageNumber?: number): void }
 type Format = 'png' | 'pdf' | 'zip' | 'spread' | 'project' | 'source';
 export function output(host: OutputHost) {
-  const dialog = el<HTMLDialogElement>('export-dialog'); let controller: AbortController | undefined, savedURL: string | undefined, savedKey = '', checkRevision = -1, preflightKey = '';
+  const dialog = el<HTMLDialogElement>('export-dialog'); let controller: AbortController | undefined, savedURL: string | undefined, savedKey = '', newProjectReady = false, checkRevision = -1, preflightKey = '';
   const key = (s: OutputState) => `${s.revision}:${s.filename}:${s.selected}:${el<HTMLSelectElement>('export-scope').value}:${input('export-from').value}:${input('export-to').value}`;
   const lossCodes = new Set(['element-overflow', 'text-box-overflow', 'asset-missing']);
   function clearResult(): void {
-    if (savedURL) URL.revokeObjectURL(savedURL); savedURL = undefined; savedKey = ''; el('export-result').hidden = true;
+    if (savedURL) URL.revokeObjectURL(savedURL); savedURL = undefined; savedKey = ''; newProjectReady = false; el('export-result').hidden = true; el('new-project-confirmation').hidden = true;
     el('save-output').removeAttribute('href'); el('open-output').removeAttribute('href');
   }
+  const canStartNew = () => newProjectReady && !!savedURL && savedKey === key(host.state()) && !controller;
   const commitName = () => host.rename(input('export-name').value.trim() || '原稿');
   const range = (state: OutputState) => {
     const ranged = el<HTMLSelectElement>('export-scope').value === 'range', from = ranged ? Number(input('export-from').value) : 1, to = ranged ? Number(input('export-to').value) : state.pages.length;
@@ -39,10 +40,11 @@ export function output(host: OutputHost) {
       else if (!host.ready()) add(s.source ? '組版の完了を待っています' : '原稿またはページを追加');
       for (const issue of issues) add(issue.message, issue.blockId,issue.elementId,issue.pageNumber);
     }
-    el('export-preflight').hidden = !issues.length && !draft && host.ready();
+    el('export-preflight').hidden = dialog.dataset.intent === 'new-project' || !issues.length && !draft && host.ready();
     el('export-loss-choice').hidden = !hasLoss || draft || !host.ready(); input('export-accept-loss').disabled = !host.ready();
     for (const id of ['export-png', 'export-pdf', 'export-png-all', 'export-spread']) el<HTMLButtonElement>(id).disabled = !enabled;
     for (const id of ['export-project', 'export-source']) el<HTMLButtonElement>(id).disabled = !!controller;
+    el<HTMLButtonElement>('start-new-project').disabled = !canStartNew(); el<HTMLButtonElement>('new-project-save').disabled = !!controller;
     const size = s.pages[s.selected-1]?.style?.page ?? s.style.page, pixels = [size.widthMm, size.heightMm].map(mm => Math.round(mm / 25.4 * 300));
     el('png-label').textContent = `${s.selected}ページを一枚の画像に`; el('export-info').textContent = `${pixels.join(' × ')} px · ${s.pages.length}ページ · 300 dpi`;
     el('spread-label').textContent = `${s.selected}ページを含む見開き`;
@@ -52,14 +54,18 @@ export function output(host: OutputHost) {
     input('export-from').max = String(s.pages.length); input('export-to').max = String(s.pages.length);
     setValue('export-name', s.filename);
   }
-  function open(): void {
-    if (dialog.open) return;
+  function open(intent: 'export' | 'new-project' = 'export'): void {
+    if (intent === 'export' && newProjectReady) clearResult();
+    dialog.dataset.intent = intent; el('output-heading').textContent = intent === 'new-project' ? '作業を保存' : '書き出す';
+    for (const id of ['export-info', 'image-export-options', 'export-file-options']) el(id).hidden = intent === 'new-project';
+    el('new-project-save').hidden = intent !== 'new-project';
+    if (dialog.open) { sync(); return; }
     const s = host.state();
     if (!input('export-from').value || el<HTMLSelectElement>('export-scope').value === 'all') { input('export-from').value = '1'; input('export-to').value = String(s.pages.length); }
     else { input('export-from').value = String(Math.max(1, Math.min(s.pages.length, Number(input('export-from').value)))); input('export-to').value = String(Math.max(Number(input('export-from').value), Math.min(s.pages.length, Number(input('export-to').value)))); }
     sync(); dialog.showModal(); host.active(true);
   }
-  async function write(format: Format): Promise<boolean> {
+  async function write(format: Format, forNewProject = false): Promise<boolean> {
     const imageOutput = format !== 'project' && format !== 'source';
     if (controller || imageOutput && (!host.ready() || host.state().diagnostics.some(d => lossCodes.has(d.code)) && !input('export-accept-loss').checked)) return false;
     commitName();
@@ -93,17 +99,20 @@ export function output(host: OutputHost) {
       current.signal.throwIfAborted(); if (key(host.state()) !== startedKey) throw new Error('作業が更新されました。最新の内容で書き出してください。');
       savedURL = URL.createObjectURL(blob); savedKey = startedKey;
       const save = el<HTMLAnchorElement>('save-output'), show = el<HTMLAnchorElement>('open-output'); save.href = savedURL; save.download = name; show.href = savedURL; show.hidden = format === 'zip';
-      el('export-result-text').textContent = name; el('export-result').hidden = false; downloadBlob(blob, name); return true;
+      el('export-result-text').textContent = name; el('export-result').hidden = false;
+      newProjectReady = forNewProject && format === 'project'; el('new-project-confirmation').hidden = !newProjectReady;
+      downloadBlob(blob, name); if (newProjectReady) save.focus(); return true;
     } catch (error) { el('output-error').textContent = current.signal.aborted ? '書き出しを中止しました。' : error instanceof Error ? error.message : '書き出しに失敗しました。'; el('output-error').hidden = false; return false; }
     finally { controller = undefined; el('export-progress').hidden = true; sync(); }
   }
-  el('open-export').addEventListener('click', open);
+  el('open-export').addEventListener('click', () => open());
   el('close-export').addEventListener('click', () => dialog.close()); dialog.addEventListener('close', () => { controller?.abort(); host.active(false); });
   el('export-cancel').addEventListener('click', () => controller?.abort());
+  el('new-project-save').addEventListener('click', () => { void write('project', true); });
   el('export-scope').addEventListener('change', sync);
   for (const id of ['export-from', 'export-to', 'export-accept-loss']) input(id).addEventListener('change', sync);
-  input('export-name').addEventListener('input', () => host.rename(input('export-name').value));
+  input('export-name').addEventListener('input', () => { host.rename(input('export-name').value); sync(); });
   input('export-name').addEventListener('change', () => { commitName(); sync(); });
   for (const [id, format] of [['export-png', 'png'], ['export-pdf', 'pdf'], ['export-png-all', 'zip'], ['export-spread', 'spread'], ['export-project', 'project'], ['export-source', 'source']] as const) el(id).addEventListener('click', () => { void write(format); });
-  return { sync, open, saveProject() { open(); return write('project'); } };
+  return { sync, open, canStartNew, saveProject(forNewProject = false) { open(forNewProject ? 'new-project' : 'export'); return write('project', forNewProject); } };
 }

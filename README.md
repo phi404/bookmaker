@@ -1,4 +1,4 @@
-# bookmaker
+# Folaxis
 
 原稿を読み込み、ページを整えてPNG・PDFに書き出すWebアプリです。縦書き、ルビ、圏点、目次、画像や自由ページに対応しています。原稿と素材はブラウザー内で処理します。
 
@@ -21,6 +21,6 @@ npm run dev
 
 作業は自動保存されます。別の端末やURLで続ける場合は、左上の作品名から作業JSONを保存してください。
 
-PDFは現在、画像として出力します。
+PDFは現在、画像として出力します。印刷所向けのPDF/Xには対応していません。
 
 [原稿の書き方](docs/SOURCE_FORMAT.md) · [対応範囲](docs/CAPABILITIES.md) · [開発資料](docs/INDEX.md) · [使用フォント・ライブラリ](sources/README.md)

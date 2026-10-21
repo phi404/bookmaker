@@ -2,7 +2,7 @@
 
 ## 対象
 
-公開先は [phi404/bookmaker](https://github.com/phi404/bookmaker)、試用URLは [GitHub Pages](https://phi404.github.io/bookmaker/) を使う。2026-10-13のユーザーの直接指示により、従来の非公開方針を更新した。リリース・タグ・npm公開は行わない。サービス名は未決のまま。
+公開先は [phi404/bookmaker](https://github.com/phi404/bookmaker)、試用URLは [GitHub Pages](https://phi404.github.io/bookmaker/) を使う。Folaxisの静的な試用環境を配布する。リリース・タグ・npm公開はまだ行わない。名称変更に伴うURLや保存領域の変更は行わない。
 
 配布するサイトは dist/ の静的ファイルだけ。原稿・取り込んだ素材・作業JSON・端末内の保存値はビルドへ入らず、サイト側へアップロードしない。公開ページを取得した後の組版、PDF素材の画像化、書き出しはブラウザー内で行う。ローカル版も維持する。
 
@@ -24,7 +24,7 @@ PowerShellで BOOKMAKER_BASE_PATH に /bookmaker/、BOOKMAKER_PORT に5175を設
 
 .github/workflows/preview.yml はmainへのpush、mainへのPull Request、手動実行を扱う。harness・型・境界・モデル/組版の検査、3分割した全操作検査を実行する。操作検査は通常のルートとプロジェクト配下URLで同じ本・フォント・Worker・PDF素材・実出力を確認する。
 
-main/手動の検査が通れば dist/ のみをPagesのartifactとして配置する。Pull Requestは検証だけ。deployジョブだけがpages:write / id-token:writeを持ち、github-pages環境へ出す。releaseイベント、タグ作成、Release作成、npm publishは設定しない。
+main/手動の検査が通れば dist/ のみをPagesのartifactとして配置する。Pull Requestは検証だけ。Firefox/WebKitの限定した保存・出力経路も別ジョブで実行し、失敗時は配置しない。deployジョブだけがpages:write / id-token:writeを持ち、github-pages環境へ出す。releaseイベント、タグ作成、Release作成、npm publishは設定しない。
 
 Pages設定のBuild and deployment → SourceはGitHub Actionsを選ぶ。[公式のカスタムワークフロー説明](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)に沿う。
 

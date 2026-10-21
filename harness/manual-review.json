@@ -1,32 +1,32 @@
 {
-  "revision": "47ce58e8eed51be056936399b7b6621757284d70e8a52f2c2a011ee611631e6a",
-  "environment": "Windows; Node 24.19.0; Playwright 1.63.0 / Chromium 153.0.8010.12; ja-JP; Asia/Tokyo; Codex in-app browser; Poppler 120 dpi; Python 3.12.14 / Pillow 12.3.0 / pypdf 6.10.0",
-  "reviewer": "NOEMA; AI UI/code/visual review on 2026-10-21; not a human usability study",
+  "revision": "0e19147219504ad14ec30f46c7249e2f311a6713bfc843da7b3543485aab9694",
+  "environment": "Windows; Node 24.22.1; Playwright 1.63.0 / Chromium 153.0.8010.12; Firefox 155.0 / WebKit 26.6 core flows; ja-JP; Asia/Tokyo; IAB 1280x720 and 320x800; Poppler 120 dpi; Python 3.12 / Pillow / pypdf",
+  "reviewer": "NOEMA; AI code/UI/visual review on 2026-10-22; not a human usability study",
   "items": {
     "default-page-quality": {
       "status": "pass",
-      "evidence": "output/roadmap-continuation-2026-10-21/final-workspace.png",
-      "notes": "Reviewed the current interface in IAB at 1280 x 720 and 320 x 800: page composition labels, white paper, left binding and hierarchical TOC. Four changed reference files were individually inspected for white paper and final label changes; expected/actual/diff paths and hashes are in baseline-review.json. The existing maxDiffPixels 0 contract is retained. The final complete operation/image gate is recorded separately in output/verification/product.json."
+      "evidence": "output/release-readiness-2026-10-22/18-final-workspace.png",
+      "notes": "Fresh frozen-source IAB reload and saved screenshot inspected. White paper, manuscript wrapping and setting tabs remain clear. Eleven changed reference images were individually reviewed with reasons and before/after hashes; zero changed-pixel contract retained. Full gate result recorded separately."
     },
     "vertical-glyphs-and-spacing": {
       "status": "pass",
-      "evidence": "output/roadmap-continuation-2026-10-21/pdf-review/exceptions/page-1.png",
-      "notes": "Current-revision PDFs were independently rendered with Poppler at 120 dpi. Inspected all main and excerpt pages in nine contact sheets plus native foundation, A5 exceptions, mixed-book body and new hierarchical TOC/body views. Ruby, emphasis, bold, rotated Latin, numbers, dashes, horizontal columns and left-bound page sequence show no observed unintended clipping, overlap or mirroring in these fixtures. This does not establish full JLREQ compliance."
+      "evidence": "output/release-readiness-2026-10-22/pdf-review/exceptions/page-1.png",
+      "notes": "All main and excerpt pages inspected in nine independent Poppler contact sheets plus native foundation, A5 ruby/emphasis/Latin and hierarchical TOC views. No observed unintended clipping, overlap or mirroring in these fixtures. This is not complete JLREQ or arbitrary-glyph validation."
     },
     "mobile-usability": {
       "status": "pass",
-      "evidence": "output/roadmap-continuation-2026-10-21/final-mobile-settings-320.png",
-      "notes": "Reviewed composition settings and TOC preview at 320 x 800. Notification captures at desktop and 320 px retain exactly the same workspace/editor/paper bounds before and after a validation message. Import success notices yield to resumed work. Real phones, software keyboards, Safari/Firefox, screen readers and human user evaluation remain untested."
+      "evidence": "output/release-readiness-2026-10-22/19-final-mobile-save.png",
+      "notes": "Frozen-source 320x800 manuscript, export and focused JSON save views captured and inspected. Close/save/start controls fit; original manuscript remains until explicit continuation. Real phones, software keyboards, actual Safari, assistive-technology and human usability remain untested."
     },
     "export-appearance": {
       "status": "pass",
-      "evidence": "output/roadmap-continuation-2026-10-21/pdf-review/final-review.json",
-      "notes": "Reviewed all current-revision full-book and excerpt output cases with independent Poppler images, commands, exit codes and hashes in pdf-review/*/render.json. TOC indentation, final numbers, intentional blanks and original excerpt folios match the canonical pages. Separate pypdf completion checks verify bitmap identity, hierarchy, link targets/rectangles and reading direction. Raster RGB output only; searchable text/font embedding, PDF/X, CMYK and print-shop acceptance remain outside support."
+      "evidence": "output/release-readiness-2026-10-22/pdf-review/final-review.json",
+      "notes": "All 35 current-source physical pages from seven primary and two excerpt PDFs rendered independently and inspected. Hierarchical TOC indentation, original excerpt folios, intentional blanks, external pages and spread halves are coherent. Machine image/navigation checks are separate. Raster RGB only; no PDF/X, CMYK or embedded/searchable-text guarantee."
     },
     "local-first": {
       "status": "pass",
-      "evidence": "output/roadmap-continuation-2026-10-21/ui-review.json",
-      "notes": "Reviewed changes to the canonical model, margins/binding, structured TOC, final-page navigation and local notifications. Existing local storage conflict/recovery and source-preservation flows stay in the completion gate. No production dependency or external manuscript service was added. GitHub publication contains application code, docs, artificial fixtures and reviewed reference images; it excludes runtime manuscripts/assets, storage values, output and release/tag creation."
+      "evidence": "output/release-readiness-2026-10-22/ui-review.json",
+      "notes": "Save confirmation and retry share the same local writer; no second book model or remote manuscript service. Existing restoration, conflict, quota and source-preservation checks remain enabled. Official vendored PDF.js/fflate packages have integrity and license records. Publication excludes output, runtime manuscripts/assets and local storage; release/tag creation is not performed."
     }
   }
 }

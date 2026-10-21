@@ -211,15 +211,19 @@ function selectCanvasElement(pageId:string,id:string,toggle=false):void {
   const ids=toggle?previous.includes(id)?previous.filter(x=>x!==id):[...previous,id]:previous.length>1&&previous.includes(id)?previous:[id];
   select({kind:'special',id:pageId,...(ids[0]?{elementId:ids.includes(id)?id:ids[0],...(ids.length>1?{elementIds:ids}:{})}:{})},false);
 }
+function renderPaperContents(paper: HTMLElement, page: BookPage): void {
+  paper.innerHTML = renderPageSVG(page, style);
+  const choose = document.createElement('button'); choose.type = 'button'; choose.className = 'paper-select sr-only'; choose.tabIndex = -1; choose.textContent = `${page.number}ページを選択`; paper.append(choose);
+}
 function paperFor(page: BookPage | undefined, side: string, lazy = false): HTMLElement {
   const paper = document.createElement('div'); paper.className = `paper${page ? '' : ' blank'}`; paper.dataset.side = side;
   if (page) {
-    paper.dataset.pageNumber = String(page.number); if (!lazy) paper.innerHTML = renderPageSVG(page, style); paper.setAttribute('role', 'button'); paper.tabIndex = 0; paper.setAttribute('aria-label', `${page.number}ページを選択`);
+    paper.dataset.pageNumber = String(page.number); if (!lazy) renderPaperContents(paper, page); paper.setAttribute('role', 'group'); paper.setAttribute('aria-roledescription', '紙面'); paper.setAttribute('aria-describedby', 'paper-selection-help'); paper.tabIndex = 0; paper.setAttribute('aria-label', `${page.number}ページ`);
     paper.addEventListener('click', e => { if (paper.dataset.dragged === 'true') { delete paper.dataset.dragged; return; } if (viewMode === 'gallery') chooseGallery(page.number, e.shiftKey, e.ctrlKey || e.metaKey); else selectPaper(page, e); });
     paper.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (viewMode === 'gallery') chooseGallery(page.number, e.shiftKey, e.ctrlKey || e.metaKey); else selectPaper(page); } });
     paper.addEventListener('dblclick', e => { const target = e.target instanceof Element ? e.target : undefined, id = target?.closest('[data-text-from]')?.closest('[data-block-id]')?.getAttribute('data-block-id'); if (id && viewMode !== 'gallery') revealSource(id); });
     if (page.kind === 'layout' && viewMode !== 'gallery') attachDrag(paper, page);
-  } else paper.setAttribute('aria-label', '見開きの余白'); return paper;
+  } else paper.setAttribute('aria-hidden', 'true'); return paper;
 }
 function highlightElements(): void {
   highlightSourceMatch();
@@ -234,7 +238,7 @@ function highlightElements(): void {
     for(const e of p.elements.filter(e=>ids.includes(e.id))){
     const box = document.createElement('div'); box.className = 'selected-element-box';
     Object.assign(box.style, { left: `${e.xMm / style.page.widthMm * 100}%`, top: `${e.yMm / style.page.heightMm * 100}%`, width: `${e.widthMm / style.page.widthMm * 100}%`, height: `${e.heightMm / style.page.heightMm * 100}%` });
-    if (!e.locked&&ids.length===1) for (const edge of ['e', 's', 'se']) { const handle = document.createElement('span'); handle.className = `element-handle handle-${edge}`; handle.dataset.resizeElement = e.id; handle.dataset.edge = edge; handle.setAttribute('aria-label', '大きさを変更'); box.append(handle); }
+    if (!e.locked&&ids.length===1) for (const edge of ['e', 's', 'se']) { const handle = document.createElement('span'); handle.className = `element-handle handle-${edge}`; handle.dataset.resizeElement = e.id; handle.dataset.edge = edge; handle.setAttribute('aria-hidden', 'true'); box.append(handle); }
     box.dataset.locked = String(!!e.locked); paper.append(box);
     }
   }
@@ -289,7 +293,7 @@ function showPages(): void {
   el('preview-purpose').textContent = gallery ? 'Shiftで連続選択 · Ctrl / Cmdで追加選択' : style.pageLayout === 'uniform' ? '全ページ共通の版面' : single() ? '一枚ずつ、下へ進む' : style.binding === 'left' ? '左綴じ · 次のページへは右に' : '右綴じ · 次のページへは左に';
   const oldScroll = preview.scrollTop; galleryObserver?.disconnect(); spread.replaceChildren();
   if (gallery) galleryObserver = new IntersectionObserver(entries => {
-    for (const entry of entries) if (entry.isIntersecting) { const paper = entry.target as HTMLElement, page = result?.pages[Number(paper.dataset.pageNumber) - 1]; if (page) paper.innerHTML = renderPageSVG(page, style); galleryObserver?.unobserve(paper); }
+    for (const entry of entries) if (entry.isIntersecting) { const paper = entry.target as HTMLElement, page = result?.pages[Number(paper.dataset.pageNumber) - 1]; if (page) renderPaperContents(paper, page); galleryObserver?.unobserve(paper); }
   }, { root: preview, rootMargin: '250px' });
   for (const [i, number] of numbers.entries()) {
     const page = number === null ? undefined : result.pages[number - 1];
@@ -321,7 +325,7 @@ worker.onmessage = async (event: MessageEvent<{ revision: number; result?: Rende
 };
 worker.onerror = () => { layoutJobs.clear(); notify('組版処理を起動できません。ページを再読み込みしてください。'); preview.dataset.layoutState = 'error'; };
 function edited(): void {
-  if (manuscript.value.length > MAX_SOURCE) { manuscript.value = source; notify('この試作では50万文字まで扱えます。原稿を分けてください。'); return; }
+  if (manuscript.value.length > MAX_SOURCE) { manuscript.value = source; notify('原稿は50万文字まで扱えます。分けて読み込んでください。'); return; }
   snapshot(true); const styled = flattenDocument(project.document).filter(b => b.styleId || b.localStyle), edit = editBookSource(project, manuscript.value); project = edit.book;
   if (edit.error) notify(edit.error); else { if (canSave) el('notice').hidden = true; const currentIds = new Set(flattenDocument(project.document).map(b => b.id)); if (styled.some(b => !currentIds.has(b.id))) notify('編集後の段落へ対応づけられない書式がありました。別の段落へは移していません。必要なら「元に戻す」で確認してください。'); }
   const chosen = selection;
@@ -406,7 +410,10 @@ el('file-save').addEventListener('click',()=>{void exports.saveProject();});
 el('file-new').addEventListener('click',()=>el<HTMLDialogElement>('new-project-dialog').showModal());
 el('close-new-project').addEventListener('click',()=>el<HTMLDialogElement>('new-project-dialog').close());
 el('confirm-new-project').addEventListener('click',async()=>{
-  el<HTMLDialogElement>('new-project-dialog').close(); if(!await exports.saveProject())return; el<HTMLDialogElement>('export-dialog').close();
+  el<HTMLDialogElement>('new-project-dialog').close(); await exports.saveProject(true);
+});
+el('start-new-project').addEventListener('click',()=>{
+  if(!exports.canStartNew())return; el<HTMLDialogElement>('export-dialog').close();
   snapshot();project=asBook(createPublication('','markdown'));style=project.style;filename='無題';marginOffset=0;selection={kind:'book'};selected=1;selectedPages.clear();inspectorMode='body';inspector.clear();syncSource();views.sync(true);el('notice').hidden=true;reflow(true);showLeft('source');manuscript.focus();
 });
 el('inspect-styles').addEventListener('click', () => { inspectorMode = 'styles'; inspector.clear(); openPane('right', true); views.sync(); if (mobile.matches) activePanel('settings'); });

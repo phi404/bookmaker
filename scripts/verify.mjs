@@ -17,6 +17,7 @@ if (!harnessOnly) steps.push(
   ['e2e-1', ['scripts/browser-test.mjs', '--grep', '@flow', '--shard', '1/3']],
   ['e2e-2', ['scripts/browser-test.mjs', '--grep', '@flow', '--shard', '2/3']],
   ['e2e-3', ['scripts/browser-test.mjs', '--grep', '@flow', '--shard', '3/3']],
+  ['compatibility', ['scripts/browser-test.mjs', '--config=playwright.compatibility.config.mjs']],
   ['visual', ['scripts/browser-test.mjs', '--grep', '@visual']],
   ['exports', ['scripts/run-export-check.mjs']],
   ['manual-review', ['scripts/check-manual.mjs']],

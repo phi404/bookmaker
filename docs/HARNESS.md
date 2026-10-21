@@ -8,7 +8,7 @@ Node.js 22.13以上で `npm ci`。Windowsのブラウザ検査はプロジェク
 
 ```powershell
 $env:PLAYWRIGHT_BROWSERS_PATH = Join-Path (Get-Location) '.cache/browsers'
-node node_modules/@playwright/test/cli.js install chromium
+node node_modules/@playwright/test/cli.js install chromium firefox webkit
 ```
 
 PDF/PNGの解析はPython 3.11以上、Pillow、pypdfが必要。環境に応じて準備する。
@@ -29,9 +29,10 @@ PDFの目視用画像化はPoppler等の独立rendererを使い、実行環境�
 | `npm run verify:harness` | 6工程：静的検査/境界/テストポリシー/実tsc/文書・fixture・要件/自己検査 |
 | `npm run test:product` | ビルド後に実関数のモデル/組版を検査 |
 | `npm run test:e2e` | 操作、保存、外部通信、実ダウンロードを検査しmanifestを生成 |
+| `npm run test:compatibility` | Firefox/WebKitの空原稿、保存復元、素材と出力の限定経路 |
 | `npm run test:visual` | フォント/組版を待ち固定環境の基準と比較 |
 | `npm run test:exports` | E2Eが作った現在の実出力を解析。古い指紋は失敗 |
-| `npm run verify` | 14工程の完了ゲート。E2Eを3分割で順次実行→visual→exports→目視証拠の順 |
+| `npm run verify` | 15工程の完了ゲート。E2Eを3分割で順次実行→Firefox/WebKitの限定経路→visual→exports→目視証拠の順 |
 
 ブラウザ検査は `scripts/browser-test.mjs` がサーバーを直接所有し、IPCで開始/終了を制御する。手動の5174サーバーを止めてからnpm scripts経由で実行する。異なるportの試用サーバーは別。Windowsの経緯は [H-002](regressions/H-002-browser-server-lifecycle.md)。
 

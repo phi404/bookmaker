@@ -1,10 +1,10 @@
 @font-face{font-family:'Book Mincho';src:url('./fonts/NotoSerifJP-Regular.otf') format('opentype');font-style:normal;font-weight:400;font-display:block}
 :root{
   font-family:system-ui,-apple-system,'Segoe UI','Noto Sans JP',sans-serif;font-size:13px;color:var(--text);background:var(--bg);
-  --bg:#f7f7f8;--panel:#fff;--panel-soft:#f6f7f9;--canvas:#e9ebef;--line:#e1e3e8;--text:#272a33;--muted:#676b78;
+  --bg:#f7f7f8;--panel:#fff;--panel-soft:#f6f7f9;--canvas:#e9ebef;--line:#e1e3e8;--text:#272a33;--danger:#b24d36;--muted:#676b78;--preview-muted:#636774;
   --accent:#4c55cf;--button-accent:#4c55cf;--accent-soft:#eeefff;--hover:#f0f1f5;--field:#fafbfc;--shadow:0 16px 60px #14182722;
 }
-:root[data-theme=dark]{color-scheme:dark;--bg:#191b21;--panel:#202229;--panel-soft:#1b1d24;--canvas:#15171d;--line:#373a45;--text:#eeeff4;--muted:#afb3c0;--accent:#a0a7ff;--button-accent:#555fd1;--accent-soft:#303449;--hover:#2d303a;--field:#272a33;--shadow:0 16px 60px #0006}
+:root[data-theme=dark]{color-scheme:dark;--bg:#191b21;--panel:#202229;--panel-soft:#1b1d24;--canvas:#15171d;--line:#373a45;--text:#eeeff4;--danger:#f49785;--muted:#afb3c0;--preview-muted:#afb3c0;--accent:#a0a7ff;--button-accent:#555fd1;--accent-soft:#303449;--hover:#2d303a;--field:#272a33;--shadow:0 16px 60px #0006}
 *{box-sizing:border-box}
 body{margin:0}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer;border-radius:5px}button:disabled{opacity:.4;cursor:default}
 button,input,textarea,select,summary,a{outline-offset:2px}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent)}
@@ -59,7 +59,7 @@ dialog::backdrop{background:#11182755;backdrop-filter:blur(3px)}dialog h2{font-s
 .export-button:hover:enabled{background:var(--accent-soft);border-color:var(--accent)}
 .export-note{font-size:11px;color:var(--muted);line-height:1.7;margin:16px 0}
 #export-progress{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12px;margin-top:14px}#export-cancel{background:transparent;border:1px solid var(--line);padding:7px 10px}
-#output-error{font-size:12px;color:#b45132;line-height:1.7}#export-result{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;border-top:1px solid var(--line);padding-top:15px;margin-top:18px}
+#output-error{font-size:12px;color:var(--danger);line-height:1.7}#export-result{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;border-top:1px solid var(--line);padding-top:15px;margin-top:18px}
 #export-result span{width:100%;font-size:12px;color:var(--muted);overflow-wrap:anywhere}#export-result a{color:var(--accent);text-underline-offset:3px}
 #insert-dialog .primary-button{margin-top:16px}
 .context-group{margin-top:16px}.context-group h3{font-size:12px;margin:0 0 12px}.context-group textarea{min-height:72px;resize:vertical;line-height:1.8}

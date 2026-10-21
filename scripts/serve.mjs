@@ -15,7 +15,7 @@ export async function serveBuiltApp() {
   }
   server.listen(port, host, () => {
     const actualPort = server.address().port;
-    console.log(`本づくりの試作: http://${host}:${actualPort}${basePath}`);
+    console.log(`Folaxis: http://${host}:${actualPort}${basePath}`);
     process.send?.({ type: 'ready', port: actualPort });
   });
   return server;

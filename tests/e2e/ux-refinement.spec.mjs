@@ -54,7 +54,7 @@ test('@flow project menu saves before new work and the saved file restores the o
   await ui.manuscript().press('ControlOrMeta+s');await expect(page.locator('#export-dialog')).toBeVisible();await expect(page.locator('#export-result')).toBeVisible();await page.locator('#close-export').click();
   await page.locator('#project-home').click();await page.locator('#file-new').click();await expect(page.locator('#new-project-dialog')).toBeVisible();
   const pending=page.waitForEvent('download');await page.locator('#confirm-new-project').click();const downloaded=await pending;const file=absolute('output/ux-improvements-2026-10-19/before-new.book.json');await downloaded.saveAs(file);
-  await expect(ui.manuscript()).toHaveValue('');await ui.ready();await ui.importTxt(file);await expect(ui.manuscript()).toHaveValue(source);
+  await expect(ui.manuscript()).toHaveValue(source);await expect(page.locator('#export-result')).toBeVisible();await page.locator('#start-new-project').click();await expect(ui.manuscript()).toHaveValue('');await ui.ready();await ui.importTxt(file);await expect(ui.manuscript()).toHaveValue(source);
   const restored=JSON.parse(await readFile(file,'utf8'));expect(restored.source).toBe(source);expect(restored.schemaVersion).toBe(3);
 });
 

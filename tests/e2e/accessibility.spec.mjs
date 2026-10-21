@@ -1,0 +1,13 @@
+import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { absolute, fingerprint } from '../../scripts/lib.mjs';
+import { BookUI } from './ui-driver.mjs';
+for(const width of [1440,320]) test(`@flow accessible labels, contrast and controls at ${width}px`,async({page})=>{
+  await page.setViewportSize({width,height:900});await page.goto('/');const ui=new BookUI(page);await ui.ready();
+  const theme=async()=>{if(await page.locator('#toggle-theme').isVisible())await page.locator('#toggle-theme').click();else{await page.locator('#open-command').click();await page.locator('#command-search').fill('表示テーマ');await page.locator('#command-results button').click();}};
+  const scan=async name=>{await expect.poll(()=>page.locator('html').evaluate(root=>root.getAnimations({subtree:true}).filter(animation=>animation.playState==='running'&&animation.effect?.getTiming().iterations!==Infinity).length),{timeout:3000}).toBe(0);const result=await new AxeBuilder({page}).analyze();await mkdir(absolute('output/accessibility'),{recursive:true});await writeFile(absolute(`output/accessibility/${width}-${name}.json`),JSON.stringify({sourceFingerprint:await fingerprint(),...result},null,2));expect.soft(result.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))).toEqual([]);};
+  await scan('entry');await theme();await scan('entry-dark');await theme();await ui.paste('# 点検の本\n｜雨《あめ》と*小さな光*。');await ui.tab('設定');await page.locator('#inspect-styles').click();await scan('styles');
+  await ui.tab('プレビュー');await page.locator('.paper').first().press('Enter');await expect(page.locator('#edit-selection')).toBeVisible();await page.locator('#view-gallery').click();await scan('gallery');await page.locator('#view-single').click();await ui.tab('原稿');await page.locator('#tab-structure').click();await page.locator('#add-book-item').click();await page.locator('#new-page-role').selectOption('layout');await page.locator('#new-page-template').selectOption('title');await page.locator('#new-page-name').fill('試作タイトル');await page.locator('#confirm-add-page').click();await ui.ready();await ui.tab('プレビュー');await page.locator('.paper [data-element-id]').first().click();await ui.tab('設定');await scan('free-page');await theme();await scan('free-page-dark');await theme();
+  await page.locator('#open-export').click();await scan('export');await page.locator('#close-export').click();await page.locator('#project-home').click();await page.locator('#file-new').click();await page.locator('#confirm-new-project').click();await expect(page.locator('#export-result')).toBeVisible();await scan('before-new');
+});

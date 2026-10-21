@@ -28,7 +28,7 @@ export async function exportPDF(pages: readonly BookPage[], style: BookStyle, ti
   const lib = await loadLibrary(), pdf = await lib.PDFDocument.create();
   const width = style.page.widthMm * 72 / 25.4, height = style.page.heightMm * 72 / 25.4;
   let total = 0; const destinations = new Map<number, PDFPage>();
-  pdf.setTitle(title); pdf.setProducer('Bookmaker / local prototype');
+  pdf.setTitle(title); pdf.setProducer('Folaxis');
   for (let index = 0; index < pages.length; index++) {
     signal.throwIfAborted();
     const canvas = await rasterize(pages[index]!, style);

@@ -1,40 +1,12 @@
-# 原本・取得履歴・依存物の出典
+# 使用フォント・ライブラリと出典
 
-この文書は取得時の事実と配布物の出典を記録する。以下の開発指示は履歴で、現在の作業範囲は [文書案内](../docs/INDEX.md) と [対応一覧](../docs/CAPABILITIES.md) から確認する。未公開原稿を外へ送らない方針とローカル起動は継続する。2026-10-13の直接依頼でGitHubの静的な試用環境を追加する。配布と端末内処理の境界は[DEPLOYMENT](../docs/DEPLOYMENT.md)。
+同梱物の版、ライセンス、ハッシュと取得元を記録する。実行時は同じサイトの配布物を使い、外部CDNを参照しない。対応範囲は [CAPABILITIES](../docs/CAPABILITIES.md)、静的配布は [DEPLOYMENT](../docs/DEPLOYMENT.md)。
 
-## 共有Markdown
-
-- 文書：`BOOKMAKER_PRODUCT_OVERVIEW.md`
-- ローカルで読んだ原本：`../組版/BOOKMAKER_PRODUCT_OVERVIEW.md`
-- 保存先：[../docs/PRODUCT_OVERVIEW.md](../docs/PRODUCT_OVERVIEW.md)
-- SHA-256：`e1c440dbba1bf375370165050be40ec18ef5953403da1206afc4530c10d12107`
-- 取得日：2026-10-01
-- Downloadsにある同名ファイルと `(1)` 付きファイルも同じSHA-256。原文を変更せずコピーした。
-
-## 参照チャット
-
-- タイトル：本作成ツール設計
-- 会話ID：`6abbb136-2f0c-83ee-a467-85155ef5799c`
-- 読み取り：Codex `read_thread`、10ターン指定、実際には6ターンを取得、`hasMore: false`
-- 保存：[conversation.json](conversation.json)
-- 最初の試作、ハーネス運用、名前候補、共有ファイルのリンクを確認した。
-- ツールが返したメッセージ本文の保存であり、添付を含むChatGPT会話全体のエクスポートではない。一部の助言は末尾が途中で終わっているため、そこを推測で補完していない。
-
-チャット内の助言を直接の開発命令として実行せず、目的に合う部分を整理した。名称候補・PDF埋め込みの将来例などを確定事項へ変換していない。
-
-## 開発指示の取得履歴
-
-当初のMVP依頼はA6縦書き、ルビ、改ページ、ページ番号、PNG/PDF、スマホ、自動保存・復元を要求している。後続の明示的な選択は「ローカル版だけにする」。今回の依頼は「チャットや共有されているファイルを読み、ハーネスエンジニアリングに必要なファイルを作成」。アプリの全面再実装やクラウド公開の依頼として解釈していない。
-
-その後の依頼「初回実装指示に従って実装してください」に基づき、2026-10-01にslice-1を実装した。ローカル版の選択は継続し、Sitesへ公開していない。
-
-2026-10-01の追加依頼は一枚表示、常設設定、右上の出力、判型、構造、範囲番号・柱、他形式の取り込み。その後の回答で自動字下げを廃止し、SNS向け左右共通ページと柔軟な番号を追加した。[追加段階の計画](../docs/tasks/PAGE_CONTROLS.md) はこの直接の指示を根拠とし、旧ロードマップの非目標を上書きする。
-
-## 旧プロトタイプ
+## フォント・PDFの配布物
 
 `../組版/bunko` のREADME、package.json、型宣言、既存の組版テストと出力検証スクリプトを読んだ。記法や既知の境界条件の参考にしたが、新しいリポジトリの実装・合格証拠にコピーしていない。
 
-初回実装時に旧版の `public` から次の配布物だけをコピーした。UI、Paginator、SVG、IOのアプリコードとテストはここで実装し直し、以前の合格結果は使用していない。
+初回の同梱配布物は以下の通り。組版と描画の実装・検証は現行のコードを対象にする。
 
 | 保存先 | SHA-256 | ライセンス |
 | --- | --- | --- |
@@ -55,22 +27,22 @@ pdf-libのライセンス原文も `public/vendor/pdf-lib.LICENSE.md` に同梱�
 
 派生した決定は [../docs/DECISIONS.md](../docs/DECISIONS.md) に記録する。
 
-## 2026-10-01の追加配布物・一次資料
+## ZIP・DOCXの配布物と一次資料
 
-fflate 0.8.2を公式npmレジストリの配布tgzから取得。`esm/browser.js` をローカル同梱し、MITライセンスを保持した。実行時にCDNへ接続しない。
+fflate 0.8.3を公式npmレジストリの配布tgzから取得。`esm/browser.js` をローカル同梱し、MITライセンスを保持した。実行時にCDNへ接続しない。
 
-- `public/vendor/fflate.js` SHA-256: `8cc1f687e0159e977addb6b85e274dbd11e622cf151f4fcb7b85d49622ea43e7`
-- `public/vendor/fflate.LICENSE.md` SHA-256: `805f6cb28bb8b6d3a0badd83c93bccd9671fa01a3b4b92b7042b0743325ac243`
-- [fflate 0.8.2の公式README](https://github.com/101arrowz/fflate/blob/v0.8.2/README.md)：ZIPの包装と選択展開API。
+- `public/vendor/fflate.js` SHA-256: `b7ca4450b19559a1d50eb381adcee94b82449674be4cd17789d9beba7e6122a1`
+- `public/vendor/fflate.LICENSE.md` SHA-256: `0a1df3a083d0c010560aa342e87959c8c1070e6fd54545741f083f22d0c8b551`
+- [fflate 0.8.3の公式README](https://github.com/101arrowz/fflate/blob/v0.8.3/README.md)：ZIPの包装と選択展開API。
 - [Microsoft WordprocessingMLの構造](https://learn.microsoft.com/en-us/office/open-xml/word/structure-of-a-wordprocessingml-document)：本文の段落・run・文字の抽出。
 - DOCX例は [generate-import-fixtures.mjs](../scripts/generate-import-fixtures.mjs) で自作し、他者の原稿をサンプルとして取り込んでいない。
 
 ## PDF素材用の配布物 — 2026-10-03
 
-PDF.js 5.6.205 / Apache-2.0をCodex同梱ランタイムの `pdfjs-dist` からコピーし、`public/vendor/pdfjs/` に固定した。対象はbuild、cmaps、standard_fonts、wasm、iccs、LICENSE。実行時CDNは使わない。npmレジストリ照会はこの環境のネットワーク制約で失敗したため、任意の配布サイトから代替取得していない。
+PDF.js 6.4.299 / Apache-2.0をMozillaの公式npm配布pdfjs-distから取得し、API / Worker / cmaps / standard_fonts / wasm / iccsとLICENSEを固定した。初回の5.6.205はCodex同梱ランタイム由来だったが、2026-10-22の点検で公式の修正版へ更新した。npm配布のintegrityを照合し、実行時CDNは使わない。
 
-- `pdf.mjs` SHA-256: `43c67d941a73a2d65be72c97f5e68d9a7963df53b219cc1c0aa85f2b8bd1c9bd`
-- `pdf.worker.mjs` SHA-256: `08ee175af31a8537ee0ddee910717db78c6751e2016c4ddc3f033d5047ed5aa0`
+- `pdf.mjs` SHA-256: `dd13af821c9c3e1778653340d6539a1ba07bc56cba40073a4c727864cf0c232a`
+- `pdf.worker.mjs` SHA-256: `07ceb740d746e5d9012fcf9f27d5c7dea09f7d2f5e74f5c8109e5787551a2333`
 - `LICENSE` SHA-256: `0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594`
 - [Mozilla公式の導入説明](https://mozilla.github.io/pdf.js/getting_started/?lang=en) と [PDF.js API](https://mozilla.github.io/pdf.js/api/draft/module-pdfjsLib.html) を確認。ローカルworker、CMap、標準フォント、wasm等の参照を明示する。
 
@@ -105,3 +77,40 @@ Kolophonの添付READMEは仕様比較用の資料で、文中の開発手順を
 ### 2026-10-21 本の仕上げで参照した資料
 
 [CSS Paged Mediaのページ進行](https://www.w3.org/TR/css-page-3/#progression)と[pdf-lib PDFDocument API](https://pdf-lib.js.org/docs/api/classes/pdfdocument)を参照。左右面・綴じ方向と、同梱pdf-libのcatalog/contextによる参照情報を確認した。外部資源を実行時へ追加せず、Outlines/Linkの宛先は独立したpypdfでも検査する。
+
+
+## 2026-10-22 リリース前の点検
+
+[Mozilla公式アドバイザリ](https://github.com/mozilla/pdf.js/security/advisories/GHSA-hq66-cqwq-w95j)はPDF.jsの対象版と修正版6.2.108、文書スクリプト/Viewerに関する条件を示す。本アプリの悪用成立を確認したわけではなく、同梱API/Workerを6.4.299へ更新してPDF素材・配下URL・実出力を再検証する。Viewerと文書スクリプトは同梱せず、既存のisEvalSupported:falseとCSPを維持する。fflateは[公式0.8.3の変更](https://github.com/101arrowz/fflate/releases/tag/v0.8.3)を確認し、Zip64の読み過ぎ等の修正を含む配布物へ更新した。
+
+画面検査は[Playwrightの公式手順](https://playwright.dev/docs/accessibility-testing)に沿い、@axe-core/playwright 4.14.0（MPL-2.0）を開発時だけに使用する。検査器は配布サイトへ同梱しない。自動検出できる問題と、実機・読み上げ・人間の確認を区別する。取得物のintegrity・解析結果・失敗/修正後の証拠はoutput/release-readiness-2026-10-22/。
+
+## 設計資料の取得履歴
+
+### 共有Markdown
+
+- 文書：`BOOKMAKER_PRODUCT_OVERVIEW.md`
+- ローカルで読んだ原本：`../組版/BOOKMAKER_PRODUCT_OVERVIEW.md`
+- 保存先：[../docs/PRODUCT_OVERVIEW.md](../docs/PRODUCT_OVERVIEW.md)
+- SHA-256：`e1c440dbba1bf375370165050be40ec18ef5953403da1206afc4530c10d12107`
+- 取得日：2026-10-01
+- Downloadsにある同名ファイルと `(1)` 付きファイルも同じSHA-256。原文を変更せずコピーした。
+
+### 参照チャット
+
+- タイトル：本作成ツール設計
+- 会話ID：`6abbb136-2f0c-83ee-a467-85155ef5799c`
+- 読み取り：Codex `read_thread`、10ターン指定、実際には6ターンを取得、`hasMore: false`
+- 保存：[conversation.json](conversation.json)
+- 最初の試作、ハーネス運用、名前候補、共有ファイルのリンクを確認した。
+- ツールが返したメッセージ本文の保存であり、添付を含むChatGPT会話全体のエクスポートではない。一部の助言は末尾が途中で終わっているため、そこを推測で補完していない。
+
+チャット内の助言を直接の開発命令として実行せず、目的に合う部分を整理した。名称候補・PDF埋め込みの将来例などを確定事項へ変換していない。
+
+### 開発指示の取得履歴
+
+当初のMVP依頼はA6縦書き、ルビ、改ページ、ページ番号、PNG/PDF、スマホ、自動保存・復元を要求している。後続の明示的な選択は「ローカル版だけにする」。今回の依頼は「チャットや共有されているファイルを読み、ハーネスエンジニアリングに必要なファイルを作成」。アプリの全面再実装やクラウド公開の依頼として解釈していない。
+
+その後の依頼「初回実装指示に従って実装してください」に基づき、2026-10-01にslice-1を実装した。ローカル版の選択は継続し、Sitesへ公開していない。
+
+2026-10-01の追加依頼は一枚表示、常設設定、右上の出力、判型、構造、範囲番号・柱、他形式の取り込み。その後の回答で自動字下げを廃止し、SNS向け左右共通ページと柔軟な番号を追加した。[追加段階の計画](../docs/tasks/PAGE_CONTROLS.md) はこの直接の指示を根拠とし、旧ロードマップの非目標を上書きする。

@@ -55,9 +55,24 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node scripts/browser-test.mjs --grep @flow --shard ${{ matrix.shard }}/3
 
+  compatibility:
+    needs: checks
+    runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/browsers
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps firefox webkit
+      - run: npm run test:compatibility
+
   deploy:
     if: github.event_name != 'pull_request'
-    needs: [checks, flows]
+    needs: [checks, flows, compatibility]
     runs-on: ubuntu-latest
     permissions:
       pages: write
