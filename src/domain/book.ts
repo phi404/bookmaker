@@ -1,6 +1,7 @@
 import type { BookModel, Publication, SpecialPageDefinition, SpecialRole, TreeBlock, PageElement } from './model.js';
 import { createPublication, flattenDocument, sourceOf, updateSource, validatePublication, validateDocumentReferences } from './publication.js';
 import { sourceBlocks } from './source.js';
+import { rawSourceOffsets } from './source-map.js';
 import { newSpecialPage } from './special.js';
 import { identifier } from './validation.js';
 
@@ -126,7 +127,8 @@ export function addChapter(book: BookModel, title: string): BookModel {
 }
 export function sourceRangeFor(book: BookModel, id: string): { from: number; to: number } | undefined {
   const blocks = flattenDocument(book.document), index = blocks.findIndex(b => b.id === id || b.kind === 'specialPage' && b.pageId === id);
-  return sourceBlocks(book.source, book.syntax)[index];
+  const range = sourceBlocks(book.source, book.syntax)[index], raw = rawSourceOffsets(book.source);
+  return range ? { from: raw[range.from]!, to: raw[range.to]! } : undefined;
 }
 export function checkBook(book: BookModel): BookModel { return validatePublication({ ...book, source: sourceOf(book.document, book.syntax) }) as BookModel; }
 export function renameChapter(book: BookModel, sectionId: string, title: string): BookModel {

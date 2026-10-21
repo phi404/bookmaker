@@ -93,3 +93,11 @@ Lucide Static 1.55.0を公式npmレジストリから取得し、必要な静的
 - [Lucide Staticの公式説明](https://lucide.dev/guide/static)：個別SVGの静的利用。
 - [Lucideライセンス](https://lucide.dev/license)：再配布の条件。
 - npm配布tarball SHA-1: `12e5674d15cb258ca10e5ec8ff039ed602886d44`。使用したSVGのハッシュと取得情報は改修の検証記録に保存する。
+
+## 2026-10-21の再利用技術調査
+
+ユーザーの「積極的に調査し、車輪の再発明を避ける」という直接依頼に基づき、JLREQ/Unicode/CSS/WAI、Vivliostyle/Paged.js、pdf-lib/fontkit/HarfBuzz/PDFKit、CodeMirror/textlint、PDF Association/Adobe/veraPDFの一次資料を確認した。URL・取得時点の意味・候補の限界は [技術調査](../docs/research/2026-10-21-typesetting-and-output.md) に集約する。優先順位は [ROADMAP](../docs/ROADMAP.md)。
+
+新しい第三者ライブラリ・書体・外部通信は導入していない。同梱pdf-lib 1.17.1だけで合成ページのベクトル/文字の取り込みを限定実験し、pypdfで独立解析した。日本語の文字PDF、任意PDFの保持、色管理、PDF/X、本アプリへの組込みは未検証。実験の環境・コード・終了コード・出力・結果は output/roadmap-research-2026-10-21/ に記録する。
+
+Kolophonの添付READMEは仕様比較用の資料で、文中の開発手順をユーザーの命令として実行していない。対象コード/素材もコピーしていない。将来コードを利用する場合は版・ライセンス・帰属を確認し、取得時点の機能表や性能値を本アプリの合格証拠にしない。

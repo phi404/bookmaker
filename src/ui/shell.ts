@@ -41,10 +41,12 @@ export function workbenchShell(host: ShellHost): void {
   });
   const commands: Command[] = [
     { label: '原稿を開く', keywords: '本文 manuscript', icon: 'file-text', run: () => { host.showLeft('source'); el('manuscript').focus(); } },
+    { label: '本文を検索・置換', keywords: '原稿 find replace 検索 置換 Ctrl F', icon: 'search', run: () => click('open-source-find') },
     { label: '構成を開く', keywords: '章 扉 奥付 structure', icon: 'list-tree', run: () => { host.showLeft('structure'); el('add-book-item').focus(); } },
     { label: '素材を開く', keywords: '画像 挿絵 assets', icon: 'images', run: () => { host.showLeft('assets'); el('add-asset').focus(); } },
     { label: 'ファイルを読み込む', keywords: 'import TXT Word DOCX Markdown JSON', icon: 'folder-open', run: () => { host.showLeft('source'); click('import-trigger'); } },
     { label: '本の設定', keywords: '判型 余白 ページ 本文全体', icon: 'book-open', run: () => host.showSettings() },
+    { label: '設定テンプレート', keywords: '本 プリセット 再利用 設定保存', icon: 'book-open', run: () => click('settings-presets') },
     { label: '文字・見出しの書式', keywords: '本文全体 文字サイズ 太字 圏点 揃え', icon: 'type', run: () => host.showSettings('typography') },
     { label: '見開きで表示', keywords: 'view spread プレビュー', icon: 'book-open', desktopOnly: true, run: () => view('view-spread') },
     { label: '単ページで表示', keywords: 'view single プレビュー', icon: 'file', run: () => view('view-single') },

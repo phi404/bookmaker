@@ -38,3 +38,7 @@ AIによる目視/操作と人間の利用者調査、ブラウザ幅と実機�
 段階ごとの成功や当時の未実装を残した旧QAは [VERIFICATION_HISTORY](history/VERIFICATION_HISTORY.md)。その文中の「現在」「今回」は各段階を指す。現在の機能は [CAPABILITIES](CAPABILITIES.md)、今後の候補は [ROADMAP](ROADMAP.md)。
 
 実行後の報告はoutputに、再利用する契約はdocsに置く。完了したタスクの成功件数を複数の仕様書へ追記して、どれが現在か曖昧にしない。
+
+## 2026-10-21の先行実装の証拠
+
+`output/roadmap-implementation-2026-10-21/` に変更前のファイル/指紋、共通原稿、エンジン/検索の限定比較、保存競合とCRLF位置ずれの修正前失敗、画面確認、最終の検証結果への索引を残す。比較候補は製品依存へ導入していない。限定比較と現在の全体ゲートを混同しない。対象/未達は[実装履歴](history/2026-10-21-roadmap-implementation.md)。

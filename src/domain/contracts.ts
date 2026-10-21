@@ -50,7 +50,7 @@ export interface FlowLine {
   fontScale?: number;
   heading?: boolean;
   alignment?: 'start' | 'center' | 'end';
-  runs: readonly (Inline & { advanceEm?: number; sizeMm?: number; tcy?: boolean; displayText?: string })[];
+  runs: readonly (Inline & { advanceEm?: number; sizeMm?: number; tcy?: boolean; displayText?: string; textFrom?: number; textTo?: number })[];
   band?: number;
   xMm?: number;
   yMm?: number;

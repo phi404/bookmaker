@@ -15,20 +15,21 @@ export function renderFlowLine(line: FlowLine,style: BookStyle,escape:(s:string)
   };
   for(let i=0;i<line.runs.length;i++){
     const run=line.runs[i]!,size=run.sizeMm??font,span=(run.advanceEm??1)*font,value=run.displayText??(run.kind==='text'?run.text:run.base),weight=run.fontWeight===700?' font-weight="700"':'';
+    const range=(from=run.textFrom,to=run.textTo)=>from!==undefined&&to!==undefined?` data-text-from="${from}" data-text-to="${to}"`:'';
     const attrs=`data-body="${run.kind==='ruby'?'ruby-base':'text'}"${weight}${line.heading?' data-heading="true"':''}${run.orientation?` data-orientation="${run.orientation}"`:''}${run.displayText?` data-source-text="${escape(run.kind==='text'?run.text:run.base)}"`:''}`;
     if(run.kind==='text'&&/^[―—]+$/u.test(run.text)){
       let length=span;while(line.runs[i+1]?.kind==='text'&&/^[―—]+$/u.test((line.runs[i+1] as {text:string}).text)&&line.runs[i+1]!.emphasis===run.emphasis&&line.runs[i+1]!.sizeMm===run.sizeMm)length+=(line.runs[++i]!.advanceEm??1)*font;
-      out.push(`<line data-dash="continuous" x1="${n(x)}" y1="${n(y)}" x2="${n(vertical?x:x+length)}" y2="${n(vertical?y+length:y)}" stroke="currentColor" stroke-width="${n(size*.045)}"/>`);marks(run,'―'.repeat(Math.round(length/size)),x,y,size);if(vertical)y+=length;else x+=length;continue;
+      out.push(`<line data-dash="continuous"${range(run.textFrom,line.runs[i]!.textTo)} x1="${n(x)}" y1="${n(y)}" x2="${n(vertical?x:x+length)}" y2="${n(vertical?y+length:y)}" stroke="currentColor" stroke-width="${n(size*.045)}"/>`);marks(run,'―'.repeat(Math.round(length/size)),x,y,size);if(vertical)y+=length;else x+=length;continue;
     }
     if(run.kind==='ruby'){
       const baseSpan=width(run.base)*size,baseOffset=Math.max(0,(span-baseSpan)/2);let offset=0;
-      for(const g of graphemes(run.base)){out.push(text(g,vertical?x:x+baseOffset+offset,vertical?y+baseOffset+offset:y,size,attrs,run.orientation));offset+=advance(g)*size;}
+      let sourceOffset=run.textFrom??0;for(const g of graphemes(run.base)){out.push(text(g,vertical?x:x+baseOffset+offset,vertical?y+baseOffset+offset:y,size,attrs+range(sourceOffset,sourceOffset+g.length),run.orientation));offset+=advance(g)*size;sourceOffset+=g.length;}
       const readingSize=size*Math.min(.5,span/Math.max(size,width(run.reading)*size)),readingSpan=width(run.reading)*readingSize;offset=Math.max(0,(span-readingSpan)/2);
-      for(const g of graphemes(run.reading)){out.push(text(g,vertical?x+size*.76:x+offset,vertical?y+offset:y-size*.76,readingSize,'data-ruby="reading"'));offset+=advance(g)*readingSize;}
+      for(const g of graphemes(run.reading)){out.push(text(g,vertical?x+size*.76:x+offset,vertical?y+offset:y-size*.76,readingSize,'data-ruby="reading"'+range()));offset+=advance(g)*readingSize;}
       marks(run,run.base,vertical?x:x+baseOffset,vertical?y+baseOffset:y,size);
-    }else if(run.tcy&&vertical){out.push(`<text ${attrs} data-tcy="true" x="${n(x)}" y="${n(y+size*.5)}" font-size="${n(size*.9)}" text-anchor="middle" dominant-baseline="central"${width(value)>1.1?` textLength="${n(size)}" lengthAdjust="spacingAndGlyphs"`:''}>${escape(value)}</text>`);marks(run,value,x,y,size);}
-    else if(vertical&&run.orientation==='sideways'&&/^[0-9A-Za-z]+$/u.test(value)){out.push(`<text ${attrs} x="${n(x)}" y="${n(y)}" font-size="${n(size)}" dominant-baseline="central" transform="rotate(90 ${n(x)} ${n(y)})">${escape(value)}</text>`);marks(run,value,x,y,size);}
-    else {out.push(text(value,x,y,size,attrs,run.orientation));marks(run,value,x,y,size);}
+    }else if(run.tcy&&vertical){out.push(`<text ${attrs}${range()} data-tcy="true" x="${n(x)}" y="${n(y+size*.5)}" font-size="${n(size*.9)}" text-anchor="middle" dominant-baseline="central"${width(value)>1.1?` textLength="${n(size)}" lengthAdjust="spacingAndGlyphs"`:''}>${escape(value)}</text>`);marks(run,value,x,y,size);}
+    else if(vertical&&run.orientation==='sideways'&&/^[0-9A-Za-z]+$/u.test(value)){out.push(`<text ${attrs}${range()} x="${n(x)}" y="${n(y)}" font-size="${n(size)}" dominant-baseline="central" transform="rotate(90 ${n(x)} ${n(y)})">${escape(value)}</text>`);marks(run,value,x,y,size);}
+    else {out.push(text(value,x,y,size,attrs+range(),run.orientation));marks(run,value,x,y,size);}
     if(vertical)y+=span;else x+=span;
   }
   return `<g data-block-id="${escape(line.blockId)}">${out.join('')}</g>`;

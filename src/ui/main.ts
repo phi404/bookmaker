@@ -1,21 +1,25 @@
 import type { RenderedPages, ViewMode, BookPage } from '../domain/contracts.js';
 import { MAX_SOURCE } from '../domain/document.js';
 import type { BookModel, SourceSyntax } from '../domain/model.js';
-import { createPublication, flattenDocument, migrateProject } from '../domain/publication.js';
-import { asBook, editBookSource, checkBook, sourceRangeFor, modernizeNotation } from '../domain/book.js';
+import { createPublication, flattenDocument, migrateProject, validatePublication } from '../domain/publication.js';
+import { asBook, editBookSource, sourceRangeFor, modernizeNotation } from '../domain/book.js';
 import { SAMPLE } from '../domain/sample.js';
 import { validateStyle, geometry } from '../domain/style.js';
 import { adjacentPage, spreadPages } from '../domain/page-order.js';
 import { sourceBlocks } from '../domain/source.js';
+import { bookSourceMap, rawSourceOffsets, editorOffset, textSourceRange, sourceTextRanges, type TextSourceSpan } from '../domain/source-map.js';
 import { pageElementMovement } from '../domain/editing.js';
 import { renderPageSVG } from '../render/svg.js';
-import { restoreBookDraft, saveBookDraft } from '../io/book-draft.js';
+import { restoreBookDraft, saveBookDraft, preserveBookDraft, draftRecoveryState, DraftConflict } from '../io/book-draft.js';
 import type { Draft } from '../io/draft.js';
 import { importFile } from '../io/import.js';
 import { el, input, setValue } from './dom.js';
 import { settings } from './settings.js';
+import { settingsPresetEditor } from './settings-presets.js';
 import { output } from './output.js';
 import { manuscriptTools, scrollToPosition } from './manuscript.js';
+import { sourceSearch } from './source-search.js';
+import { latestJob } from './latest-job.js';
 import { blockInspector } from './inspector.js';
 import { workspaceViews, selectedElementIds, type Selection } from './workspace.js';
 import { catalogEditor } from './catalog.js';
@@ -24,6 +28,7 @@ import { typographyEditor } from './typography.js';
 
 const manuscript = el<HTMLTextAreaElement>('manuscript'), preview = el('preview-stage'), spread = el('book-spread'), panel = el('preview-panel'), workspace = el('workspace');
 const worker = new Worker(new URL('../app/typesetter.worker.js', import.meta.url), { type: 'module' }), mobile = matchMedia('(max-width:760px)');
+const layoutJobs = latestJob<{ revision: number; project: BookModel }>(job => worker.postMessage(job));
 const compact = matchMedia('(max-width:1100px)'); let explicitSpread = false;
 const narrow = matchMedia('(min-width:761px) and (max-width:1199px)'); let hiddenPane: 'left' | 'right' | undefined;
 let project = asBook(createPublication('', 'markdown')), source = project.source, style = project.style, filename = '無題', marginOffset = 0;
@@ -31,6 +36,25 @@ let viewMode: ViewMode = 'spread', selection: Selection = { kind: 'book' }, left
 let result: RenderedPages | undefined, canSave = true, restoring = true, importUndo: Draft | undefined, zoomed = false, previousPanel = 'manuscript', followSelection = false;
 let inspectorMode: 'body' | 'styles' | 'selection' = 'body', normalWidth = '420px', normalRightOpen = true, editorWide = false;
 let textAnchor: string | undefined;
+let paperSourceSelection: { source: string; id: string; from: number; to: number; part: 'text' | 'reading' } | undefined;
+let sourceMapCache: { source: string; document: BookModel['document']; spans: TextSourceSpan[]; editorOffsets: Uint32Array } | undefined;
+let searchTools: ReturnType<typeof sourceSearch> | undefined, searchRange: { from: number; to: number } | undefined;
+function sourceMap(): TextSourceSpan[] {
+  if (project.sourceDraft !== undefined) return [];
+  if (sourceMapCache?.source !== project.source || sourceMapCache.document !== project.document) sourceMapCache = { source: project.source, document: project.document, spans: bookSourceMap(project), editorOffsets: rawSourceOffsets(project.source, false) };
+  return sourceMapCache.spans;
+}
+function editorRange(range: { from: number; to: number }): { from: number; to: number } {
+  sourceMap(); const offsets = sourceMapCache!.editorOffsets; return { from: editorOffset(offsets, range.from), to: editorOffset(offsets, range.to) };
+}
+function sourceMatches(from: number, to: number): ReturnType<typeof sourceTextRanges> {
+  const spans = sourceMap(), offsets = sourceMapCache?.editorOffsets; return offsets ? sourceTextRanges(spans, offsets[from] ?? from, offsets[to] ?? to) : [];
+}
+function revealSource(id: string, exact = true): void {
+  if (project.sourceDraft !== undefined) { notify('入力中の原稿を確定してから、紙面から移動してください。'); return; }
+  const chosen = paperSourceSelection, range = exact && chosen?.id === id && chosen.source === project.source ? textSourceRange(sourceMap(), id, chosen.from, chosen.to, chosen.part) : sourceRangeFor(project, id);
+  if (!range) return; const display = editorRange(range); showLeft('source'); manuscript.focus(); manuscript.setSelectionRange(display.from, display.to); scrollToPosition(manuscript, display.from);
+}
 let importing = false, importSerial = 0;
 let focusPanes: { left: boolean; right: boolean } | undefined;
 let layoutTimer: ReturnType<typeof setTimeout> | undefined, saveTimer: ReturnType<typeof setTimeout> | undefined, saveQueue = Promise.resolve(), saveSerial = 0, lastEditAt = 0;
@@ -86,6 +110,7 @@ function syncSource(): void {
   el('syntax-label').textContent = project.syntax === 'markdown' ? 'Markdown' : '旧形式';
   const empty = project.source.length === 0; el('preview-empty').hidden = !empty; spread.hidden = empty; panel.dataset.empty = String(empty);
   setValue('book-title', project.document.title === '本文' ? '' : project.document.title); setValue('book-author', project.document.author);
+  searchTools?.sync();
 }
 function applyDraft(draft: Draft): void { project = modernizeNotation(asBook(draft.project)); style = project.style; marginOffset = draft.marginOffset; filename = project.metadata?.filename ?? '原稿'; viewMode = project.metadata?.viewMode ?? 'spread'; selected = project.metadata?.selected ?? 1; syncSource(); }
 function syncHistory(): void { el<HTMLButtonElement>('undo').disabled = !history.length; el<HTMLButtonElement>('redo').disabled = !future.length; }
@@ -96,11 +121,12 @@ function persistDraft(): void {
   clearTimeout(saveTimer); if (!canSave || restoring) return; const draft = currentDraft(), serial = ++saveSerial;
   saveQueue = saveQueue.then(async () => {
     if (!canSave) return;
-    try { await saveBookDraft(draft); if (serial === saveSerial) { el('save-state').textContent = '保存済み'; el('save-state').title = 'この端末に保存済み'; el('save-state').dataset.state = 'saved'; } }
-    catch { canSave = false; el('save-state').textContent = '保存できません'; el('save-state').dataset.state = 'error'; notify('端末の保存領域に書き込めません。作業ファイル（JSON）も保存してください。'); }
+    try { await saveBookDraft(draft, serial); if (serial === saveSerial) { el('save-state').textContent = '保存済み'; el('save-state').title = 'この端末に保存済み'; el('save-state').dataset.state = 'saved'; } }
+    catch (error) { canSave = false; el('save-state').textContent = error instanceof DraftConflict ? '保存を停止' : '保存できません'; el('save-state').dataset.state = 'error'; notify(error instanceof DraftConflict ? error.message : '端末の保存領域に書き込めません。作業ファイル（JSON）も保存してください。'); }
   });
 }
-window.addEventListener('pagehide', persistDraft); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') persistDraft(); });
+function preserveAndSave(): void { if (!canSave || restoring || el('save-state').dataset.state !== 'pending') return; try { preserveBookDraft(currentDraft(), ++saveSerial); } catch { /* The committed draft stays intact; the normal save reports capacity failures. */ } persistDraft(); }
+window.addEventListener('pagehide', preserveAndSave); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') preserveAndSave(); });
 const ready = () => !importing && !!result && revision === layoutRevision && project.sourceDraft === undefined;
 const exports = output({
   state: () => ({ revision, diagnostics: result?.diagnostics ?? [], source: project.sourceDraft ?? source, project: currentProject(), filename, style, selected, viewMode, pages: result?.pages ?? [] }),
@@ -116,13 +142,13 @@ const exports = output({
     } else {
       showLeft('source'); if (mobile.matches) activePanel('manuscript'); manuscript.focus();
       const range = blockId && project.sourceDraft === undefined ? sourceRangeFor(project, blockId) : undefined;
-      if (range) {manuscript.setSelectionRange(range.from,range.to);scrollToPosition(manuscript,range.from);}
+      if (range) {const display=editorRange(range);manuscript.setSelectionRange(display.from,display.to);scrollToPosition(manuscript,display.from);}
     }
   },
 });
 function commit(next: BookModel, message?: string): void {
   if (project.sourceDraft !== undefined) { notify('原稿の参照指定を完成させてから構成や書式を変更してください。入力内容は保存されています。'); return; }
-  try { const valid = checkBook(next); snapshot(); project = valid; style = valid.style; followSelection = true; if (canSave) el('notice').hidden = true; syncSource(); reflow(); if (message) notify(message); }
+  try { const valid = asBook(validatePublication(next)); snapshot(); project = valid; style = valid.style; followSelection = true; if (canSave) el('notice').hidden = true; syncSource(); reflow(); if (message) notify(message); }
   catch (error) { notify(error instanceof Error ? error.message : '変更を適用できません。'); controls.sync(); inspector.sync(); views.sync(true); }
 }
 const controls = settings({ getStyle: () => style, update(next) {
@@ -138,15 +164,14 @@ function select(value: Selection, reveal = true): void {
   if (value.kind === 'special' && !project.specialPages.some(p => p.id === value.id) || value.kind === 'chapter' && !project.document.children.some(s => s.id === value.id) || value.kind === 'running' && !project.runningElements.some(r => r.id === value.id)) return;
   views.sync(); highlightElements();
 }
-const views = workspaceViews({ book: currentProject, result: () => result, selection: () => selection, inspectorMode: () => inspectorMode, textTarget:()=>inspector.target(), select, change: commit, notify, choosePage(n) { selected = n; showPages(); scheduleSave(); }, revealSource(id) {
-  showLeft('source'); const range = sourceRangeFor(project, id); if (range) { manuscript.focus(); manuscript.setSelectionRange(range.from, range.to); scrollToPosition(manuscript, range.from); }
-} });
+const views = workspaceViews({ book: currentProject, result: () => result, selection: () => selection, inspectorMode: () => inspectorMode, textTarget:()=>inspector.target(), select, change: commit, notify, choosePage(n) { selected = n; showPages(); scheduleSave(); }, revealSource });
 catalogEditor(el('catalog-editor'),{book:currentProject,change:commit});
+settingsPresetEditor({ book: currentProject, change: commit, notify });
 const typography = typographyEditor({ book: currentProject, change: commit });
-function reflow(resetPage = false): void {
+function reflow(resetPage = false, save = true): void {
   if (resetPage) selected = 1; revision++; preview.dataset.inputRevision = String(revision); preview.dataset.layoutState = 'pending'; el('layout-pending').hidden = false;
   project = currentProject(); exports.sync(); controls.sync(); inspector.sync(); typography.sync(); syncSource(); views.sync();
-  clearTimeout(layoutTimer); const nextRevision = revision; layoutTimer = setTimeout(() => worker.postMessage({ revision: nextRevision, project: currentProject() }), 160); scheduleSave();
+  clearTimeout(layoutTimer); const nextRevision = revision; layoutTimer = setTimeout(() => layoutJobs.submit({ revision: nextRevision, project: currentProject() }), 160); if (save) scheduleSave();
 }
 const single = () => mobile.matches || viewMode === 'single' || viewMode === 'spread' && compact.matches && !explicitSpread;
 function resetReadingPosition(): void {
@@ -165,6 +190,9 @@ function chooseGallery(n: number, extend: boolean, additive: boolean): void {
 }
 function selectPaper(page: BookPage, event?: MouseEvent): void {
   selected = page.number; const target = event?.target instanceof Element ? event.target : undefined, running = target?.closest('[data-running-element]')?.getAttribute('data-running-element'), folio = target?.closest('[data-testid="folio"]');
+  const glyph = target?.closest('[data-text-from]'), blockId = glyph?.closest('[data-block-id]')?.getAttribute('data-block-id');
+  paperSourceSelection = glyph && blockId ? { source: project.source, id: blockId, from: Number(glyph.getAttribute('data-text-from')), to: Number(glyph.getAttribute('data-text-to')), part: glyph.hasAttribute('data-ruby') ? 'reading' : 'text' } : undefined;
+  el<HTMLButtonElement>('open-paper-source').disabled = project.sourceDraft !== undefined || !blockId;
   if (running && project.runningElements.some(e => e.id === running)) select({ kind: 'running', id: running }, false);
   else if (folio) { select({ kind: 'book' }); el<HTMLDetailsElement>('detail-folio').open = true; input('folio-enabled').focus(); }
   else if (page.kind !== 'flow') { const elementId = target?.closest('[data-element-id]')?.getAttribute('data-element-id'); if(page.kind==='layout'&&elementId)selectCanvasElement(page.pageId,elementId,!!event?.shiftKey);else select({kind:'special',id:page.pageId},false); }
@@ -186,10 +214,12 @@ function paperFor(page: BookPage | undefined, side: string, lazy = false): HTMLE
     paper.dataset.pageNumber = String(page.number); if (!lazy) paper.innerHTML = renderPageSVG(page, style); paper.setAttribute('role', 'button'); paper.tabIndex = 0; paper.setAttribute('aria-label', `${page.number}ページを選択`);
     paper.addEventListener('click', e => { if (paper.dataset.dragged === 'true') { delete paper.dataset.dragged; return; } if (viewMode === 'gallery') chooseGallery(page.number, e.shiftKey, e.ctrlKey || e.metaKey); else selectPaper(page, e); });
     paper.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (viewMode === 'gallery') chooseGallery(page.number, e.shiftKey, e.ctrlKey || e.metaKey); else selectPaper(page); } });
+    paper.addEventListener('dblclick', e => { const target = e.target instanceof Element ? e.target : undefined, id = target?.closest('[data-text-from]')?.closest('[data-block-id]')?.getAttribute('data-block-id'); if (id && viewMode !== 'gallery') revealSource(id); });
     if (page.kind === 'layout' && viewMode !== 'gallery') attachDrag(paper, page);
   } else paper.setAttribute('aria-label', '見開きの余白'); return paper;
 }
 function highlightElements(): void {
+  highlightSourceMatch();
   spread.querySelectorAll('.selected-element-box').forEach(e => e.remove()); spread.querySelectorAll<HTMLElement>('.paper').forEach(e => { delete e.dataset.editing; });
   const layout = result?.pages[selected - 1]; el('free-page-tools').hidden = layout?.kind !== 'layout';
   for (const b of el('free-page-tools').querySelectorAll<HTMLButtonElement>('[data-canvas-action]')) b.disabled = selection.kind !== 'special' || !selection.elementId;
@@ -273,7 +303,7 @@ function showPages(): void {
   if (paperFocused) spread.querySelector<HTMLElement>(`[data-page-number="${selected}"]`)?.focus({ preventScroll: true });
 }
 worker.onmessage = async (event: MessageEvent<{ revision: number; result?: RenderedPages; error?: string }>) => {
-  const response = event.data; if (response.revision !== revision) return;
+  const response = event.data; layoutJobs.complete(response.revision); if (response.revision !== revision) return;
   if (!response.result) { preview.dataset.layoutState = 'error'; el('layout-pending').hidden = true; notify(response.error ?? '組版に失敗しました。'); return; }
   try { await fontReady; } catch (error) { preview.dataset.layoutState = 'error'; el('layout-pending').hidden = true; notify(error instanceof Error ? error.message : 'フォントを読み込めません。'); return; }
   if (response.revision !== revision) return; result = response.result; layoutRevision = response.revision;
@@ -286,7 +316,7 @@ worker.onmessage = async (event: MessageEvent<{ revision: number; result?: Rende
   showPages(); preview.dataset.layoutRevision = String(layoutRevision); preview.dataset.layoutState = importing ? 'importing' : project.sourceDraft === undefined ? 'ready' : 'draft'; el('layout-pending').hidden = !importing;
   const messages = [...new Set(result.diagnostics.map(d => d.message))]; el('diagnostics').textContent = messages.join(' '); el('diagnostics').hidden = !messages.length; exports.sync();
 };
-worker.onerror = () => { notify('組版処理を起動できません。ページを再読み込みしてください。'); preview.dataset.layoutState = 'error'; };
+worker.onerror = () => { layoutJobs.clear(); notify('組版処理を起動できません。ページを再読み込みしてください。'); preview.dataset.layoutState = 'error'; };
 function edited(): void {
   if (manuscript.value.length > MAX_SOURCE) { manuscript.value = source; notify('この試作では50万文字まで扱えます。原稿を分けてください。'); return; }
   snapshot(true); const styled = flattenDocument(project.document).filter(b => b.styleId || b.localStyle), edit = editBookSource(project, manuscript.value); project = edit.book;
@@ -297,13 +327,31 @@ function edited(): void {
   importUndo = undefined; el('undo-import').hidden = true; reflow();
 }
 manuscript.addEventListener('input', edited); manuscriptTools(manuscript, edited, notify, () => project.syntax, () => el('inspect-styles').click(), formatSelection);
+function highlightSourceMatch(): void {
+  spread.querySelectorAll('[data-search-hit]').forEach(node => node.removeAttribute('data-search-hit'));
+  if (!searchRange || project.sourceDraft !== undefined) return;
+  const ranges = sourceMatches(searchRange.from, searchRange.to);
+  for (const node of spread.querySelectorAll('[data-text-from]')) {
+    const id = node.closest('[data-block-id]')?.getAttribute('data-block-id'), from = Number(node.getAttribute('data-text-from')), to = Number(node.getAttribute('data-text-to'));
+    if (ranges.some(range => range.blockId === id && range.to > from && range.from < to)) node.setAttribute('data-search-hit', 'true');
+  }
+}
+searchTools = sourceSearch(manuscript, { showSource: () => showLeft('source'), notify, changed() { lastEditAt = 0; edited(); lastEditAt = 0; }, reveal(from, to, showPaper = false) {
+  searchRange = from < 0 ? undefined : { from, to };
+  if (searchRange && project.sourceDraft === undefined) {
+    const ranges = sourceMatches(from, to), page = result?.pages.find(p => p.lines.some(line => ranges.some(range => range.blockId === line.blockId && line.runs.some(run => (run.textTo ?? -1) > range.from && (run.textFrom ?? Infinity) < range.to))));
+    if (page && selected !== page.number) { selected = page.number; showPages(); }
+  }
+  highlightSourceMatch(); if (showPaper) { if (mobile.matches) activePanel('preview'); else panel.focus(); }
+} });
+el('open-paper-source').addEventListener('click', () => { if (paperSourceSelection) revealSource(paperSourceSelection.id); });
 el('source-syntax').addEventListener('change', () => {
   const syntax = el<HTMLSelectElement>('source-syntax').value as SourceSyntax; if (project.specialPages.length && syntax !== 'markdown') { notify('特殊ページを含む原稿にはMarkdownの読み方を使います。'); setValue('source-syntax', project.syntax); return; }
   snapshot(); project = editBookSource(project, source, syntax).book; reflow();
 });
 function formatSelection(): void {
   if (project.sourceDraft !== undefined) { notify('原稿の参照を確定してから段落を選んでください。'); return; }
-  const ranges = sourceBlocks(manuscript.value, project.syntax), at = manuscript.selectionStart - (manuscript.value.startsWith('\uFEFF') ? 1 : 0), end = manuscript.selectionEnd, all = flattenDocument(project.document);
+  const raw = rawSourceOffsets(manuscript.value), ranges = sourceBlocks(manuscript.value, project.syntax).map(r => ({ ...r, from: raw[r.from]!, to: raw[r.to]! })), at = manuscript.selectionStart, end = manuscript.selectionEnd, all = flattenDocument(project.document);
   const indices = ranges.map((r, i) => at === end ? at >= r.from && at <= r.to ? i : -1 : r.to >= at && r.from < end ? i : -1).filter(i => i >= 0);
   const ids = indices.map(i => all[i]).filter((b): b is typeof all[number] => !!b && 'inlines' in b).map(b => b.id);
   if (ids.length > 1) { select({ kind: 'range', ids }); return; }
@@ -434,7 +482,11 @@ function syncEditorWidthButton(): void {
   const button = el('expand-manuscript'), label = editorWide ? '通常の幅に戻す' : '原稿を広げる'; button.setAttribute('aria-label', label); button.title = label; button.setAttribute('aria-pressed', String(editorWide)); button.querySelector<HTMLElement>('[data-icon]')!.dataset.icon = editorWide ? 'minimize-2' : 'maximize-2';
 }
 syncEditorWidthButton();
+let unchangedRestore = false;
 try {
-  const draft = await restoreBookDraft(); if (draft) applyDraft(draft);
+  const draft = await restoreBookDraft(); if (draft) { applyDraft(draft); unchangedRestore = draft.project.schemaVersion === 3 && draft.project.syntax === 'markdown' && !draftRecoveryState().restored; }
+  if (draftRecoveryState().conflict) { canSave = false; el('save-state').textContent = '保存を停止'; el('save-state').dataset.state = 'error'; notify(new DraftConflict().message); }
 } catch (error) { canSave = false; el('save-state').textContent = '保存を停止'; el('save-state').dataset.state = 'error'; notify(error instanceof Error ? error.message : '端末内の保存データを読めません。'); }
-restoring = false; manuscript.value = project.sourceDraft ?? project.source; syncHistory(); reflow();
+restoring = false; manuscript.value = project.sourceDraft ?? project.source; syncHistory();
+if (unchangedRestore && canSave) { el('save-state').textContent = '保存済み'; el('save-state').dataset.state = 'saved'; }
+reflow(false, !unchangedRestore);

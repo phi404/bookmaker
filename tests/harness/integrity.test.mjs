@@ -9,7 +9,7 @@ import { blockedTests } from '../../scripts/check-test-policy.mjs';
 
 const policy = await readJson('harness/boundaries.json');
 test('documents, original source, links, fixtures and requirement routes are consistent', async () => {
-  assert.deepEqual(await checkHarness(), { documents: 50, fixtures: 10, modelFixtures: 6, bookFixtures: 11, requirements: 45 });
+  assert.deepEqual(await checkHarness(), { documents: 52, fixtures: 10, modelFixtures: 6, bookFixtures: 12, requirements: 50 });
 });
 test('independent long-text expectation is exactly 100k code points', async () => {
   const source = await readText('fixtures/long-chapter.txt');

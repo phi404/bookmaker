@@ -55,6 +55,11 @@
       "id": "book-spread-colors",
       "file": "fixtures/book/spread-colors.svg",
       "sourceSha256": "1e43ed23f36aae27d797872e3b28367044f56041a3cdf8d9d8576ab375c6bd15"
+    },
+    {
+      "id": "book-roadmap-evaluation",
+      "file": "fixtures/book/roadmap-evaluation.md",
+      "sourceSha256": "5196aa4841c2cd7b3f19367f24887251cc7173d00dc07ea1b3f9c85496e5b6ef"
     }
   ]
 }

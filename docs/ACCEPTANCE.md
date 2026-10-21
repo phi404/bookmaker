@@ -2,7 +2,7 @@
 
 ## 対象と対応表
 
-現在の完了ゲートは `harness/config.json` の `phase: mvp`。R-01–R-45を対象とする。要件、fixture、機械検査、目視項目、現行の仕様正本への対応は [requirements.json](../harness/requirements.json) の一か所で管理する。過去のslice-1（R-01–R-10）の成功や、ロードマップ全体の完成と混同しない。
+現在の完了ゲートは `harness/config.json` の `phase: mvp`。R-01–R-50を対象とする。要件、fixture、機械検査、目視項目、現行の仕様正本への対応は [requirements.json](../harness/requirements.json) の一か所で管理する。過去のslice-1（R-01–R-10）の成功や、ロードマップ全体の完成と混同しない。
 
 | 契約群 | 必ず確かめる結果 |
 | --- | --- |

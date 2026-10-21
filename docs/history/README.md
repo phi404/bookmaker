@@ -24,6 +24,12 @@
 | [VERIFICATION_HISTORY](VERIFICATION_HISTORY.md) | 整理前QAの段階別成功・当時の制約 |
 | [DECISION_HISTORY](DECISION_HISTORY.md) | 整理前の決定の詳細。現索引はDECISIONS |
 
+## 日付付きの技術調査
+
+| 資料 | 扱い |
+| --- | --- |
+| [2026-10-21 組版・編集・出力の再利用](../research/2026-10-21-typesetting-and-output.md) | 標準/既存エンジン/ライブラリの取得時点の比較と、同梱pdf-libの限定実験。候補の本実装・全面適合を示さない。現在の優先順位はROADMAP |
+
 ## 回帰記録
 
 | 記録 | 再発を防ぐ対象 |
@@ -45,3 +51,7 @@
 ## 共有原本・取得情報
 
 [PRODUCT_OVERVIEW](../PRODUCT_OVERVIEW.md) は共有Markdownを改変せず保存した原本。[参照チャット](../../sources/conversation.json) は取得できた本文の保存で、全添付を含むエクスポートではない。取得方法・ハッシュ・ライセンスは [sources/README](../../sources/README.md)。
+
+## ロードマップからの実装
+
+[2026-10-21の先行実装](2026-10-21-roadmap-implementation.md)は設定テンプレート、紙面/原稿位置、本文検索、保存競合保護、依頼集約と限定比較の記録。ロードマップ全体の完成を意味しない。

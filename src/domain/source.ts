@@ -6,7 +6,7 @@ import type { SpecialRole } from './model.js';
 import { formatAttributes, readFormat, readSection } from './source-format.js';
 import type { LocalStyle, Section } from './model.js';
 
-export interface SourceBlock { block: TreeBlock; from: number; to: number; section?: Pick<Section, 'start' | 'styleId' | 'localStyle'> }
+export interface SourceBlock { block: TreeBlock; from: number; to: number; contentFrom?: number; literal?: boolean; section?: Pick<Section, 'start' | 'styleId' | 'localStyle'> }
 export function normalizedSource(source: string): string {
   if (typeof source !== 'string' || source.length > MAX_SOURCE) throw new Error('原稿は50万文字以内で読み込んでください。');
   return source.replace(/^\uFEFF/u, '').replace(/\r\n?/gu, '\n');
@@ -20,7 +20,7 @@ export function sourceBlocks(source: string, syntax: SourceSyntax): SourceBlock[
   const formats: { localStyle?: LocalStyle; styleId?: string }[] = [];
   for (const [index, line] of lines.entries()) {
     const from = offset; offset += line.length + 1;
-    if (legacy) { out.push({ block: legacy[index]!, from, to: offset - 1 }); continue; }
+    if (legacy) { const prefix = /^\[見出し(?::[1-3])?\][　 ]?/u.exec(line)?.[0].length ?? 0; out.push({ block: legacy[index]!, from, to: offset - 1, contentFrom: from + prefix }); continue; }
     if (/^```/u.test(line)) fence = !fence;
     const open = !fence ? /^:::(center|end|format)(?:\s+(.*))?\s*$/u.exec(line) : null;
     if (open) { formats.push(open[1] === 'format' ? readFormat(open[2] ?? '') : { localStyle: { paragraph: { alignment: open[1] as 'center' | 'end' } } }); continue; }
@@ -28,7 +28,7 @@ export function sourceBlocks(source: string, syntax: SourceSyntax): SourceBlock[
     const sectionLine = !fence ? /^:::section\s+(.*)$/u.exec(line) : null;
     if (sectionLine) { section = readSection(sectionLine[1]!); continue; }
     if (!fence && /^:::section(?:\s|$)/u.test(line)) throw new Error('章の書式を入力中です。属性と次の章見出しを確認してください。');
-    let block: TreeBlock;
+    let block: TreeBlock, contentFrom = from, literal = false;
     const special = !fence ? /^:::(title|chapter-title|toc|colophon|illustration|free|external) id="([a-zA-Z0-9][a-zA-Z0-9_-]{0,99})"\s*$/u.exec(line) : null;
     const heading = !fence ? /^(#{1,6})[ \t]+(.+)$/u.exec(line) : null;
     const pageDirective = !fence ? /^:::page-break(?: side="(left|right)")?\s*$/u.exec(line) : null;
@@ -37,9 +37,10 @@ export function sourceBlocks(source: string, syntax: SourceSyntax): SourceBlock[
     else if (pageDirective) block = { id: `p-${index}`, kind: 'pageBreak', start: (pageDirective[1] ?? 'next') as 'left' | 'right' | 'next' };
     else if (!fence && /^:::recto\s*$/u.test(line)) block = { id: `p-${index}`, kind: 'pageBreak', start: 'recto' };
     else if (!fence && /^(?:===|---+|\*\*\*+)\s*$/u.test(line)) block = { id: `p-${index}`, kind: 'pageBreak', start: 'next' };
-    else if (heading) block = { id: `p-${index}`, kind: 'heading', level: heading[1]!.length, keepWithNext: true, inlines: markdownInlines(heading[2]!) };
+    else if (heading) { contentFrom += line.length - heading[2]!.length; block = { id: `p-${index}`, kind: 'heading', level: heading[1]!.length, keepWithNext: true, inlines: markdownInlines(heading[2]!) }; }
     else {
       const quote = !fence ? /^>[ ]?(.*)$/u.exec(line) : null;
+      contentFrom += quote ? line.length - quote[1]!.length : 0; literal = fence || /^```/u.test(line);
       block = { id: `p-${index}`, kind: 'paragraph', indent: 'auto', inlines: fence || /^```/u.test(line) ? [{ kind: 'text', text: line }] : markdownInlines(quote?.[1] ?? line), ...(quote ? { role: 'quote' as const } : {}) };
     }
     if (block.kind !== 'pageBreak' && block.kind !== 'specialPage') for (const format of formats) {
@@ -47,7 +48,7 @@ export function sourceBlocks(source: string, syntax: SourceSyntax): SourceBlock[
       if (format.localStyle) block.localStyle = { ...block.localStyle, ...format.localStyle, paragraph: { ...block.localStyle?.paragraph, ...format.localStyle.paragraph }, character: { ...block.localStyle?.character, ...format.localStyle.character }, page: { ...block.localStyle?.page, ...format.localStyle.page, ...(block.localStyle?.page?.margins || format.localStyle.page?.margins ? { margins: { ...block.localStyle?.page?.margins, ...format.localStyle.page?.margins } } : {}) } };
     }
     if (block.localStyle) for (const family of ['paragraph', 'character', 'page'] as const) if (!Object.keys(block.localStyle[family] ?? {}).length) delete block.localStyle[family];
-    out.push({ block, from, to: offset - 1, ...(section ? { section } : {}) }); section = undefined;
+    out.push({ block, from, to: offset - 1, contentFrom, ...(literal ? { literal } : {}), ...(section ? { section } : {}) }); section = undefined;
   }
   if (formats.length || section) throw new Error('書式の囲みを入力中です。閉じ行 ::: と、その後の本文を確認してください。');
   return out;

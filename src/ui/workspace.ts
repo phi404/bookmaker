@@ -285,7 +285,7 @@ export function workspaceViews(host: Host) {
       else if (s.kind === 'running' && b.runningElements.some(e => e.id === s.id)) runningFields(s.id, group());
       else if (s.kind === 'pages' && s.numbers.length) pagesFields(s.numbers, group());
       else if (s.kind === 'block') {
-        button(actions(context), '原稿のこの段落へ', () => host.revealSource(s.id), 'reveal-source');
+        button(actions(context), '原稿で開く', () => host.revealSource(s.id), 'reveal-source');
 
       }
     }

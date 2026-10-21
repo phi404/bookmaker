@@ -815,6 +815,100 @@
         "local-first"
       ],
       "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-46",
+      "phase": "mvp",
+      "summary": "本文/作品情報/局所指定を保持する設定テンプレートの保存・読込・対象別適用・ID参照・Undo・作業再開",
+      "fixtures": [
+        "book-roadmap-evaluation",
+        "book-range-format",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "local-first",
+        "mobile-usability"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-47",
+      "phase": "mvp",
+      "summary": "紙面から原稿への明示的な文字位置移動、ルビ読み/縦中横/書記素/元改行の対応と選択時の画面維持",
+      "fixtures": [
+        "book-roadmap-evaluation",
+        "book-range-format",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "local-first",
+        "mobile-usability"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-48",
+      "phase": "mvp",
+      "summary": "原稿の文字列検索・一致の紙面対応・範囲/全置換・共通Undoと未完draft/IMEの保持",
+      "fixtures": [
+        "book-roadmap-evaluation",
+        "book-range-format",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "local-first",
+        "mobile-usability"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-49",
+      "phase": "mvp",
+      "summary": "タブ間の保存競合を拒否し、容量不足/素材スナップショットの参照更新失敗でも以前の保存と現入力を保持",
+      "fixtures": [
+        "book-roadmap-evaluation",
+        "book-range-format",
+        "book-local-page"
+      ],
+      "automated": [
+        "e2e"
+      ],
+      "manual": [
+        "local-first",
+        "mobile-usability"
+      ],
+      "specification": "docs/ARCHITECTURE.md"
+    },
+    {
+      "id": "R-50",
+      "phase": "mvp",
+      "summary": "組版依頼を実行中と最新保留へ集約し、古い応答を表示せず最後の原稿と同じ結果を生成",
+      "fixtures": [
+        "book-roadmap-evaluation",
+        "book-range-format",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "local-first",
+        "mobile-usability"
+      ],
+      "specification": "docs/ARCHITECTURE.md"
     }
   ]
 }

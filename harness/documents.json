@@ -272,6 +272,16 @@
       "path": "docs/regressions/P-015-use-case-audit.md",
       "purpose": "regression",
       "kind": "history"
+    },
+    {
+      "path": "docs/research/2026-10-21-typesetting-and-output.md",
+      "purpose": "technical-study",
+      "kind": "history"
+    },
+    {
+      "path": "docs/history/2026-10-21-roadmap-implementation.md",
+      "purpose": "stage-record",
+      "kind": "history"
     }
   ]
 }

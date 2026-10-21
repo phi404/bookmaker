@@ -3,14 +3,14 @@ import { advance, geometry, graphemes, pageMargins, validateStyle } from '../dom
 import type { PaginationBlock } from './paginator.js';
 import { imagePrintInfo } from '../domain/image-print.js';
 
-type Atom = Inline & { advanceEm: number; sizeMm: number; tcy?: boolean; displayText?: string };
+type Atom = Inline & { advanceEm: number; sizeMm: number; tcy?: boolean; displayText?: string; textFrom: number; textTo: number };
 const noStart = new Set(graphemes('、。，．・：；？！ー〜～ゝゞ々ヽヾぁぃぅぇぉっゃゅょァィゥェォッャュョ）〕］｝〉》」』】〙〗’”)]},.!?:;'));
 const noEnd = new Set(graphemes('（〔［｛〈《「『【〘〖‘“([{'));
 const pairs = new Set(['―', '—', '…', '‥']);
 const textOf = (r: Inline) => r.kind === 'ruby' ? r.base : r.text;
 const width = (s: string) => graphemes(s).reduce((sum,g)=>sum+advance(g),0);
 function atoms(runs: readonly Inline[], style: BookStyle, scale: number, capacity: number, warn: (code: string) => void): Atom[] {
-  const out: Atom[] = [], font = style.fontPt * 25.4 / 72;
+  const out: Atom[] = [], font = style.fontPt * 25.4 / 72; let textOffset = 0;
   for (const run of runs) {
     const size = run.fontPt ? run.fontPt * 25.4 / 72 : font * scale, factor = size / font, space = run.letterSpacingEm ?? 0;
     if (run.kind === 'ruby') {
@@ -19,7 +19,7 @@ function atoms(runs: readonly Inline[], style: BookStyle, scale: number, capacit
         let end = start + 1;
         const part = (to: number) => ({base:base.slice(start,to).join(''),reading:reading.slice(Math.floor(start*reading.length/base.length),Math.floor(to*reading.length/base.length)).join('')});
         while (end < base.length) { const next = part(end+1); if (Math.max(width(next.base),width(next.reading)*.5)*factor>capacity) break; end++; }
-        if (end < base.length) warn('ruby-split'); const piece=part(end); out.push({...run,...piece,orientation:/^[0-9A-Za-z]+$/u.test(piece.base)?run.orientation??'mixed':'mixed',sizeMm:size,advanceEm:(Math.max(width(piece.base),width(piece.reading)*.5)+space)*factor}); start=end;
+        if (end < base.length) warn('ruby-split'); const piece=part(end); out.push({...run,...piece,textFrom:textOffset,textTo:textOffset+piece.base.length,orientation:/^[0-9A-Za-z]+$/u.test(piece.base)?run.orientation??'mixed':'mixed',sizeMm:size,advanceEm:(Math.max(width(piece.base),width(piece.reading)*.5)+space)*factor}); textOffset+=piece.base.length; start=end;
       }
       continue;
     }
@@ -34,7 +34,7 @@ function atoms(runs: readonly Inline[], style: BookStyle, scale: number, capacit
       for (const glyph of units) {
         const displayText=numeric&&mode==='kanji' ? glyph.replace(/[0-9]/gu,n=>'〇一二三四五六七八九'[Number(n)]!) : undefined;
         const em=tcy?1:style.writingMode==='vertical-rl'&&(orientation==='upright'||displayText)?graphemes(displayText??glyph).length:width(glyph);
-        out.push({...run,text:glyph,orientation:sideways?'sideways':orientation,sizeMm:size,advanceEm:(em+space)*factor,...(tcy?{tcy:true}:{}),...(displayText?{displayText}: {})});
+        out.push({...run,text:glyph,textFrom:textOffset,textTo:textOffset+glyph.length,orientation:sideways?'sideways':orientation,sizeMm:size,advanceEm:(em+space)*factor,...(tcy?{tcy:true}:{}),...(displayText?{displayText}: {})});textOffset+=glyph.length;
       }
     }
   }

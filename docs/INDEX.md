@@ -35,6 +35,7 @@
 - **UI改修**：UI → PUBLISHING_MODEL → 関連するCAPABILITIES / SOURCE_FORMAT。操作の変更がモデル・保存・出力を壊さないか確認する。
 - **組版・出力改修**：TYPOGRAPHY → ARCHITECTURE → PUBLISHING_MODEL → CASE_CATALOG。新しい反例を独立したfixtureへ追加する。
 - **文書・ハーネス改修**：この文書 → ACCEPTANCE → HARNESS → QA → documents / requirements / boundariesの登録。
+- **次の作業・再利用先を選ぶ**：ROADMAP → [技術調査](research/2026-10-21-typesetting-and-output.md) → CASE_CATALOG → 試作/採用理由。候補の機能を現対応へ混ぜない。
 - **以前の理由を調べる**：DECISIONS → history/README → 対象タスク・回帰記録・出典。
 
 ## 仕様と証拠の優先関係
