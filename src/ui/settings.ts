@@ -17,6 +17,7 @@ export function settings(host: SettingsHost) {
   for (const [id, key] of [['font-size', 'fontPt'], ['line-height', 'lineHeight']] as const) input(id).addEventListener('input', () => changed({ ...host.getStyle(), [key]: number(id) }));
   numeric('font-pt', (s, v) => ({ ...s, fontPt: v }));
   numeric('column-gap', (s,v)=>({...s,columnGapMm:v}));
+  el('page-count-multiple').addEventListener('change', () => changed({ ...host.getStyle(), pageCountMultiple: Number(el<HTMLSelectElement>('page-count-multiple').value) as NonNullable<BookStyle['pageCountMultiple']> }));
   el('page-writing').addEventListener('change',()=>changed({...host.getStyle(),writingMode:el<HTMLSelectElement>('page-writing').value as BookStyle['writingMode']}));
   el('page-binding').addEventListener('change',()=>changed({...host.getStyle(),binding:el<HTMLSelectElement>('page-binding').value as BookStyle['binding']}));
   el('page-columns').addEventListener('change',()=>changed({...host.getStyle(),columns:Number(el<HTMLSelectElement>('page-columns').value) as 1|2}));
@@ -95,6 +96,7 @@ export function settings(host: SettingsHost) {
   }
   function sync(): void {
     const s = host.getStyle(), grid = geometry(s), uniform = s.pageLayout === 'uniform';
+    setValue('page-count-multiple', s.pageCountMultiple ?? 1);
     setValue('page-binding',s.binding);setValue('page-writing',s.writingMode);setValue('page-columns',s.columns);setValue('column-gap',s.columnGapMm??6);
     setValue('font-size', s.fontPt); el('font-size-value').textContent = `${s.fontPt} pt`;
     setValue('line-height', s.lineHeight); el('line-height-value').textContent = s.lineHeight.toFixed(2);

@@ -120,13 +120,13 @@ test('@flow right-bound spread exports the correct image half on each physical p
 
 test('@flow mobile free page multi-selection and alignment work without modifier keys', async ({page}) => {
   await page.setViewportSize({width:320,height:812});await page.goto('/');const ui=new BookUI(page);await freePage(page,ui);await page.locator('#add-element-text').click();await page.locator('#element-text').fill('二つ目');await ui.ready();
-  await page.locator('.element-row input[type=checkbox]').nth(1).check();await expect(page.locator('#context-inspector')).toContainText('2要素を選択');await page.getByRole('button',{name:'左右中央',exact:true}).click();await ui.ready();
+  await page.locator('#free-layers > summary').click();await page.locator('.element-row input[type=checkbox]').nth(1).check();await expect(page.locator('#edit-current-target')).toContainText('2要素');await page.getByRole('button',{name:'左右中央',exact:true}).click();await ui.ready();
   await ui.tab('プレビュー');await expect(page.locator('.selected-element-box')).toHaveCount(2);expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 });
 
 test('@flow deleting a selected manuscript range clears its stale editing target', async ({page}) => {
   await page.goto('/');const ui=new BookUI(page);await ui.paste('# 章\n残す段落\n消す一\n消す二');await ui.tab('原稿');await ui.manuscript().evaluate(e=>{e.focus();e.setSelectionRange(e.value.indexOf('消す一'),e.value.length);});await page.locator('#select-block-style').click();await expect(page.locator('#settings-heading')).toHaveText('選択範囲');
-  await ui.tab('原稿');await ui.manuscript().fill('# 章\n残す段落');await ui.ready();await expect(page.locator('#inspect-selection')).toBeDisabled();await expect(page.locator('#block-inspector')).toBeHidden();
+  await ui.tab('原稿');await ui.manuscript().fill('# 章\n残す段落');await ui.ready();await expect(page.locator('#edit-current-target')).toHaveAttribute('disabled', '');await expect(page.locator('#block-inspector')).toBeHidden();
 });
 
 test('@flow ruby validation resets when reopened for a new selection', async ({page}) => {

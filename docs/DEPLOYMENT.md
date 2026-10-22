@@ -10,7 +10,7 @@
 
 Nodeの推奨版は .node-version、開発依存は package-lock.json で固定する。npm ci → npm run build で dist/ を生成する。HTML/CSS、同梱フォント、PDF/ZIPライブラリ、Worker、PDF.jsの補助ファイルと各ライセンスを含む。
 
-配置先ディレクトリに依存するURLを書かない。HTML/CSSは相対参照、IOの同梱素材URLは io/resources.ts の import.meta.url を基準に解決する。外部ES Moduleの静的importは同じ配布先を参照し、harness/boundaries.json の明示したIO専用カタログで検査する。計算されたimport、未知の依存、純粋層のブラウザー利用は従来どおり拒否する。
+配置先ディレクトリに依存するURLを書かない。HTML/CSSは相対参照、IOの同梱素材URLは io/resources.ts の import.meta.url を基準に解決する。外部ES Moduleの静的importは同じ配布先を参照し、harness/boundaries.json の明示したレイヤー別カタログで検査する。Unicode改行規則は純粋な組版層で使い、同梱のfflateを分類データの展開だけに再利用する。計算されたimport、未知の依存、純粋層のブラウザー利用は従来どおり拒否する。
 
 Content Security Policyは scripts/static-server.mjs が正本。ビルド時にHTMLのmetaへ挿入し、ローカルサーバーでも同じ方針をヘッダーへ設定する。frame-ancestorsはヘッダー専用で、Pagesのmetaでは提供できない。外部CDN・分析を追加しない。
 

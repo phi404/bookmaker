@@ -15,9 +15,9 @@ function fontDataURL(): Promise<string> {
 export const DPI = 300;
 export const PAGE_PIXELS = { width: Math.round(105 * DPI / 25.4), height: Math.round(148 * DPI / 25.4) };
 export const pagePixels = (style: BookStyle) => ({ width: Math.round(style.page.widthMm * DPI / 25.4), height: Math.round(style.page.heightMm * DPI / 25.4) });
-export async function rasterize(page: BookPage, style: BookStyle): Promise<HTMLCanvasElement> {
+export async function rasterize(page: BookPage, style: BookStyle, transparent = false): Promise<HTMLCanvasElement> {
   await document.fonts.ready;
-  const svg = renderPageSVG(page, style, await fontDataURL());
+  const svg = renderPageSVG(page, style, await fontDataURL(), transparent);
   const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
   const pixels = pagePixels(style), canvas = document.createElement('canvas'); canvas.width = pixels.width; canvas.height = pixels.height;
   const image = new Image();

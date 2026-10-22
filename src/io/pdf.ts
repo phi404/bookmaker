@@ -1,19 +1,21 @@
 import type { BookStyle, BookPage } from '../domain/contracts.js';
 import type { BookNavigation } from '../domain/navigation.js';
+import type { Publication } from '../domain/model.js';
+import { preservedPDFPages, type VectorDocument, type VectorLibrary, type VectorPage } from './pdf-vectors.js';
 import { addPDFNavigation, type NavigationPDF, type NavigationPDFPage, type NavigationPDFLibrary } from './pdf-navigation.js';
 import { rasterize } from './raster.js';
 
 interface RawStream { getContentsSize(): number }
-interface PDFPage extends NavigationPDFPage { node: NavigationPDFPage['node'] & { newXObject(tag: string, reference: unknown): unknown }; pushOperators(...operators: unknown[]): void }
-interface PDFDocument extends NavigationPDF {
-  context: NavigationPDF['context'] & { flateStream(bytes: Uint8Array, dictionary: Record<string, string | number>): RawStream; register(stream: RawStream): unknown };
+interface PDFPage extends NavigationPDFPage, VectorPage { node: NavigationPDFPage['node'] & VectorPage['node'] }
+interface PDFDocument extends NavigationPDF, VectorDocument {
+  context: NavigationPDF['context'] & VectorDocument['context'] & { flateStream(bytes: Uint8Array, dictionary: Record<string, string | number>): RawStream; register(stream: RawStream): unknown };
   addPage(size: [number, number]): PDFPage;
   setTitle(title: string): void;
   setProducer(name: string): void;
   save(): Promise<Uint8Array>;
 }
-interface PDFLibrary extends NavigationPDFLibrary {
-  PDFDocument: { create(): Promise<PDFDocument> };
+interface PDFLibrary extends NavigationPDFLibrary, VectorLibrary {
+  PDFDocument: VectorLibrary['PDFDocument'] & { create(): Promise<PDFDocument> };
   pushGraphicsState(): unknown;
   popGraphicsState(): unknown;
   concatTransformationMatrix(a: number, b: number, c: number, d: number, e: number, f: number): unknown;
@@ -24,13 +26,18 @@ async function loadLibrary(): Promise<PDFLibrary> {
   return library ??= import('../vendor/pdf-lib.js').then(module => module as unknown as PDFLibrary).catch(() => { library = undefined; throw new Error('PDFライブラリを読み込めません。'); });
 }
 /** Retain compressed RGB streams, not an uncompressed image for every book page. */
-export async function exportPDF(pages: readonly BookPage[], style: BookStyle, title: string, signal: AbortSignal, progress: (count: number) => void, navigation: BookNavigation = { headings: [], links: [] }): Promise<Blob> {
+export async function exportPDF(pages: readonly BookPage[], style: BookStyle, title: string, signal: AbortSignal, progress: (count: number) => void, navigation: BookNavigation = { headings: [], links: [] }, preserve?: Publication): Promise<Blob> {
   const lib = await loadLibrary(), pdf = await lib.PDFDocument.create();
   const width = style.page.widthMm * 72 / 25.4, height = style.page.heightMm * 72 / 25.4;
   let total = 0; const destinations = new Map<number, PDFPage>();
   pdf.setTitle(title); pdf.setProducer('Folaxis');
+  const vectorPage = preserve ? preservedPDFPages(pdf, lib, preserve, style, signal, bytes => { total += bytes; if (total > 128 * 1024 * 1024) throw new Error('PDFが128MBを超えました。範囲を分けて書き出してください。'); }) : undefined;
   for (let index = 0; index < pages.length; index++) {
     signal.throwIfAborted();
+    if (vectorPage?.hasPDF(pages[index]!)) {
+      const page = pdf.addPage([width, height]); destinations.set(pages[index]!.number, page);
+      await vectorPage.draw(pages[index]!, page); progress(index + 1); continue;
+    }
     const canvas = await rasterize(pages[index]!, style);
     try {
       const context = canvas.getContext('2d'); if (!context) throw new Error('画像を生成できません。');

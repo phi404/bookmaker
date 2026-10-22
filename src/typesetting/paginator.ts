@@ -2,10 +2,8 @@ import type { Diagnostic, Block, BookStyle, BookPage, FlowPage, FlowLine, Inline
 import { advance, geometry, graphemes, validateStyle } from '../domain/style.js';
 import { matchesPageStart } from '../domain/page-order.js';
 import { paginateAdvanced } from './flow.js';
+import { wrapRuns as wrap } from './line-breaks.js';
 
-const NO_START = new Set(graphemes('、。，．・：；？！ー〜～ゝゞ々ヽヾぁぃぅぇぉっゃゅょァィゥェォッャュョ）〕］｝〉》」』】〙〗’”)]},.!?:;'));
-const NO_END = new Set(graphemes('（〔［｛〈《「『【〘〖‘“([{'));
-const PAIRS = new Set(['―', '—', '…', '‥']);
 type Run = Inline & { advanceEm: number };
 const textOf = (run: Inline) => run.kind === 'text' ? run.text : run.base;
 const width = (text: string) => graphemes(text).reduce((sum, g) => sum + advance(g), 0);
@@ -28,29 +26,9 @@ function atomsOf(inlines: readonly Inline[], capacity: number, warnRuby: () => v
   }
   return atoms;
 }
-function wrap(atoms: Run[], capacity: number, indent: number, warn: () => void): { indentEm: number; runs: Run[] }[] {
-  const lines: { indentEm: number; runs: Run[] }[] = [];
-  let start = 0;
-  const boundaryOK = (end: number): boolean => {
-    const previous = graphemes(atoms[end - 1] ? textOf(atoms[end - 1]!) : '').at(-1), next = graphemes(atoms[end] ? textOf(atoms[end]!) : '')[0];
-    return !NO_END.has(previous ?? '') && !NO_START.has(next ?? '') && !(previous === next && PAIRS.has(previous ?? ''));
-  };
-  while (start < atoms.length) {
-    const leading = lines.length ? 0 : indent;
-    let end = start, used = leading;
-    while (end < atoms.length && used + atoms[end]!.advanceEm <= capacity + .00001) used += atoms[end++]!.advanceEm;
-    if (end === start) { end++; warn(); }
-    if (end < atoms.length) {
-      const fitted = end; while (end > start && !boundaryOK(end)) end--;
-      if (end === start) { end = fitted; warn(); }
-    }
-    lines.push({ indentEm: leading, runs: atoms.slice(start, end) }); start = end;
-  }
-  return lines;
-}
 export type PaginationBlock = (Block | { kind: 'specialPage'; id: string; page: Omit<SpecialRenderedPage, 'number'> }) & { layoutStyle?: BookStyle; sectionId?: string };
 export function paginate(doc: { schemaVersion: 1; title: string; blocks: readonly PaginationBlock[] }, rawStyle: BookStyle): RenderedPages {
-  if (rawStyle.writingMode !== 'vertical-rl' || rawStyle.columns !== 1 || doc.blocks.some(b => b.layoutStyle || b.kind === 'specialPage' && b.page.imageInfo || 'inlines' in b && (b.insetEm || b.endInsetEm || b.beforeEm || b.afterEm || b.lineHeight || b.inlines.some(r => r.fontPt || r.letterSpacingEm || r.orientation || r.numbers || r.emphasis === 'circle' || r.emphasis === 'triangle')))) return paginateAdvanced(doc.blocks, rawStyle);
+  if (rawStyle.writingMode !== 'vertical-rl' || rawStyle.columns !== 1 || doc.blocks.some(b => b.layoutStyle || b.kind === 'specialPage' && b.page.imageInfo || 'inlines' in b && (b.insetEm || b.endInsetEm || b.beforeEm || b.afterEm || b.lineHeight || b.orphans || b.widows || b.inlines.some(r => r.fontPt || r.letterSpacingEm || r.orientation || r.numbers || r.emphasis === 'circle' || r.emphasis === 'triangle')))) return paginateAdvanced(doc.blocks, rawStyle);
   const style = validateStyle(rawStyle), grid = geometry(style), pages: BookPage[] = [], diagnostics: Diagnostic[] = [];
   const headingScale = Math.max(1, Math.min(1.15, (style.lineHeight - .04) / 1.51));
   let page: FlowPage = { kind: 'flow', number: 1, lines: [] }, column = 0, currentHeading = '', afterSpecial = false;

@@ -19,7 +19,7 @@ interface Host {
 const node = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) => { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; return e; };
 export function workspaceViews(host: Host) {
   const context = el('context-inspector'); let contextKey = '', abort: AbortController | undefined, replaceAssetId: string | undefined, insertingAssetId: string | undefined, assetAnchor: string | undefined;
-  const folded = new Set<string>();
+  const folded = new Set<string>(), expandedLayers = new Set<string>();
   function change(fn: (book: BookModel) => BookModel, message?: string): void {
     try { const book = host.book(); if (book.sourceDraft !== undefined) throw new Error('原稿の参照指定を完成・確定させてから操作してください。入力内容は保存されています。'); const next = fn(book); if (next !== book) host.change(next, message); }
     catch (error) { host.notify(error instanceof Error ? error.message : '設定を確認してください。'); sync(true); }
@@ -150,6 +150,13 @@ export function workspaceViews(host: Host) {
     const asset = host.book().assets.find(a => a.id === p.assetId);
     if (asset && asset.images.length > 1) field(parent, '素材内のページ', 'special-asset-page', p.assetPage, v => update(p.id, { assetPage: Number(v) }), asset.images.map((_, i) => [String(i + 1), `${i + 1}ページ`]));
     field(parent, '紙面への合わせ方', 'special-fit', p.fit, v => update(p.id, { fit: v as 'contain' | 'cover' }), [['contain', '全体を収める'], ['cover', '紙面いっぱい（端を切る）']]);
+    const captionDetails = details('図の説明', parent);
+    field(captionDetails, '説明と図番号', 'caption-mode', p.caption ? p.caption.numbered ? 'numbered' : 'plain' : '', v => { update(p.id, { caption: v ? { text: special(p.id).caption?.text ?? '', fontPt: special(p.id).caption?.fontPt ?? 8, numbered: v === 'numbered' } : undefined }); sync(true); }, [['', '付けない'], ['plain', '説明のみ'], ['numbered', '図番号と説明']]);
+    if (p.caption) {
+      const text = field(captionDetails, '説明', 'caption-text', p.caption.text, v => update(p.id, { caption: { ...special(p.id).caption!, text: v } }), undefined, true) as HTMLTextAreaElement;
+      text.maxLength = 1000;
+      field(captionDetails, '文字サイズ / pt', 'caption-font', p.caption.fontPt, v => update(p.id, { caption: { ...special(p.id).caption!, fontPt: Number(v) } }));
+    }
     pageDecorations(parent,p.id);
     caption('素材ビューから読み込んだ画像・PDFを指定します。', parent);
     const info=node('p');info.className='setting-caption';info.dataset.imageInfo=p.id;parent.append(info);
@@ -161,23 +168,25 @@ export function workspaceViews(host: Host) {
   function freePage(id: string, parent: HTMLElement, elementId?: string): void {
     const p = special(id);
     const ids=selectedElementIds(host.selection());
-    const list = node('div'); list.className = 'element-list'; list.setAttribute('aria-label', '重なり順（上が手前）'); parent.append(list);
+    const layers = details('要素と重なり順', parent); layers.id = 'free-layers'; layers.open = !ids.length || expandedLayers.has(id);
+    layers.querySelector('summary')!.addEventListener('click', () => { if (layers.open) expandedLayers.delete(id); else expandedLayers.add(id); });
+    const list = node('div'); list.className = 'element-list'; list.setAttribute('aria-label', '重なり順（上が手前）'); layers.append(list);
     for (const e of [...p.elements].reverse()) {
       const row=node('div');row.className='element-row';list.append(row);
-      if(p.elements.length>1){const box=node('input');box.type='checkbox';box.checked=ids.includes(e.id);box.setAttribute('aria-label',`${e.kind==='text'?e.text.slice(0,22)||'空のテキスト':e.kind==='image'?'画像':e.kind==='line'?'線':'矩形'}を追加選択`);box.addEventListener('change',()=>{const next=box.checked?[...new Set([...ids,e.id])]:ids.filter(x=>x!==e.id);host.select({kind:'special',id,...(next[0]?{elementId:next[0],elementIds:next}:{})});});row.append(box);}
-      const b = button(row, `${e.locked ? '固定 · ' : ''}${e.kind === 'text' ? e.text.slice(0, 22) || '空のテキスト' : e.kind === 'image' ? '画像' : e.kind === 'line' ? '線' : '矩形'}`, () => host.select({ kind: 'special', id, elementId: e.id }));
-      b.addEventListener('click',event=>{if(!event.shiftKey)return;event.stopImmediatePropagation();const selected=ids.includes(e.id)?ids.filter(x=>x!==e.id):[...ids,e.id];host.select({kind:'special',id,...(selected[0]?{elementId:selected[0],elementIds:selected}:{})});},{capture:true});
+      if(p.elements.length>1){const box=node('input');box.type='checkbox';box.checked=ids.includes(e.id);box.setAttribute('aria-label',`${e.kind==='text'?e.text.slice(0,22)||'空のテキスト':e.kind==='image'?'画像':e.kind==='line'?'線':'矩形'}を追加選択`);box.addEventListener('change',()=>{expandedLayers.add(id);const next=box.checked?[...new Set([...ids,e.id])]:ids.filter(x=>x!==e.id);host.select({kind:'special',id,...(next[0]?{elementId:next[0],elementIds:next}:{})});});row.append(box);}
+      const b = button(row, `${e.locked ? '固定 · ' : ''}${e.kind === 'text' ? e.text.slice(0, 22) || '空のテキスト' : e.kind === 'image' ? '画像' : e.kind === 'line' ? '線' : '矩形'}`, () => { expandedLayers.add(id); host.select({ kind: 'special', id, elementId: e.id }); });
+      b.addEventListener('click',event=>{if(!event.shiftKey)return;event.stopImmediatePropagation();expandedLayers.add(id);const selected=ids.includes(e.id)?ids.filter(x=>x!==e.id):[...ids,e.id];host.select({kind:'special',id,...(selected[0]?{elementId:selected[0],elementIds:selected}:{})});},{capture:true});
       b.setAttribute('aria-pressed', String(ids.includes(e.id)));
       b.dataset.elementRow = e.id;
     }
-    const a = actions(parent);
+    const a = actions(layers);
     for (const [kind, label] of [['text', '＋ 文字'], ['image', '＋ 画像'], ['line', '＋ 線'], ['rect', '＋ 矩形']] as const) button(a, label, () => {
       const current = host.book(), copy = { ...current, document: structuredClone(current.document) }, e = newElement(copy, kind);
       change(() => updateSpecialPage(copy, id, { elements: [...special(id).elements, e] })); host.select({ kind: 'special', id, elementId: e.id });
     }, `add-element-${kind}`);
     const e = p.elements.find(e => e.id === elementId);
-    if(ids.length>1){const g=group(`${ids.length}要素を選択`,parent),align=actions(g);for(const [value,label]of [['left','左端'],['center-x','左右中央'],['right','右端'],['top','上端'],['center-y','上下中央'],['bottom','下端']]as const)button(align,label,()=>{change(b=>{let next=b;for(const selected of ids)if(!specialFrom(next,id).elements.find(e=>e.id===selected)?.locked)next=alignPageElement(next,id,selected,value);return next;});sync(true);});const a=actions(g);for(const [action,label]of [['duplicate','複製'],['lock','固定 / 解除'],['delete','削除']]as const)button(a,label,()=>elementAction(action));}
-    else if (e) elementFields(id, e, group('選択した要素', parent));
+    if(ids.length>1){const g=group(undefined,parent),align=actions(g);for(const [value,label]of [['left','左端'],['center-x','左右中央'],['right','右端'],['top','上端'],['center-y','上下中央'],['bottom','下端']]as const)button(align,label,()=>{change(b=>{let next=b;for(const selected of ids)if(!specialFrom(next,id).elements.find(e=>e.id===selected)?.locked)next=alignPageElement(next,id,selected,value);return next;});sync(true);});const a=actions(g);for(const [action,label]of [['duplicate','複製'],['lock','固定 / 解除'],['delete','削除']]as const)button(a,label,()=>elementAction(action));}
+    else if (e) elementFields(id, e, group(undefined, parent));
     const d=details('自由ページの詳細',parent);pageDecorations(d,id);field(d,'移動を揃える間隔 / mm（0で自由）','free-snap',p.snapMm??1,v=>update(id,{snapMm:Number(v)}));
     pageStyleFields(d,'special',()=>special(id),patch=>update(id,patch));
     if (p.originalTemplate) button(actions(details('元のテンプレート', parent)), 'テンプレートへ戻す', () => {
@@ -224,7 +233,6 @@ export function workspaceViews(host: Host) {
     button(actions(parent), 'この柱を削除', () => { change(b => ({ ...b, runningElements: b.runningElements.filter(e => e.id !== id) })); host.select({ kind: 'book' }); });
   }
   function pagesFields(numbers: number[], parent: HTMLElement): void {
-    caption(`通しページ ${numbers.join('・')} を選択しています。`, parent);
     caption('この指定はページの位置に固定されます。本文が増えても章には追従しません。字数や行数を変える設定は本・段落に適用します。', parent);
     const existing = host.book().pageOverrides.find(r => r.pages.length === numbers.length && r.pages.every(n => numbers.includes(n)));
     const edit = (patch: object) => change(b => {
@@ -249,6 +257,10 @@ export function workspaceViews(host: Host) {
     const d = details('章全体の書式', parent);
     const current=()=>host.book().document.children.find(s=>s.id===id)!,edit=(patch:object)=>change(b=>({...b,document:{...b.document,children:b.document.children.map(s=>s.id===id?{...s,...patch}:s)}}));
     const sectionLocal=(patch:object)=>{const next={...current().localStyle} as Record<string,unknown>;for(const [key,value] of Object.entries(patch))if(value===undefined)delete next[key];else next[key]=value;edit({localStyle:next});};
+    const numbering = details('ページ番号の区切り', parent);
+    field(numbering, 'この章の開始番号', 'chapter-number-start', section.localStyle?.numberStart === undefined ? '' : section.localStyle.numberStart, v => sectionLocal({ numberStart: v === '' ? undefined : Number(v) }));
+    field(numbering, '番号の表し方', 'chapter-number-format', section.localStyle?.numberFormat ?? '', v => sectionLocal({ numberFormat: v || undefined }), [['', '前の系列に従う'], ['decimal', '1, 2, 3'], ['roman', 'i, ii, iii'], ['Roman', 'I, II, III']]);
+    caption('番号を区切る章は、新しいページから始まります。空欄に戻すと指定を解除します。', numbering);
     field(d,'章のスタイル','chapter-style',section.styleId??'',v=>edit({styleId:v||undefined}),[['','本全体に従う'],...host.book().styles.sections!.map(s=>[s.id,s.name] as const)]);
     field(d,'版面のスタイル','chapter-page-style',section.localStyle?.pageStyleId??'',v=>sectionLocal({pageStyleId:v||undefined}),pageOptions());
     field(d,'本文のスタイル','chapter-body-style',section.localStyle?.paragraphStyleId??'',v=>sectionLocal({paragraphStyleId:v||undefined}),[['','本全体に従う'],...host.book().styles.paragraphs.map(s=>[s.id,s.name] as const)]);
@@ -272,7 +284,13 @@ export function workspaceViews(host: Host) {
     outline(); assets();
     el('book-settings').hidden = mode !== 'body'; el('typography-settings').hidden = mode !== 'styles';
     el('block-inspector').hidden = !['block', 'range'].includes(s.kind);
-    el('inspect-book').setAttribute('aria-selected', String(mode === 'body')); el('inspect-styles').setAttribute('aria-selected', String(mode === 'styles')); el('inspect-selection').setAttribute('aria-selected', String(mode === 'selection')); el<HTMLButtonElement>('inspect-selection').disabled = chosen.kind === 'book';
+    el('inspect-book').setAttribute('aria-selected', String(mode === 'body')); el('inspect-styles').setAttribute('aria-selected', String(mode !== 'body'));
+    el('inspect-book').tabIndex = mode === 'body' ? 0 : -1; el('inspect-styles').tabIndex = mode === 'body' ? -1 : 0;
+    el('edit-target-row').hidden = mode === 'body';
+    const picker = el<HTMLSelectElement>('typography-target'), currentTarget = el<HTMLOptionElement>('edit-current-target');
+    currentTarget.hidden = chosen.kind === 'book'; currentTarget.disabled = chosen.kind === 'book';
+    if (mode === 'selection') picker.value = 'context';
+    else if (picker.value === 'context') picker.value = 'all';
     el('edit-selection').hidden = chosen.kind === 'book';
     el('preview-hint').dataset.selected = String(chosen.kind !== 'book');
     el('inspector-scope').parentElement!.dataset.scope = s.kind;
@@ -280,11 +298,31 @@ export function workspaceViews(host: Host) {
     const excerpt = description && 'inlines' in description ? description.inlines.map(i => i.kind === 'ruby' ? i.base : i.text).join('').slice(0, 26) : '';
     el('selection-hint').textContent = chosen.kind === 'range' ? `${chosen.ids.length}段落を選択` : chosen.kind === 'block' ? `${excerpt || '空の段落'}` : chosen.kind === 'pages' ? `通しページ ${chosen.numbers.join('・')}` : chosen.kind === 'book' ? '' : chosen.kind === 'special' ? `${special(chosen.id)?.name ?? 'ページ'}` : '選択した箇所';
     const labels = { book: mode === 'styles' ? '書式' : '本の設定', block: '選択した文章', range: '選択範囲', chapter: '章の設定', special: s.kind === 'special' ? special(s.id)?.name ?? 'ページ' : 'ページ', running: '柱', pages: '選択ページ' };
+    currentTarget.textContent = chosen.kind === 'range' ? `いまの範囲 · ${chosen.ids.length}段落` : chosen.kind === 'special' ? special(chosen.id)?.name ?? '自由ページ' : chosen.kind === 'chapter' ? 'いまの章' : chosen.kind === 'pages' ? `通しページ ${chosen.numbers.join('・')}` : chosen.kind === 'running' ? 'いまの柱' : chosen.kind === 'block' ? excerpt || 'いまの段落' : 'いまの対象';
+    let canvasTargets = 0;
+    if (chosen.kind === 'special') {
+      const page = special(chosen.id), ids = selectedElementIds(chosen), elements = page.elements.filter(e => ids.includes(e.id));
+      canvasTargets = elements.length;
+      if (elements.length) {
+        const e = elements[0]!, name = elements.length > 1 ? `${elements.length}要素` : e.kind === 'text' ? '文字' : e.kind === 'image' ? '画像' : e.kind === 'line' ? '線' : '矩形';
+        currentTarget.textContent = `${page.name} · ${name}`;
+      }
+    }
     el('settings-heading').textContent = labels[s.kind];
-    el('inspector-scope').textContent = s.kind === 'book' ? mode === 'styles' ? '同じ書式の文章をまとめて変更' : '判型・版面・ページの装飾' : s.kind === 'range' ? `${s.ids.length}段落 · 原稿にも反映` : s.kind === 'chapter' ? `この章全体 · ${range(new Set(b.document.children.find(x => x.id === s.id)?.children.map(x => x.id) ?? []))}` : s.kind === 'pages' ? '通しページに固定' : s.kind === 'running' ? '内容・配置・適用範囲' : s.kind === 'block' ? '原稿にも反映' : 'このページに適用';
-    if(s.kind==='block'||s.kind==='range'){const target=host.textTarget();if(target.scope!=='selection'){el('settings-heading').textContent=target.label;el('inspector-scope').textContent=`${target.count}段落 · 原稿にも反映`;}}
+    el('settings-heading').classList.toggle('sr-only', mode !== 'body');
+    if (mode === 'styles') el('settings-heading').textContent = `${picker.selectedOptions[0]?.textContent ?? '全体の基本'}の書式`;
+    el('inspector-scope').textContent = s.kind === 'book' ? mode === 'styles' ? '同じ書式の文章をまとめて変更' : '判型・版面・ページの装飾' : s.kind === 'range' ? '原稿にも反映' : s.kind === 'chapter' ? `この章全体 · ${range(new Set(b.document.children.find(x => x.id === s.id)?.children.map(x => x.id) ?? []))}` : s.kind === 'pages' ? '通しページに固定' : s.kind === 'running' ? '内容・配置・適用範囲' : s.kind === 'block' ? '原稿にも反映' : 'このページに適用';
+    if (mode === 'selection' && canvasTargets) { el('settings-heading').textContent = currentTarget.textContent; el('inspector-scope').textContent = canvasTargets > 1 ? '選んだ要素に適用' : 'この要素に適用'; }
+    if(s.kind==='block'||s.kind==='range'){const target=host.textTarget();if(target.scope!=='selection'){el('settings-heading').textContent=target.label;currentTarget.textContent=target.label;el('inspector-scope').textContent=`${target.count}段落 · 原稿にも反映`;}}
     const key = JSON.stringify(s);
     if (key !== contextKey || force) {
+      const detailPath = (detail: HTMLDetailsElement): string => {
+        const parts: string[] = []; let current: HTMLDetailsElement | null = detail;
+        while (current && context.contains(current)) { parts.unshift(current.querySelector(':scope > summary')?.textContent ?? ''); current = current.parentElement?.closest('details') ?? null; }
+        return parts.join('/');
+      };
+      const sameTarget = key === contextKey, detailState = new Map(sameTarget ? [...context.querySelectorAll<HTMLDetailsElement>('details')].map(d => [detailPath(d), d.open] as const) : []);
+      const focused = sameTarget && context.contains(document.activeElement) ? (document.activeElement as HTMLElement).id : '';
       contextKey = key; context.replaceChildren();
       if (s.kind === 'special') {
         const p = special(s.id); if (p) { const g = group(); if (p.representation === 'template') pageFields(s.id, g); else if (p.representation === 'asset') assetPicker(g, p); else freePage(s.id, g, s.elementId); }
@@ -295,6 +333,8 @@ export function workspaceViews(host: Host) {
         button(actions(context), '原稿で開く', () => host.revealSource(s.id), 'reveal-source');
 
       }
+      if (sameTarget) for (const detail of context.querySelectorAll<HTMLDetailsElement>('details')) { const state = detailState.get(detailPath(detail)); if (state !== undefined) detail.open = state; }
+      if (focused) { const control = document.getElementById(focused); if (control && context.contains(control) && control.offsetParent !== null) control.focus({ preventScroll: true }); }
     }
     for(const el of context.querySelectorAll<HTMLElement>('[data-image-info]')){const ref=flattenDocument(b.document).find(x=>x.kind==='specialPage'&&x.pageId===el.dataset.imageInfo),pages=host.result()?.pages??[],info=pages.flatMap(p=>{if(p.kind!=='flow')return p.pageId===el.dataset.imageInfo&&p.imageInfo?[p.imageInfo]:[];const at=p.elements?.findIndex(e=>e.blockId===ref?.id)??-1;return at>=0&&p.imageInfo?.[at]?[p.imageInfo[at]]:[];})[0];el.textContent=info?`${info.sourcePixels.join(' × ')} px · 配置後 約${Math.round(info.effectiveDpi)} dpi · 仕上がり ${info.trimMm.join(' × ')} mm${info.bleedMm?` · 塗り足し想定 ${info.bleedMm} mm`:''}${info.originalMm?` · 元のPDF ${info.originalMm.map(n=>n.toFixed(1)).join(' × ')} mm`:''}`:'素材が未指定、または再組版中です。';}
     const convert=context.querySelector<HTMLButtonElement>('#convert-free');

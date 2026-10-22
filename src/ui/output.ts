@@ -7,14 +7,16 @@ import { rasterize, rasterizeSpread, pngBlob } from '../io/raster.js';
 import { exportPDF } from '../io/pdf.js';
 import { downloadBlob } from '../io/text.js';
 import { zipBlobs } from '../io/zip.js';
+import { productionBundle } from '../io/bundle.js';
+import { imageExportPlan } from '../domain/image-export.js';
 import { el, input, setValue } from './dom.js';
 
 interface OutputState { revision: number; diagnostics: readonly Diagnostic[]; source: string; project: Publication; filename: string; style: BookStyle; pages: readonly BookPage[]; selected: number; viewMode: ViewMode }
 interface OutputHost { state(): OutputState; ready(): boolean; rename(name: string): void; active(open: boolean): void; revealIssue(blockId?: string, elementId?: string, pageNumber?: number): void }
-type Format = 'png' | 'pdf' | 'zip' | 'spread' | 'project' | 'source';
+type Format = 'png' | 'pdf' | 'zip' | 'spread' | 'project' | 'source' | 'bundle';
 export function output(host: OutputHost) {
   const dialog = el<HTMLDialogElement>('export-dialog'); let controller: AbortController | undefined, savedURL: string | undefined, savedKey = '', newProjectReady = false, checkRevision = -1, preflightKey = '';
-  const key = (s: OutputState) => `${s.revision}:${s.filename}:${s.selected}:${el<HTMLSelectElement>('export-scope').value}:${input('export-from').value}:${input('export-to').value}`;
+  const key = (s: OutputState) => `${s.revision}:${s.filename}:${s.selected}:${el<HTMLSelectElement>('export-scope').value}:${input('export-from').value}:${input('export-to').value}:${el<HTMLSelectElement>('export-batch-size').value}:${el<HTMLSelectElement>('export-pdf-mode').value}`;
   const lossCodes = new Set(['element-overflow', 'text-box-overflow', 'asset-missing']);
   function clearResult(): void {
     if (savedURL) URL.revokeObjectURL(savedURL); savedURL = undefined; savedKey = ''; newProjectReady = false; el('export-result').hidden = true; el('new-project-confirmation').hidden = true;
@@ -43,7 +45,7 @@ export function output(host: OutputHost) {
     el('export-preflight').hidden = dialog.dataset.intent === 'new-project' || !issues.length && !draft && host.ready();
     el('export-loss-choice').hidden = !hasLoss || draft || !host.ready(); input('export-accept-loss').disabled = !host.ready();
     for (const id of ['export-png', 'export-pdf', 'export-png-all', 'export-spread']) el<HTMLButtonElement>(id).disabled = !enabled;
-    for (const id of ['export-project', 'export-source']) el<HTMLButtonElement>(id).disabled = !!controller;
+    for (const id of ['export-project', 'export-source', 'export-bundle']) el<HTMLButtonElement>(id).disabled = !!controller;
     el<HTMLButtonElement>('start-new-project').disabled = !canStartNew(); el<HTMLButtonElement>('new-project-save').disabled = !!controller;
     const size = s.pages[s.selected-1]?.style?.page ?? s.style.page, pixels = [size.widthMm, size.heightMm].map(mm => Math.round(mm / 25.4 * 300));
     el('png-label').textContent = `${s.selected}ページを一枚の画像に`; el('export-info').textContent = `${pixels.join(' × ')} px · ${s.pages.length}ページ · 300 dpi`;
@@ -66,7 +68,7 @@ export function output(host: OutputHost) {
     sync(); dialog.showModal(); host.active(true);
   }
   async function write(format: Format, forNewProject = false): Promise<boolean> {
-    const imageOutput = format !== 'project' && format !== 'source';
+    const imageOutput = !['project', 'source', 'bundle'].includes(format);
     if (controller || imageOutput && (!host.ready() || host.state().diagnostics.some(d => lossCodes.has(d.code)) && !input('export-accept-loss').checked)) return false;
     commitName();
     const s = structuredClone(host.state()), safeName = s.filename.replace(/[\\/:*?"<>|\u0000-\u001F]/gu, '_').slice(0, 100) || '原稿';
@@ -78,18 +80,19 @@ export function output(host: OutputHost) {
       if (format === 'project') {
         blob = new Blob([serializeProject({ ...s.project, metadata: { filename: s.filename, viewMode: s.viewMode, selected: s.selected } })], { type: 'application/json' }); name = `${safeName}.book.json`;
       } else if (format === 'source') { blob = new Blob([s.source], { type: 'text/plain;charset=utf-8' }); name = `${safeName}.${s.project.syntax === 'markdown' ? 'md' : 'txt'}`; }
+      else if (format === 'bundle') { blob = await productionBundle({ ...s.project, metadata: { filename: s.filename, viewMode: s.viewMode, selected: s.selected } }, current.signal); name = `${safeName}.folaxis.zip`; }
       else if (format === 'png' || format === 'spread') {
         const spread = spreadPages(s.selected, s.pages.length, s.style.binding), canvas = format === 'png' ? await rasterize(s.pages[s.selected - 1]!, s.style) : await rasterizeSpread(spread.left ? s.pages[spread.left - 1] : undefined, spread.right ? s.pages[spread.right - 1] : undefined, s.style);
         try { current.signal.throwIfAborted(); blob = await pngBlob(canvas); } finally { canvas.width = 0; canvas.height = 0; }
         name = `${safeName}-${format === 'spread' ? '見開き-' : ''}${String(s.selected).padStart(3, '0')}.png`;
       } else {
         const pages = range(s), span = pages.length === s.pages.length ? '' : `-${pages[0]!.number}-${pages.at(-1)!.number}`;
-        if (format === 'pdf') { blob = await exportPDF(pages, s.style, s.filename, current.signal, count => { el('export-progress-text').textContent = `${count} / ${pages.length} ページを準備しました`; }, bookNavigation(s.project, s.pages, pages)); name = `${safeName}${span}.pdf`; }
+        if (format === 'pdf') { blob = await exportPDF(pages, s.style, s.filename, current.signal, count => { el('export-progress-text').textContent = `${count} / ${pages.length} ページを準備しました`; }, bookNavigation(s.project, s.pages, pages), el<HTMLSelectElement>('export-pdf-mode').value === 'preserve' ? s.project : undefined); name = `${safeName}${span}.pdf`; }
         else {
-          const files: Record<string, Uint8Array> = {}; let total = 0;
+          const files: Record<string, Uint8Array> = {}, plan = imageExportPlan(pages, Number(el<HTMLSelectElement>('export-batch-size').value)); let total = 0;
           for (const [i, page] of pages.entries()) {
             current.signal.throwIfAborted(); const canvas = await rasterize(page, s.style);
-            try { const data = new Uint8Array(await (await pngBlob(canvas)).arrayBuffer()); total += data.byteLength; if (total > 128 * 1024 * 1024) throw new Error('画像が128MBを超えました。範囲を分けて書き出してください。'); files[`${safeName}-${String(page.number).padStart(5, '0')}.png`] = data; }
+            try { const data = new Uint8Array(await (await pngBlob(canvas)).arrayBuffer()); total += data.byteLength; if (total > 128 * 1024 * 1024) throw new Error('画像が128MBを超えました。範囲を分けて書き出してください。'); files[`${plan[i]!.folder}${safeName}-${String(page.number).padStart(5, '0')}.png`] = data; }
             finally { canvas.width = 0; canvas.height = 0; }
             el('export-progress-text').textContent = `${i + 1} / ${pages.length} ページを準備しました`; await new Promise<void>(resolve => setTimeout(resolve, 0));
           }
@@ -98,7 +101,7 @@ export function output(host: OutputHost) {
       }
       current.signal.throwIfAborted(); if (key(host.state()) !== startedKey) throw new Error('作業が更新されました。最新の内容で書き出してください。');
       savedURL = URL.createObjectURL(blob); savedKey = startedKey;
-      const save = el<HTMLAnchorElement>('save-output'), show = el<HTMLAnchorElement>('open-output'); save.href = savedURL; save.download = name; show.href = savedURL; show.hidden = format === 'zip';
+      const save = el<HTMLAnchorElement>('save-output'), show = el<HTMLAnchorElement>('open-output'); save.href = savedURL; save.download = name; show.href = savedURL; show.hidden = format === 'zip' || format === 'bundle';
       el('export-result-text').textContent = name; el('export-result').hidden = false;
       newProjectReady = forNewProject && format === 'project'; el('new-project-confirmation').hidden = !newProjectReady;
       downloadBlob(blob, name); if (newProjectReady) save.focus(); return true;
@@ -110,9 +113,11 @@ export function output(host: OutputHost) {
   el('export-cancel').addEventListener('click', () => controller?.abort());
   el('new-project-save').addEventListener('click', () => { void write('project', true); });
   el('export-scope').addEventListener('change', sync);
+  el('export-batch-size').addEventListener('change', sync);
+  el('export-pdf-mode').addEventListener('change', sync);
   for (const id of ['export-from', 'export-to', 'export-accept-loss']) input(id).addEventListener('change', sync);
   input('export-name').addEventListener('input', () => { host.rename(input('export-name').value); sync(); });
   input('export-name').addEventListener('change', () => { commitName(); sync(); });
-  for (const [id, format] of [['export-png', 'png'], ['export-pdf', 'pdf'], ['export-png-all', 'zip'], ['export-spread', 'spread'], ['export-project', 'project'], ['export-source', 'source']] as const) el(id).addEventListener('click', () => { void write(format); });
+  for (const [id, format] of [['export-png', 'png'], ['export-pdf', 'pdf'], ['export-png-all', 'zip'], ['export-spread', 'spread'], ['export-project', 'project'], ['export-source', 'source'], ['export-bundle', 'bundle']] as const) el(id).addEventListener('click', () => { void write(format); });
   return { sync, open, canStartNew, saveProject(forNewProject = false) { open(forNewProject ? 'new-project' : 'export'); return write('project', forNewProject); } };
 }

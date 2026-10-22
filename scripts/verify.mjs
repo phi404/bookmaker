@@ -20,6 +20,7 @@ if (!harnessOnly) steps.push(
   ['compatibility', ['scripts/browser-test.mjs', '--config=playwright.compatibility.config.mjs']],
   ['visual', ['scripts/browser-test.mjs', '--grep', '@visual']],
   ['exports', ['scripts/run-export-check.mjs']],
+  ['preserved-pdf', ['scripts/check-preserved-pdf.mjs']],
   ['manual-review', ['scripts/check-manual.mjs']],
 );
 const report = { kind: harnessOnly ? 'harness' : 'product', startedAt: new Date().toISOString(), phase: (await readJson('harness/config.json')).phase, node: process.version, platform: process.platform, sourceFingerprint: await fingerprint(), status: 'running', steps: [] };

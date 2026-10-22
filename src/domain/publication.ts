@@ -144,7 +144,7 @@ export function validatePublication(value: unknown): Publication {
   object(value, ['schemaVersion', 'syntax', 'source', 'document', 'styles', 'style', 'overrides', 'runningElements', 'metadata', 'specialPages', 'assets', 'pageOverrides', 'sourceDraft'], 'プロジェクト');
   if (![2, 3].includes(value.schemaVersion as number) || !['legacy', 'markdown'].includes(value.syntax as string)) throw new Error('未対応のプロジェクト形式です。');
   const syntax = value.syntax as SourceSyntax, documentTree = validateTree(value.document), styles = validateCatalog(value.styles), style = validateStyle(value.style);
-  object(value.style, ['page', 'writingMode', 'binding', 'columns', 'columnGapMm', 'fontFamily', 'fontPt', 'lineHeight', 'margins', 'maxCharsPerLine', 'maxLinesPerPage', 'pageLayout', 'paragraphIndent', 'paperColor', 'folio', 'runningHeads'], '本の組版設定');
+  object(value.style, ['page', 'writingMode', 'binding', 'columns', 'columnGapMm', 'fontFamily', 'fontPt', 'lineHeight', 'margins', 'maxCharsPerLine', 'maxLinesPerPage', 'pageLayout', 'paragraphIndent', 'paperColor', 'folio', 'runningHeads', 'pageCountMultiple'], '本の組版設定');
   object(value.style.page, ['widthMm', 'heightMm'], '判型'); object(value.style.margins, ['topMm', 'bottomMm', 'innerMm', 'outerMm'], '余白');
   if (value.style.folio) {
     object(value.style.folio, ['enabled', 'fromPage', 'startNumber', 'position', 'fontPt', 'insetMm', 'rules'], 'ページ番号');

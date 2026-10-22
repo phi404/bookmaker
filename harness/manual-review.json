@@ -1,32 +1,32 @@
 {
-  "revision": "0e19147219504ad14ec30f46c7249e2f311a6713bfc843da7b3543485aab9694",
-  "environment": "Windows; Node 24.22.1; Playwright 1.63.0 / Chromium 153.0.8010.12; Firefox 155.0 / WebKit 26.6 core flows; ja-JP; Asia/Tokyo; IAB 1280x720 and 320x800; Poppler 120 dpi; Python 3.12 / Pillow / pypdf",
-  "reviewer": "NOEMA; AI code/UI/visual review on 2026-10-22; not a human usability study",
+  "revision": "e581a4abe6d2e239e32cba30efd3a6d02363a4fddfe5b61777f9e45b28f27668",
+  "environment": "Windows; Node 24.22.1; Playwright 1.63.0 / Chromium 153.0.8010.12; Firefox 155 / WebKit 26.6 limited core flows; ja-JP; Asia/Tokyo; 1440/1024/375/320 CSS px; Poppler 120 dpi; bundled Python/Pillow/pypdf. Current visual evidence uses the existing verification harness; CUA Chrome capture/upload limitations recorded separately.",
+  "reviewer": "NOEMA; AI UI/PDF visual review on 2026-10-22; not a human usability study",
   "items": {
     "default-page-quality": {
       "status": "pass",
-      "evidence": "output/release-readiness-2026-10-22/18-final-workspace.png",
-      "notes": "Fresh frozen-source IAB reload and saved screenshot inspected. White paper, manuscript wrapping and setting tabs remain clear. Eleven changed reference images were individually reviewed with reasons and before/after hashes; zero changed-pixel contract retained. Full gate result recorded separately."
+      "evidence": "output/remaining-2026-10-22/context-review/desktop-context.png",
+      "notes": "Current-source target/common-style views inspected. Quiet Book/Edit navigation, explicit target, visible alignment, same source projection, white paper and stable workspace. Ten unique changed references inspected individually; hard checks and zero-pixel limits retained."
     },
     "vertical-glyphs-and-spacing": {
       "status": "pass",
-      "evidence": "output/release-readiness-2026-10-22/pdf-review/exceptions/page-1.png",
-      "notes": "All main and excerpt pages inspected in nine independent Poppler contact sheets plus native foundation, A5 ruby/emphasis/Latin and hierarchical TOC views. No observed unintended clipping, overlap or mirroring in these fixtures. This is not complete JLREQ or arbitrary-glyph validation."
+      "evidence": "output/remaining-2026-10-22/pdf-review-final/exceptions/page-1.png",
+      "notes": "All raster contact sheets and native ruby/emphasis/Latin/TCY and TOC views inspected. No observed unintended clipping/overlap in these fixtures. Full glyph metrics, missing-glyph detection, advanced ruby and JLREQ remain unfinished."
     },
     "mobile-usability": {
       "status": "pass",
-      "evidence": "output/release-readiness-2026-10-22/19-final-mobile-save.png",
-      "notes": "Frozen-source 320x800 manuscript, export and focused JSON save views captured and inspected. Close/save/start controls fit; original manuscript remains until explicit continuation. Real phones, software keyboards, actual Safari, assistive-technology and human usability remain untested."
+      "evidence": "output/remaining-2026-10-22/context-review/free-object-320.png",
+      "notes": "Current 320px object and common-style forms inspected. Selected type/scope, direct properties, deliberate layer multi-selection, focus and preserved source checked in the harness. Real phones, software keyboards, actual Safari/IME/assistive technology and human usability are untested."
     },
     "export-appearance": {
       "status": "pass",
-      "evidence": "output/release-readiness-2026-10-22/pdf-review/final-review.json",
-      "notes": "All 35 current-source physical pages from seven primary and two excerpt PDFs rendered independently and inspected. Hierarchical TOC indentation, original excerpt folios, intentional blanks, external pages and spread halves are coherent. Machine image/navigation checks are separate. Raster RGB only; no PDF/X, CMYK or embedded/searchable-text guarantee."
+      "evidence": "output/remaining-2026-10-22/pdf-review-final/final-review.json",
+      "notes": "All 35 raster physical pages from seven primary and two actual excerpt PDFs independently rendered and inspected, plus all five static-PDF preservation comparisons. Four rotations, nonzero crop, UserUnit, transparency, original text and CMYK operators independently checked. No body text-PDF, arbitrary-PDF, PDF/X or print-shop approval claim."
     },
     "local-first": {
       "status": "pass",
-      "evidence": "output/release-readiness-2026-10-22/ui-review.json",
-      "notes": "Save confirmation and retry share the same local writer; no second book model or remote manuscript service. Existing restoration, conflict, quota and source-preservation checks remain enabled. Official vendored PDF.js/fflate packages have integrity and license records. Publication excludes output, runtime manuscripts/assets and local storage; release/tag creation is not performed."
+      "evidence": "output/remaining-2026-10-22/ui-review.json",
+      "notes": "Canonical book/source kept local. Delayed-save regression, conflict/quota/reload, source loss protection, portable ZIP hashes/font continuity and minimal Worker transfer checked. Publication uses code/dependencies only; runtime manuscripts, imported assets and output are excluded."
     }
   }
 }

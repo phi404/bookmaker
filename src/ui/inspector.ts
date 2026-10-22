@@ -18,16 +18,11 @@ export function blockInspector(host: Host) {
   function sync(): void {
     const ids = targets(), blocks = flattenDocument(host.project().document).filter(b => ids.has(b.id) && 'inlines' in b), block = blocks[0]; panel.hidden = !block; if (!block || !('inlines' in block)) return;
     const styles = block.kind === 'heading' ? host.project().styles.headings : host.project().styles.paragraphs;
-    el('block-inspector-title').textContent = blocks.length > 1 ? `${blocks.length}段落の書式` : block.kind === 'heading' ? '見出しの書式' : '文章の書式';
     const select = el<HTMLSelectElement>('block-style'), mixed = blocks.some(b => blockStyleId(b) !== blockStyleId(block));
     select.replaceChildren(new Option(mixed ? '書式が混在' : '書式を選ぶ', ''), ...styles.map(s => new Option(s.name, s.id))); select.value = mixed ? '' : blockStyleId(block);
     select.disabled = blocks.some(b => b.kind !== block.kind);
-    el('block-selection-label').textContent = blocks.map(b => 'inlines' in b ? b.inlines.map(i => i.kind === 'ruby' ? i.base : i.text).join('') : '').join(' / ').slice(0, 64) || '空の文章';
     const names = [...new Set(blocks.map(b => {const family=b.kind==='heading'?host.project().styles.headings:host.project().styles.paragraphs;return family.find(s=>s.id===blockStyleId(b))?.name??'共通書式';}))];
     el('block-local-count').textContent = `${names.join(' / ')}から継承 · 個別指定 ${blocks.reduce((n, b) => n + localStyleCount(b), 0)}件`;
-    el('block-inspector-title').textContent = `${blocks.length}段落の書式`;
-    const excerpt=(b:TreeBlock)=>'inlines'in b?b.inlines.map(i=>i.kind==='ruby'?i.base:i.text).join(''):'';
-    el('block-selection-label').textContent = blocks.length===1?excerpt(block).slice(0,40)||'空の段落':`${excerpt(block).slice(0,24)} … ${excerpt(blocks.at(-1)!).slice(0,16)}`;
     const mixedValue = Symbol('mixed');
     const common = (family: 'paragraph' | 'character', key: string) => {
       const values = blocks.map(b => (b.localStyle?.[family] as Record<string, unknown> | undefined)?.[key]);

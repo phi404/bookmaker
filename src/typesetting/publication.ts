@@ -1,6 +1,9 @@
 import { tocEntries } from '../domain/navigation.js';
-import type { CharacterProperties, Diagnostic, ParagraphProperties, RenderedPages, ResolvedRunningElement, RenderElement } from '../domain/contracts.js';
-import type { Publication, Scope, PageProperties } from '../domain/model.js';
+import { finishBookPages, sectionNumbering } from '../domain/numbering.js';
+import { captionedPages } from '../domain/figures.js';
+import type { LayoutPublication } from '../domain/layout-input.js';
+import type { BookStyle, CharacterProperties, Diagnostic, ParagraphProperties, RenderedPages, ResolvedRunningElement, RenderElement } from '../domain/contracts.js';
+import type { Scope, PageProperties } from '../domain/model.js';
 import { flattenDocument } from '../domain/publication.js';
 import { blockStyleId, inheritedStyle, validateCatalog, validateLocal } from '../domain/styles.js';
 import { scopePriority, validateScope } from '../domain/scope.js';
@@ -16,7 +19,7 @@ import type { PageElement } from '../domain/model.js';
 import { imagePrintInfo } from '../domain/image-print.js';
 
 /** Resolve semantic styles before pagination; evaluate physical-page decorations afterwards. */
-export function typesetPublication(project: Publication): RenderedPages {
+export function typesetPublication(project: LayoutPublication): RenderedPages {
   const tree = project.document, catalog = validateCatalog(project.styles), style = validateStyle(project.style), original = flattenDocument(tree);
   const blockIndex = new Map(original.map((b, i) => [b.id, i])), sectionByBlock = new Map(tree.children.flatMap(s => s.children.map(b => [b.id, s.id] as const))), sections = new Map(tree.children.map(s => [s.id, s]));
   const diagnostics: Diagnostic[] = [];
@@ -36,11 +39,22 @@ export function typesetPublication(project: Publication): RenderedPages {
   for (const element of project.runningElements) validateRunningElement(element, style);
   const rules = [...project.overrides].sort((a, b) => scopePriority(a.scope) - scopePriority(b.scope));
   const paragraphStyles = new Map(catalog.paragraphs.map(s => [s.id, inheritedStyle(catalog.paragraphs, s.id)])), headingStyles = new Map(catalog.headings.map(s => [s.id, inheritedStyle(catalog.headings, s.id)])), characterStyles = new Map(catalog.characters.map(s => [s.id, inheritedStyle(catalog.characters, s.id).properties]));
-  const pageProps = (id: string | undefined): PageProperties => id ? inheritedStyle(catalog.pages!, id).properties : {};
+  const pageStyles = new Map(catalog.pages!.map(s => [s.id, inheritedStyle(catalog.pages!, s.id).properties]));
+  const pageProps = (id: string | undefined): PageProperties => { if (!id) return {}; const properties = pageStyles.get(id); if (!properties) throw new Error(`スタイル「${id}」が見つかりません。`); return properties; };
   const mergePage = (a: PageProperties, b: PageProperties = {}): PageProperties => ({...a,...b,...(a.margins||b.margins?{margins:{...a.margins,...b.margins}}:{})});
+  const resolvedSections = new Map(tree.children.map(section => {
+    const base = section.styleId ? inheritedStyle(catalog.sections!, section.styleId).properties : {};
+    return [section.id, { ...base, ...section.localStyle, paragraph: { ...base.paragraph, ...section.localStyle?.paragraph }, character: { ...base.character, ...section.localStyle?.character }, page: mergePage(base.page ?? {}, section.localStyle?.page) }];
+  }));
+  const baseKey = JSON.stringify(style), effectiveStyles = new Map<string, { value: BookStyle; changed: boolean }>([['{}', { value: style, changed: false }]]);
+  const effectivePage = (properties: PageProperties) => {
+    const key = JSON.stringify(properties), cached = effectiveStyles.get(key); if (cached) return cached;
+    const value = validateStyle({ ...style, ...properties, margins: { ...style.margins, ...properties.margins } }), resolved = { value, changed: JSON.stringify(value) !== baseKey };
+    if (effectiveStyles.size < 512) effectiveStyles.set(key, resolved); return resolved;
+  };
   const blockPages = new Map<string, PageProperties>();
   const blocks = original.map((block): PaginationBlock => {
-    const section = sections.get(sectionByBlock.get(block.id)??'')!, sectionBase=section.styleId?inheritedStyle(catalog.sections!,section.styleId).properties:{},sectionProperties = {...sectionBase,...section.localStyle,paragraph:{...sectionBase.paragraph,...section.localStyle?.paragraph},character:{...sectionBase.character,...section.localStyle?.character},page:mergePage(sectionBase.page??{},section.localStyle?.page)};
+    const section = sections.get(sectionByBlock.get(block.id)??'')!, sectionProperties = resolvedSections.get(section.id)!;
     let pageProperties: PageProperties = catalog.pages!.some(p=>p.id==='default-page')?pageProps('default-page'):{};
     for (const rule of rules) if(rule.scope.kind==='book')pageProperties=mergePage(mergePage(pageProperties,pageProps(rule.pageStyleId)),rule.page);
     pageProperties=mergePage(pageProperties,pageProps(sectionProperties.pageStyleId));
@@ -51,7 +65,7 @@ export function typesetPublication(project: Publication): RenderedPages {
     if(definition)pageProperties=mergePage(mergePage(pageProperties,pageProps(definition.pageStyleId)),definition.localStyle);
     blockPages.set(block.id,pageProperties);
     const {showHeads: _heads,showFolio: _folio,...layoutProps}=pageProperties;
-    const effective=validateStyle({...style,...layoutProps,margins:{...style.margins,...layoutProps.margins}}), metadata={...(JSON.stringify(effective)!==JSON.stringify(style)?{layoutStyle:effective}:{}),sectionId:section.id};
+    const resolved = effectivePage(layoutProps), effective = resolved.value, metadata={...(resolved.changed?{layoutStyle:effective}:{}),sectionId:section.id};
     if (block.kind === 'pageBreak') return {...block,...metadata};
     if (block.kind === 'specialPage') {
       const page = project.specialPages?.find(p => p.id === block.pageId) ?? newSpecialPage(block.pageId, block.role);
@@ -61,13 +75,13 @@ export function typesetPublication(project: Publication): RenderedPages {
         if (element.kind !== 'image') return element;
         const image = project.assets?.find(a => a.id === element.assetId)?.images[element.assetPage - 1];
         if (!image) diagnostics.push({ code: 'asset-missing', blockId: block.id, elementId:element.id, message: '自由ページの画像素材が未指定または見つかりません。' });
-        return { ...element, ...(image ? { dataUrl: image.dataUrl } : {}) };
+        return { ...element, sourceAssetId: element.assetId, sourceAssetPage: element.assetPage, ...(image?.dataUrl ? { dataUrl: image.dataUrl } : {}) };
       });
       else {
         const asset = project.assets?.find(a => a.id === page.assetId), image = asset?.images[page.assetPage - 1];
         if (image) {
           const bleed=page.imageMode==='bleed'?page.bleedMm??3:0;
-          elements = [{ id: 'asset-image', kind: 'image', xMm: -bleed, yMm: -bleed, widthMm: effective.page.widthMm+bleed*2, heightMm: effective.page.heightMm+bleed*2, dataUrl: image.dataUrl, fit: page.fit, imagePlacement:page.imageMode??(page.role==='external'?'external':'page') }];
+          elements = [{ id: 'asset-image', kind: 'image', xMm: -bleed, yMm: -bleed, widthMm: effective.page.widthMm+bleed*2, heightMm: effective.page.heightMm+bleed*2, ...(image.dataUrl ? { dataUrl: image.dataUrl } : {}), fit: page.fit, sourceAssetId: asset!.id, sourceAssetPage: page.assetPage, imagePlacement:page.imageMode??(page.role==='external'?'external':'page') }];
           if (image.width / style.page.widthMm * 25.4 < 150 || image.height / style.page.heightMm * 25.4 < 150) diagnostics.push({ code: 'image-resolution', blockId: block.id, message: '150dpi未満の画像があります。印刷時の解像度を確認してください。' });
           if (image.widthMm && image.heightMm && (Math.abs(image.widthMm - style.page.widthMm) > .5 || Math.abs(image.heightMm - style.page.heightMm) > .5)) diagnostics.push({ code: 'asset-page-size', blockId: block.id, message: '外部PDFの仕上がり寸法が本と異なります。フィットで表示しています。' });
         } else diagnostics.push({ code: 'asset-missing', blockId: block.id, message: '挿絵・外部ページの素材を指定してください。' });
@@ -93,13 +107,20 @@ export function typesetPublication(project: Publication): RenderedPages {
       ? templatePages(definition, block.layoutStyle ?? style, tocEntries(project, definition)).map(elements => ({...block,page:{...block.page,elements}})) : [block];
   });
   const withStarts: PaginationBlock[] = [];
+  const startedSections = new Set<string>();
   for (const block of expanded) {
     const section = sections.get(sectionByBlock.get(block.id) ?? '');
-    const start=section?.start??section?.localStyle?.start??(section?.styleId?inheritedStyle(catalog.sections!,section.styleId).properties.start:undefined);
-    if (section?.headingId === block.id && start && start !== 'continuous' && (withStarts.length || start !== 'next')) withStarts.push({ kind: 'pageBreak', id: `start-${section.id}`, start,...(block.layoutStyle?{layoutStyle:block.layoutStyle}:{}) });
+    if (section && !startedSections.has(section.id)) {
+      const numbering = sectionNumbering({ ...project, styles: catalog }, section.id);
+      const specified=section.start??section.localStyle?.start??(section.styleId?inheritedStyle(catalog.sections!,section.styleId).properties.start:undefined);
+      const start = numbering.numberStart !== undefined || numbering.numberFormat ? specified && specified !== 'continuous' ? specified : 'next' : specified;
+      if (start && start !== 'continuous' && (withStarts.length || start !== 'next')) withStarts.push({ kind: 'pageBreak', id: `start-${section.id}`, start,...(block.layoutStyle?{layoutStyle:block.layoutStyle}:{}) });
+      startedSections.add(section.id);
+    }
     withStarts.push(block);
   }
-  const result = paginate({ schemaVersion: 1, title: tree.title, blocks: withStarts }, style), firstPages = new Map<string, number>();
+  const rawResult = paginate({ schemaVersion: 1, title: tree.title, blocks: withStarts }, style);
+  const result = { ...rawResult, pages: captionedPages(project, rawResult.pages) }, firstPages = new Map<string, number>();
   const tocParts = new Map<string, number>();
   for (const page of result.pages) if (page.kind === 'structured') {
     const definition = project.specialPages?.find(p => p.id === page.pageId);
@@ -113,6 +134,7 @@ export function typesetPublication(project: Publication): RenderedPages {
     if (!intentional && (e.yMm<0 || e.xMm<0 || e.yMm + e.heightMm > size.heightMm || e.xMm + e.widthMm > size.widthMm)) diagnostics.push({ code: 'element-overflow', blockId: page.blockId, pageNumber:page.number, elementId:e.id, message: 'ページの内容が用紙からはみ出しています。サイズ・位置を確認してください。' });
     if (e.kind === 'text' && textBoxOverflows(e as Extract<PageElement, { kind: 'text' }>)) diagnostics.push({ code: 'text-box-overflow', blockId: page.blockId, pageNumber:page.number, elementId:e.id, message: '特殊ページのテキストが枠に収まりません。原文は保持されています。文字サイズ・枠の大きさ・内容を確認してください。' });
   }
+  for (const page of result.pages) if (page.kind === 'flow') for (const element of page.elements ?? []) if (element.kind === 'text' && textBoxOverflows(element as Extract<PageElement, { kind: 'text' }>)) diagnostics.push({ code: 'text-box-overflow', ...(element.blockId ? { blockId: element.blockId } : {}), pageNumber: page.number, elementId: element.id, message: '図の説明が予約した枠に収まりません。文字サイズや内容を確認してください。' });
   let previousSection: string | undefined;
   const pageSections = result.pages.map(page => {
     const sectionId = sectionByBlock.get(page.kind === 'flow' ? page.lines[0]?.blockId ?? page.elements?.[0]?.blockId ?? '' : page.blockId) ?? previousSection;
@@ -149,5 +171,14 @@ export function typesetPublication(project: Publication): RenderedPages {
     return decorated;
   });
   for (const rule of project.pageOverrides ?? []) if (rule.pages.some(n => n > pages.length)) diagnostics.push({ code: 'page-override-orphan', message: '存在しない通しページを含む例外があります。指定は保持しています。' });
-  return { pages, diagnostics: [...diagnostics, ...result.diagnostics] };
+  const finished = finishBookPages({ ...project, styles: catalog, style }, pages);
+  const finalTocParts = new Map<string, number>();
+  for (const page of finished) if (page.kind === 'structured') {
+    const definition = project.specialPages?.find(p => p.id === page.pageId);
+    if (definition?.role === 'toc') {
+      const part = finalTocParts.get(page.pageId) ?? 0; finalTocParts.set(page.pageId, part + 1);
+      page.elements = templatePages(definition, page.style ?? style, tocEntries(project, definition, finished))[part]!;
+    }
+  }
+  return { pages: finished, diagnostics: [...diagnostics, ...result.diagnostics] };
 }

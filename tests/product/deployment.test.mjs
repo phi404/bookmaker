@@ -33,3 +33,8 @@ test('deployment base paths cannot contain another origin, query, fragment or tr
   assert.equal(normalizeBasePath('/bookmaker'), '/bookmaker/'); assert.equal(normalizeBasePath('/'), '/');
   for (const value of ['https://example.com/', '/a/../', '/./', '//example.com/', '/a?x=1', '/a#x', '/%2e%2e/', '/a\\b']) assert.throws(() => normalizeBasePath(value), /Invalid site base path/u);
 });
+
+test('the pinned bundled font fingerprint matches the actual font used by portable projects', async () => {
+  const { readFile } = await import('node:fs/promises'), { createHash } = await import('node:crypto'), { bundledFont } = await import('../../dist/io/resources.js');
+  assert.equal(createHash('sha256').update(await readFile(absolute('public/' + bundledFont.path))).digest('hex'), bundledFont.sha256);
+});

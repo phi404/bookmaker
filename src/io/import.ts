@@ -6,6 +6,7 @@ import { restoreProject } from '../domain/project.js';
 import { decodeText, readManuscript } from './text.js';
 import { readWordXML } from './zip.js';
 import { MAX_PROJECT_BYTES } from '../domain/special.js';
+import { MAX_BUNDLE_BYTES, restoreProductionBundle } from './bundle.js';
 
 export interface Imported { source: string; format: string; warnings: readonly string[]; syntax?: SourceSyntax; project?: Project | Publication }
 export function markdownSource(text: string): Imported {
@@ -69,6 +70,11 @@ export function wordSource(xml: string, stylesXML?: string): Imported {
 }
 export async function importFile(file: File): Promise<Imported> {
   const extension = file.name.split('.').at(-1)?.toLowerCase();
+  if (extension === 'zip') {
+    if (file.size > MAX_BUNDLE_BYTES) throw new Error('制作データは192MB以内にしてください。');
+    const project = await restoreProductionBundle(new Uint8Array(await file.arrayBuffer()));
+    return { source: project.source, format: '制作データ', warnings: [], project };
+  }
   if (extension === 'docx') {
     if (file.size > 32 * 1024 * 1024) throw new Error('DOCXは32MB以内にしてください。');
     const xml = await readWordXML(new Uint8Array(await file.arrayBuffer())); return wordSource(xml['word/document.xml']!, xml['word/styles.xml']);

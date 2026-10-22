@@ -24,6 +24,8 @@ export function styleFields<P extends Values>(parent: HTMLElement, prefix: strin
     add('indentEm', '最初の一行の字下げ / 字', undefined, 0, 8, .5); add('insetEm', '段落全体の字下げ / 字', undefined, 0, 20, .5); add('endInsetEm', '末尾側の余白 / 字', undefined, 0, 20, .5);
     add('beforeEm', '段落の前の空き / 字', undefined, 0, 20, .5); add('afterEm', '段落の後の空き / 字', undefined, 0, 20, .5); add('lineHeight', '行送り / 文字サイズの倍', undefined, 1.55, 3, .05);
     add('keepWithNext', '次の段落', [['true', '分離しない'], ['false', '自動で流す']]);
+    add('orphans', '段落の先頭に残す最少行数', undefined, 1, 10, 1);
+    add('widows', '段落の末尾に残す最少行数', undefined, 1, 10, 1);
   } else {
     add('writingMode', '書字方向', [['vertical-rl', '縦書き'], ['horizontal-tb', '横書き']]); add('columns', '段組', [['1', '一段'], ['2', '二段']]); add('columnGapMm', '段と段の間 / mm', undefined, 2, 30, .5);
     add('fontPt', '本文の文字サイズ / pt', undefined, 7, 18); add('lineHeight', '行送り / 文字サイズの倍', undefined, 1.55, 3, .05);

@@ -2,7 +2,7 @@ import type { Block, BookStyle, CharacterProperties, DecorationPosition, Paragra
 
 export type SourceSyntax = 'legacy' | 'markdown';
 export interface PageProperties { writingMode?: BookStyle['writingMode']; columns?: 1 | 2; columnGapMm?: number; fontPt?: number; lineHeight?: number; margins?: Partial<BookStyle['margins']>; maxCharsPerLine?: number; maxLinesPerPage?: number; showHeads?: boolean; showFolio?: boolean }
-export interface SectionProperties { pageStyleId?: string; paragraphStyleId?: string; start?: 'continuous' | 'next' | 'left' | 'right' | 'recto'; paragraph?: ParagraphProperties; character?: CharacterProperties; page?: PageProperties }
+export interface SectionProperties { pageStyleId?: string; paragraphStyleId?: string; start?: 'continuous' | 'next' | 'left' | 'right' | 'recto'; numberStart?: number; numberFormat?: 'decimal' | 'roman' | 'Roman'; paragraph?: ParagraphProperties; character?: CharacterProperties; page?: PageProperties }
 export interface LocalStyle { paragraph?: ParagraphProperties; character?: CharacterProperties; page?: PageProperties; pageStyleId?: string }
 export type SpecialRole = 'title' | 'chapter-title' | 'toc' | 'colophon' | 'illustration' | 'free' | 'external';
 export type SpecialPageRef = { kind: 'specialPage'; id: string; pageId: string; role: SpecialRole };
@@ -47,6 +47,7 @@ export interface SpecialPageDefinition {
   assetId: string | null; assetPage: number; fit: 'contain' | 'cover';
   originalTemplate?: { template: 'standard' | 'minimal'; fields: Record<string, string> };
   imageMode?: 'flow' | 'page' | 'spread' | 'bleed' | 'external'; bleedMm?: number; snapMm?: number;
+  caption?: { text: string; numbered: boolean; fontPt: number };
   pageStyleId?: string; localStyle?: PageProperties;
 }
 export interface AssetImage { dataUrl: string; width: number; height: number; widthMm?: number; heightMm?: number }

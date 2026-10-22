@@ -38,7 +38,7 @@ export function typographyEditor(host: { book(): BookModel; change(book: BookMod
       });
     }
   }
-  choose.addEventListener('change', () => { target = choose.value; render(); });
+  choose.addEventListener('change', () => { if (choose.value === 'context') return; target = choose.value; render(); });
   function sync(): void {
     for (const control of parent.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select')) {
       if (control === document.activeElement) continue;

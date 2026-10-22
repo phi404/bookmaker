@@ -35,7 +35,11 @@ export function validateSpecialPages(value: unknown): SpecialPageDefinition[] {
   if (!Array.isArray(value) || value.length > 200) throw new Error('特殊ページは200件以内にしてください。');
   const ids = new Set<string>();
   for (const p of value) {
-    object(p, ['id', 'role', 'name', 'representation', 'template', 'fields', 'elements', 'assetId', 'assetPage', 'fit', 'originalTemplate', 'imageMode', 'bleedMm', 'snapMm', 'pageStyleId', 'localStyle', 'toc'], '特殊ページ'); identifier(p.id);
+    object(p, ['id', 'role', 'name', 'representation', 'template', 'fields', 'elements', 'assetId', 'assetPage', 'fit', 'originalTemplate', 'imageMode', 'bleedMm', 'snapMm', 'pageStyleId', 'localStyle', 'toc', 'caption'], '特殊ページ'); identifier(p.id);
+    if (p.caption !== undefined) {
+      object(p.caption, ['text', 'numbered', 'fontPt'], '図の説明'); textValue(p.caption.text, 1000, '図の説明'); finite(p.caption.fontPt, '説明の文字サイズ', 5, 14);
+      if (p.representation !== 'asset' || typeof p.caption.numbered !== 'boolean') throw new Error('図の説明は素材ページで指定してください。');
+    }
     if (p.imageMode !== undefined && (!['flow', 'page', 'spread', 'bleed', 'external'].includes(p.imageMode as string) || p.representation !== 'asset')) throw new Error('画像の挿入方法を確認してください。');
     if (p.bleedMm !== undefined) finite(p.bleedMm, '塗り足し', 0, 10);
     if (p.pageStyleId !== undefined) identifier(p.pageStyleId); if (p.localStyle !== undefined) validatePage(p.localStyle);

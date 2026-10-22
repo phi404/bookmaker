@@ -29,7 +29,7 @@ function position(style: BookStyle, number: number, value: DecorationPosition, i
     y: value.startsWith('top-') ? inset : style.page.heightMm - inset, anchor: side === 'center' ? 'middle' : side === 'left' ? 'start' : 'end' };
 }
 /** One renderer for preview, PNG and PDF. Coordinates are derived only from semantic rules. */
-export function renderPageSVG(page: BookPage, style: BookStyle, fontData?: string): string {
+export function renderPageSVG(page: BookPage, style: BookStyle, fontData?: string, transparent = false): string {
   style=page.style??style;
   const grid = geometry(style), margins = pageMargins(style, page.number), pieces: string[] = [];
   page.lines.forEach((line, index) => {
@@ -62,7 +62,7 @@ export function renderPageSVG(page: BookPage, style: BookStyle, fontData?: strin
   });
   if(page.kind==='flow')for(const e of page.elements??[])pieces.push(`<g data-block-id="${escapeXML(e.blockId??'')}" data-image-placement="${escapeXML(e.imagePlacement??'flow')}">${renderElements([e],escapeXML,`page-${page.number}`)}</g>`);
   if (page.kind !== 'flow') pieces.push(`<g data-special-page="${escapeXML(page.pageId)}" data-block-id="${escapeXML(page.blockId)}">${renderElements(page.elements, escapeXML, `page-${page.number}`)}</g>`);
-  const f = style.folio, number = page.folioVisible === false ? null : folioNumber(f, page.number);
+  const f = style.folio, number = page.folioVisible === false ? null : page.folioLabel !== undefined ? page.folioLabel : folioNumber(f, page.number);
   if (f && number !== null) { const p = position(style, page.number, f.position, f.insetMm); pieces.push(`<text data-testid="folio" x="${n(p.x)}" y="${n(p.y)}" font-size="${n(f.fontPt * 25.4 / 72)}" text-anchor="${p.anchor}">${number}</text>`); }
   const heads = page.hideHeads ? [] : headsForPage(style, page.number), occupied = heads.length + (number !== null && f?.position.startsWith('top-') ? 1 : 0);
   for (const h of heads) {
@@ -78,5 +78,5 @@ export function renderPageSVG(page: BookPage, style: BookStyle, fontData?: strin
   }
   const fontCSS = fontData ? `<style>@font-face{font-family:'Book Mincho';src:url('${fontData}') format('opentype');font-weight:400}</style>` : '';
   const { widthMm: w, heightMm: h } = style.page;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" role="img" aria-label="${page.number}ページ" lang="ja">${fontCSS}<rect width="${w}" height="${h}" fill="${(page.paperColor ?? style.paperColor) === 'warm' ? '#fffefa' : '#ffffff'}"/><g fill="#282b28" color="#282b28" font-family="'Book Mincho',serif" font-weight="400" style="font-kerning:none;font-feature-settings:'palt' 0,'vpal' 0">${pieces.join('')}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" role="img" aria-label="${page.number}ページ" lang="ja">${fontCSS}<rect width="${w}" height="${h}" fill="${transparent ? 'none' : (page.paperColor ?? style.paperColor) === 'warm' ? '#fffefa' : '#ffffff'}"/><g fill="#282b28" color="#282b28" font-family="'Book Mincho',serif" font-weight="400" style="font-kerning:none;font-feature-settings:'palt' 0,'vpal' 0">${pieces.join('')}</g></svg>`;
 }

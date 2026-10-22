@@ -55,6 +55,7 @@
   "bundledModules": {
     "vendor/pdf-lib.js": "io",
     "vendor/fflate.js": "io",
-    "vendor/pdfjs/pdf.mjs": "io"
+    "vendor/pdfjs/pdf.mjs": "io",
+    "vendor/linebreak/index.js": "typesetting"
   }
 }

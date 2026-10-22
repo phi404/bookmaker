@@ -992,6 +992,176 @@
         "local-first"
       ],
       "specification": "docs/ARCHITECTURE.md"
+    },
+    {
+      "id": "R-55",
+      "phase": "mvp",
+      "summary": "本と編集を分け、同じ対象選択から局所と共通書式を変更し、本文クリックで編集先を奪わない",
+      "fixtures": [
+        "book-range-format"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-56",
+      "phase": "mvp",
+      "summary": "章の番号系列と末尾の倍数調整を同じページ列・目次・柱・JSONへ反映する",
+      "fixtures": [
+        "book-number-series"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-57",
+      "phase": "mvp",
+      "summary": "段落分割の前後に必要な行数を残し、不可能な版面でも文字を保持して診断する",
+      "fixtures": [
+        "book-number-series"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/TYPOGRAPHY.md"
+    },
+    {
+      "id": "R-58",
+      "phase": "mvp",
+      "summary": "素材ページの説明と自動図番号を画像枠・構成順・JSONへ接続する",
+      "fixtures": [
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/PUBLISHING_MODEL.md"
+    },
+    {
+      "id": "R-59",
+      "phase": "mvp",
+      "summary": "原稿・設定・素材原本・書体を制作データZIPへまとめ、全ハッシュ検査後に同じ本を再開する",
+      "fixtures": [
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/ARCHITECTURE.md"
+    },
+    {
+      "id": "R-60",
+      "phase": "mvp",
+      "summary": "静的素材PDFの元文字・図形・切り抜き・回転・透過資源を同じ配置へ出力し、注釈付きはその方式で拒否する",
+      "fixtures": [
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/ARCHITECTURE.md"
+    },
+    {
+      "id": "R-61",
+      "phase": "mvp",
+      "summary": "同じ出力ページを通し番号のまま小分けPNGへまとめ、変更や中止を共通出力経路で扱う",
+      "fixtures": [
+        "book-finishing"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-62",
+      "phase": "mvp",
+      "summary": "組版Workerへ素材原本・画像・元原稿キャッシュを重複転送せず、最新の本から参照を復元して同じ紙面を得る",
+      "fixtures": [
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/ARCHITECTURE.md"
+    },
+    {
+      "id": "R-63",
+      "phase": "mvp",
+      "summary": "Unicode17の改行候補と日本語禁則を共用し、単語・非改行・書式境界・明示区切りを原文のまま組む",
+      "fixtures": [
+        "book-word-boundaries"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "vertical-glyphs-and-spacing",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/TYPOGRAPHY.md"
     }
   ]
 }

@@ -37,7 +37,7 @@ for (const width of [1440, 375]) test(`@flow book views, special details, source
   if (width === 375) {
     await ui.tab('プレビュー'); await page.getByTestId('view-gallery').click(); await page.getByLabel('通しページ1を追加選択', { exact: true }).check(); await expect(ui.preview()).toBeVisible();
     await page.getByLabel('通しページ3を追加選択', { exact: true }).check(); await expect(ui.preview()).toBeVisible(); await page.screenshot({ path: absolute('output/book/mobile-gallery.png') });
-    await ui.tab('設定'); await expect(page.locator('#context-inspector')).toContainText('1・3'); await page.screenshot({ path: absolute('output/book/mobile-page-scope.png') });
+    await ui.tab('設定'); await expect(page.locator('#typography-target')).toBeVisible(); await expect(page.locator('#edit-current-target')).toContainText('1・3'); await expect(page.locator('#inspector-scope')).toHaveText('通しページに固定'); await page.screenshot({ path: absolute('output/book/mobile-page-scope.png') });
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1)).toBe(false);
 });

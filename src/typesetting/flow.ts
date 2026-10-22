@@ -3,11 +3,9 @@ import { advance, geometry, graphemes, pageMargins, validateStyle } from '../dom
 import type { PaginationBlock } from './paginator.js';
 import { matchesPageStart, pageSide } from '../domain/page-order.js';
 import { imagePrintInfo } from '../domain/image-print.js';
+import { wrapRuns as wrap } from './line-breaks.js';
 
 type Atom = Inline & { advanceEm: number; sizeMm: number; tcy?: boolean; displayText?: string; textFrom: number; textTo: number };
-const noStart = new Set(graphemes('、。，．・：；？！ー〜～ゝゞ々ヽヾぁぃぅぇぉっゃゅょァィゥェォッャュョ）〕］｝〉》」』】〙〗’”)]},.!?:;'));
-const noEnd = new Set(graphemes('（〔［｛〈《「『【〘〖‘“([{'));
-const pairs = new Set(['―', '—', '…', '‥']);
 const textOf = (r: Inline) => r.kind === 'ruby' ? r.base : r.text;
 const width = (s: string) => graphemes(s).reduce((sum,g)=>sum+advance(g),0);
 function atoms(runs: readonly Inline[], style: BookStyle, scale: number, capacity: number, warn: (code: string) => void): Atom[] {
@@ -41,12 +39,6 @@ function atoms(runs: readonly Inline[], style: BookStyle, scale: number, capacit
   }
   return out;
 }
-function wrap(list: Atom[], capacity: number, firstIndent: number, warn: () => void): {indent: number; runs: Atom[]}[] {
-  const out: {indent:number;runs:Atom[]}[]= []; let start=0;
-  const boundary=(end:number)=>{const prev=graphemes(textOf(list[end-1]!)).at(-1),next=list[end]?graphemes(textOf(list[end]!))[0]:'';return !noEnd.has(prev??'')&&!noStart.has(next??'')&&!(prev===next&&pairs.has(prev??''));};
-  while(start<list.length){const indent=out.length?0:firstIndent;let end=start,used=indent;while(end<list.length&&used+list[end]!.advanceEm<=capacity+.00001)used+=list[end++]!.advanceEm;if(end===start){end++;warn();}if(end<list.length){const fitted=end;while(end>start&&!boundary(end))end--;if(end===start){end=fitted;warn();}}out.push({indent,runs:list.slice(start,end)});start=end;}
-  return out;
-}
 /** Variable metrics and semantic page transitions; all positions remain generated results. */
 export function paginateAdvanced(blocks: readonly PaginationBlock[], baseStyle: BookStyle): RenderedPages {
   const pages: BookPage[]=[],diagnostics: Diagnostic[]=[];let style=validateStyle(baseStyle),grid=geometry(style),band=0,cursor=0,heading='',afterSpecial=false;
@@ -55,8 +47,9 @@ export function paginateAdvanced(blocks: readonly PaginationBlock[], baseStyle: 
   const fresh=()=>{band=0;cursor=0;page={kind:'flow',number:pages.length+1,lines:[],style,...(heading?{heading}: {})};};
   const next=()=>{pages.push(page);fresh();};
   const blockLimit=()=>Math.min(grid.blockMm,grid.lines*grid.lineMm);
-  const room=(pitch:number)=>{if(cursor+pitch>blockLimit()+.00001){if(band+1<style.columns){band++;cursor=0;}else next();}};
-  const warn=(blockId:string,code:string)=>{if(!diagnostics.some(d=>d.blockId===blockId&&d.code===code))diagnostics.push({blockId,code,message:code==='ruby-split'?'長いルビを、親文字と読みを保持して分割しました。':'版面内で解決できない文字の並びがあります。原文は保持しています。'});};
+  const nextBand=()=>{if(band+1<style.columns){band++;cursor=0;}else next();};
+  const room=(pitch:number)=>{if(cursor+pitch>blockLimit()+.00001)nextBand();};
+  const warn=(blockId:string,code:string)=>{if(!diagnostics.some(d=>d.blockId===blockId&&d.code===code))diagnostics.push({blockId,code,message:code==='ruby-split'?'長いルビを、親文字と読みを保持して分割しました。':code==='paragraph-fragment-relaxed'?'この版面では段落の最少行数を満たせません。文字を保持して自動で分割しました。':'版面内で解決できない文字の並びがあります。原文は保持しています。'});};
   for(let at=0;at<blocks.length;at++){
     const b=blocks[at]!,target=b.layoutStyle??baseStyle;
     if(JSON.stringify(target)!==JSON.stringify(style)){if(occupied())next();style=validateStyle(target);grid=geometry(style);page={...page,style};}
@@ -97,11 +90,29 @@ export function paginateAdvanced(blocks: readonly PaginationBlock[], baseStyle: 
     const keep=(lines.length*pitch+before+after+following);if(b.keepWithNext&&keep<=blockLimit()&&cursor+keep>blockLimit()) {if(band+1<style.columns){band++;cursor=0;}else next();}
     room(before+pitch);cursor+=before;
     if(b.kind==='heading'){heading=b.inlines.map(textOf).join('');page={...page,heading};}
-    for(const l of lines){room(pitch);const margins=pageMargins(style,page.number),used=l.runs.reduce((sum,r)=>sum+r.advanceEm,0)+l.indent;
+    let fragmentEnd = 0;
+    for(const [lineIndex,l] of lines.entries()){
+      room(pitch);
+      if (lineIndex === fragmentEnd) {
+        const remaining = lines.length - lineIndex, full = Math.max(1, Math.floor((blockLimit() + .00001) / pitch));
+        let available = Math.max(1, Math.floor((blockLimit() - cursor + .00001) / pitch));
+        const orphans = b.orphans ?? 1, widows = b.widows ?? 1;
+        if (remaining > available && cursor > .00001 && (available < orphans || remaining - available < widows && remaining <= full)) {
+          nextBand(); available = full;
+        }
+        let count = Math.min(remaining, available);
+        if (remaining > available) {
+          count = Math.min(available, remaining - widows);
+          if (count < orphans) { count = Math.min(remaining, available); warn(b.id, 'paragraph-fragment-relaxed'); }
+        }
+        fragmentEnd = lineIndex + count;
+      }
+      const margins=pageMargins(style,page.number),used=l.runs.reduce((sum,r)=>sum+r.advanceEm,0)+l.indentEm;
       const shift=Math.max(0,(capacity-used)*font)*(b.alignment==='center'?.5:b.alignment==='end'?1:0),vertical=style.writingMode==='vertical-rl';
-      const x=vertical?style.page.widthMm-margins.right-cursor-pitch/2:margins.left+band*(grid.inlineMm+grid.gap)+(inset+l.indent)*font+shift;
-      const y=vertical?style.margins.topMm+band*(grid.inlineMm+grid.gap)+(inset+l.indent)*font+shift:style.margins.topMm+cursor+pitch*.75;
-      const line:FlowLine={blockId:b.id,indentEm:l.indent,...(b.alignment?{alignment:b.alignment}:{}),heading:b.kind==='heading',fontScale:scale,column:Math.round(cursor/grid.lineMm),band,xMm:x,yMm:y,lengthMm:capacity*font,runs:l.runs};page={...page,lines:[...page.lines,line]};cursor+=pitch;
+      const x=vertical?style.page.widthMm-margins.right-cursor-pitch/2:margins.left+band*(grid.inlineMm+grid.gap)+(inset+l.indentEm)*font+shift;
+      const y=vertical?style.margins.topMm+band*(grid.inlineMm+grid.gap)+(inset+l.indentEm)*font+shift:style.margins.topMm+cursor+pitch*.75;
+      const line:FlowLine={blockId:b.id,indentEm:l.indentEm,...(b.alignment?{alignment:b.alignment}:{}),heading:b.kind==='heading',fontScale:scale,column:Math.round(cursor/grid.lineMm),band,xMm:x,yMm:y,lengthMm:capacity*font,runs:l.runs};page={...page,lines:[...page.lines,line]};cursor+=pitch;
+      if (lineIndex + 1 === fragmentEnd && fragmentEnd < lines.length) nextBand();
     }
     cursor=Math.min(grid.blockMm,cursor+after);
   }

@@ -65,6 +65,16 @@
       "id": "book-finishing",
       "file": "fixtures/book/finishing.md",
       "sourceSha256": "416f2166286f3b9fa47d2835abe7fc3e2fa91698df9e985726d2ca0a210f5893"
+    },
+    {
+      "id": "book-number-series",
+      "file": "fixtures/book/number-series.md",
+      "sourceSha256": "08fb326977b9fedc33f47d5dba4aac2b6695cba7d6bfcde343eac23575fe6a1a"
+    },
+    {
+      "id": "book-word-boundaries",
+      "file": "fixtures/book/word-boundaries.md",
+      "sourceSha256": "95e7832fdcb2228da7f9304c432c3808086054a318b421e73158312ea82206d9"
     }
   ]
 }

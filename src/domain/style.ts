@@ -35,7 +35,7 @@ export function presetStyle(name: Preset): BookStyle {
 }
 export const segmenter = new Intl.Segmenter('ja', { granularity: 'grapheme' });
 export const graphemes = (text: string): string[] => Array.from(segmenter.segment(text), item => item.segment);
-export const advance = (glyph: string): number => glyph === '\t' ? 4 : (ASCII_ADVANCES[glyph] ?? 1);
+export const advance = (glyph: string): number => glyph === '\t' ? 4 : /^[\u200B\u200C\u200D\u2028\u2029\u2060\uFEFF]$/u.test(glyph) ? 0 : glyph === '\u00A0' ? ASCII_ADVANCES[' ']! : (ASCII_ADVANCES[glyph] ?? 1);
 export function finite(value: unknown, label: string, min: number, max: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) throw new Error(`${label}の値を確認してください。`);
   return value;
@@ -69,6 +69,10 @@ export function validateStyle(value: unknown): BookStyle {
   style.paragraphIndent = v.paragraphIndent ?? false;
   if (v.paperColor !== undefined && v.paperColor !== 'warm' && v.paperColor !== 'white') throw new Error('紙の色を確認してください。');
   style.paperColor = v.paperColor ?? 'white';
+  if (v.pageCountMultiple !== undefined) {
+    if (![1, 2, 4, 8, 16].includes(v.pageCountMultiple)) throw new Error('総ページ数の単位を確認してください。');
+    style.pageCountMultiple = v.pageCountMultiple;
+  }
   if (v.folio) {
     const f = v.folio;
     if (typeof f.enabled !== 'boolean' || !DECORATION_POSITIONS.includes(f.position) || !Array.isArray(f.rules) || f.rules.length > 50) throw new Error('ページ番号の設定を確認してください。');

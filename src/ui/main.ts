@@ -25,10 +25,11 @@ import { workspaceViews, selectedElementIds, type Selection } from './workspace.
 import { catalogEditor } from './catalog.js';
 import { workbenchShell } from './shell.js';
 import { typographyEditor } from './typography.js';
+import { layoutInput, resolveLayoutAssets, type LayoutPublication } from '../domain/layout-input.js';
 
 const manuscript = el<HTMLTextAreaElement>('manuscript'), preview = el('preview-stage'), spread = el('book-spread'), panel = el('preview-panel'), workspace = el('workspace');
 const worker = new Worker(new URL('../app/typesetter.worker.js', import.meta.url), { type: 'module' }), mobile = matchMedia('(max-width:760px)');
-const layoutJobs = latestJob<{ revision: number; project: BookModel }>(job => worker.postMessage(job));
+const layoutJobs = latestJob<{ revision: number; project: LayoutPublication }>(job => worker.postMessage(job));
 const compact = matchMedia('(max-width:1100px)'); let explicitSpread = false;
 const narrow = matchMedia('(min-width:761px) and (max-width:1199px)'); let hiddenPane: 'left' | 'right' | undefined;
 let project = asBook(createPublication('', 'markdown')), source = project.source, style = project.style, filename = '無題', marginOffset = 0;
@@ -118,8 +119,14 @@ function syncSource(): void {
 function applyDraft(draft: Draft): void { project = modernizeNotation(asBook(draft.project)); style = project.style; marginOffset = draft.marginOffset; filename = project.metadata?.filename ?? '原稿'; viewMode = project.metadata?.viewMode ?? 'spread'; selected = project.metadata?.selected ?? 1; syncSource(); }
 function syncHistory(): void { el<HTMLButtonElement>('undo').disabled = !history.length; el<HTMLButtonElement>('redo').disabled = !future.length; }
 function snapshot(edit = false): void { if (!edit || Date.now() - lastEditAt > 800 || !history.length) { history.push(currentDraft()); if (history.length > 40) history.shift(); } future.length = 0; lastEditAt = edit ? Date.now() : 0; syncHistory(); }
-function restoreHistory(back: boolean): void { const from = back ? history : future, to = back ? future : history, draft = from.pop(); if (!draft) return; to.push(currentDraft()); applyDraft(draft); lastEditAt = 0; selection = { kind: 'book' }; inspectorMode = 'body'; inspector.clear(); if (canSave) el('notice').hidden = true; views.sync(true); reflow(); syncHistory(); }
-function scheduleSave(): void { clearTimeout(saveTimer); if (!canSave || restoring) return; el('save-state').textContent = '保存中…'; el('save-state').dataset.state = 'pending'; saveTimer = setTimeout(persistDraft, 500); }
+function restoreHistory(back: boolean): void {
+  const from = back ? history : future, to = back ? future : history, draft = from.pop(); if (!draft) return;
+  const commonStyle = inspectorMode === 'styles';
+  to.push(currentDraft()); applyDraft(draft); lastEditAt = 0; selection = { kind: 'book' }; inspectorMode = commonStyle ? 'styles' : 'body'; inspector.clear();
+  if (canSave) el('notice').hidden = true; views.sync(true); reflow(); syncHistory();
+}
+// Invalidate an in-flight completion as soon as editing resumes, before the debounce runs.
+function scheduleSave(): void { clearTimeout(saveTimer); if (!canSave || restoring) return; saveSerial++; el('save-state').textContent = '保存中…'; el('save-state').dataset.state = 'pending'; saveTimer = setTimeout(persistDraft, 500); }
 function persistDraft(): void {
   clearTimeout(saveTimer); if (!canSave || restoring) return; const draft = currentDraft(), serial = ++saveSerial;
   saveQueue = saveQueue.then(async () => {
@@ -174,7 +181,7 @@ const typography = typographyEditor({ book: currentProject, change: commit });
 function reflow(resetPage = false, save = true): void {
   if (resetPage) selected = 1; revision++; preview.dataset.inputRevision = String(revision); preview.dataset.layoutState = 'pending'; el('layout-pending').hidden = false;
   project = currentProject(); exports.sync(); controls.sync(); inspector.sync(); typography.sync(); syncSource(); views.sync();
-  clearTimeout(layoutTimer); const nextRevision = revision; layoutTimer = setTimeout(() => layoutJobs.submit({ revision: nextRevision, project: currentProject() }), 160); if (save) scheduleSave();
+  clearTimeout(layoutTimer); const nextRevision = revision; layoutTimer = setTimeout(() => layoutJobs.submit({ revision: nextRevision, project: layoutInput(currentProject()) }), 160); if (save) scheduleSave();
 }
 const single = () => mobile.matches || viewMode === 'single' || viewMode === 'spread' && compact.matches && !explicitSpread;
 function resetReadingPosition(): void {
@@ -313,7 +320,7 @@ worker.onmessage = async (event: MessageEvent<{ revision: number; result?: Rende
   const response = event.data; layoutJobs.complete(response.revision); if (response.revision !== revision) return;
   if (!response.result) { preview.dataset.layoutState = 'error'; el('layout-pending').hidden = true; notify(response.error ?? '組版に失敗しました。'); return; }
   try { await fontReady; } catch (error) { preview.dataset.layoutState = 'error'; el('layout-pending').hidden = true; notify(error instanceof Error ? error.message : 'フォントを読み込めません。'); return; }
-  if (response.revision !== revision) return; result = response.result; layoutRevision = response.revision;
+  if (response.revision !== revision) return; result = resolveLayoutAssets(response.result, project); layoutRevision = response.revision;
   if (followSelection) {
     const chosen = selection, ids = chosen.kind === 'chapter' ? new Set(project.document.children.find(s => s.id === chosen.id)?.children.map(b => b.id) ?? []) : undefined;
     const ref=chosen.kind==='special'?flattenDocument(project.document).find(b=>b.kind==='specialPage'&&b.pageId===chosen.id)?.id:undefined;
@@ -333,7 +340,7 @@ function edited(): void {
   if(!edit.error&&chosen.kind==='range'){const existing=new Set(flattenDocument(project.document).filter(b=>'inlines'in b).map(b=>b.id)),ids=chosen.ids.filter(id=>existing.has(id));if(ids.length!==chosen.ids.length)select(ids.length>1?{kind:'range',ids}:ids[0]?{kind:'block',id:ids[0]}:{kind:'book'},false);}
   importUndo = undefined; el('undo-import').hidden = true; reflow();
 }
-manuscript.addEventListener('input', edited); manuscriptTools(manuscript, edited, notify, () => project.syntax, () => el('inspect-styles').click(), formatSelection);
+manuscript.addEventListener('input', edited); manuscriptTools(manuscript, edited, notify, () => project.syntax, () => openCommonStyles(), formatSelection);
 function highlightSourceMatch(): void {
   spread.querySelectorAll('[data-search-hit]').forEach(node => node.removeAttribute('data-search-hit'));
   if (!searchRange || project.sourceDraft !== undefined) return;
@@ -416,10 +423,25 @@ el('start-new-project').addEventListener('click',()=>{
   if(!exports.canStartNew())return; el<HTMLDialogElement>('export-dialog').close();
   snapshot();project=asBook(createPublication('','markdown'));style=project.style;filename='無題';marginOffset=0;selection={kind:'book'};selected=1;selectedPages.clear();inspectorMode='body';inspector.clear();syncSource();views.sync(true);el('notice').hidden=true;reflow(true);showLeft('source');manuscript.focus();
 });
-el('inspect-styles').addEventListener('click', () => { inspectorMode = 'styles'; inspector.clear(); openPane('right', true); views.sync(); if (mobile.matches) activePanel('settings'); });
+function openCommonStyles(target = 'all'): void {
+  inspectorMode = 'styles'; inspector.clear(); typography.open(target); openPane('right', true); views.sync(); if (mobile.matches) activePanel('settings');
+}
+el('inspect-styles').addEventListener('click', () => { if (selection.kind !== 'book') select(selection); else openCommonStyles(); });
+el('typography-target').addEventListener('change', () => {
+  const target = el<HTMLSelectElement>('typography-target').value;
+  if (target === 'context') { if (selection.kind !== 'book') select(selection); }
+  else { inspectorMode = 'styles'; inspector.clear(); views.sync(); }
+});
+const inspectorTabs = ['inspect-book', 'inspect-styles'].map(id => el<HTMLButtonElement>(id));
+inspectorTabs.forEach((tab, at) => tab.addEventListener('keydown', event => {
+  if (event.isComposing || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+  event.preventDefault();
+  const next = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : (at + 1) % 2;
+  inspectorTabs[next]!.click(); inspectorTabs[next]!.focus();
+}));
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-canvas-action]')) button.addEventListener('click', () => views.elementAction(button.dataset.canvasAction as Parameters<typeof views.elementAction>[0]));
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-canvas-add]')) button.addEventListener('click', () => { const p = result?.pages[selected - 1]; if (p?.kind !== 'layout') return; select({ kind: 'special', id: p.pageId }, false); inspectorMode = 'selection'; views.sync(true); el(`add-element-${button.dataset.canvasAdd}`).click(); });
-for (const id of ['inspect-selection', 'edit-selection']) el(id).addEventListener('click', () => { if (selection.kind !== 'book') select(selection); });
+el('edit-selection').addEventListener('click', () => { if (selection.kind !== 'book') select(selection); });
 el('sample-manuscript').addEventListener('click', () => {
   if (source || project.assets.length) return; snapshot(); project = modernizeNotation(asBook({ ...createPublication(SAMPLE, 'legacy'), style })); filename = '組版サンプル'; syncSource(); reflow(true); manuscript.focus();
 });
@@ -454,7 +476,7 @@ el('focus-preview').addEventListener('click', focusPaper);
 workbenchShell({ showLeft, showPreview() { if (mobile.matches) activePanel('preview'); }, focusPaper,
   edit(command) { showLeft('source'); if(command==='range'||command==='center'){formatSelection();if(command==='center'&&!el('block-inspector').hidden){el<HTMLSelectElement>('block-align').value='center';el('block-align').dispatchEvent(new Event('change'));}}else document.querySelector<HTMLButtonElement>(`[data-insert="${command}"]`)!.click(); },
   showSettings(detail) {
-  el(detail === 'shared-styles' || detail === 'typography' ? 'inspect-styles' : 'inspect-book').click();
+  if (detail === 'shared-styles' || detail === 'typography') openCommonStyles(); else el('inspect-book').click();
   if (detail === 'typography') { el('typography-target').focus(); return; }
   if (detail) { const details = el<HTMLDetailsElement>(detail); details.open = true; details.querySelector<HTMLElement>('summary')!.focus(); details.scrollIntoView({ block: 'nearest' }); }
   else input('page-size').focus();

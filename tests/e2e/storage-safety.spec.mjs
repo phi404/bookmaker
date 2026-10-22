@@ -33,3 +33,21 @@ test('a recovery journal based on an older save remains editable without replaci
   const ui=new BookUI(page);await page.goto('/');await ui.ready();await ui.tab('原稿');await expect(ui.manuscript()).toHaveValue(pending.project.source);await expect(page.locator('#save-state')).toHaveText('保存を停止');await expect(page.locator('#notice-text')).toContainText('別のタブ');
   await ui.manuscript().fill('　復旧した入力をさらに修正。');await ui.ready();expect(await page.evaluate(()=>globalThis.localStorage.getItem('bookmaker-slice-draft-v1'))).toBe(raw);
 });
+
+test('an earlier save cannot mark a later edit as saved before its commit @flow', async ({ page }) => {
+  const ui = new BookUI(page); await page.goto('/'); await ui.paste('　確定した原稿。'); await expect(page.locator('#save-state')).toHaveText('保存済み');
+  await page.evaluate(() => {
+    const request = globalThis.navigator.locks.request.bind(globalThis.navigator.locks); let intercept = true;
+    globalThis.earlierSaveDone = new Promise(resolve => { globalThis.finishEarlierSave = resolve; });
+    globalThis.navigator.locks.request = (name, callback) => request(name, async lock => {
+      if (name === 'bookmaker-local-draft' && intercept) { intercept = false; globalThis.earlierSaveEntered = true; await new Promise(resolve => { globalThis.releaseEarlierSave = resolve; }); const result = await callback(lock); globalThis.finishEarlierSave(); return result; }
+      return callback(lock);
+    });
+  });
+  await ui.tab('原稿'); await ui.manuscript().fill('　保存中の前の原稿。'); await expect.poll(() => page.evaluate(() => globalThis.earlierSaveEntered === true)).toBe(true);
+  const latest = '　その間に書き換えた最新の原稿。'; await ui.manuscript().fill(latest);
+  const state = await page.evaluate(async () => { globalThis.releaseEarlierSave(); await globalThis.earlierSaveDone; await new Promise(resolve => globalThis.setTimeout(resolve, 0)); return globalThis.document.querySelector('#save-state').dataset.state; });
+  expect(state).toBe('pending');
+  // Reload before the debounce commits: the current input must reach the recovery journal.
+  await page.reload(); await ui.ready(); await ui.tab('原稿'); await expect(ui.manuscript()).toHaveValue(latest); await expect(page.locator('#save-state')).toHaveText('保存済み');
+});

@@ -103,3 +103,13 @@ BookSettingsPreset（schemaVersion 1 / kind book-settings）は適用時のコ�
 自動目次のSpecialPageDefinition.tocはdepth（1〜3）、fontPt（7〜14）、indentMm（0〜8）を持つ。省略時は見出し1、9pt、階層ごと3mm。見出し本文・参照先・確定番号を別に保存せず、同じASTとページ列から生成する。自由化した目次はその時点の文字と番号で固定され、PDFの自動リンク対象から外れる。
 
 PDFのしおりとリンクも生成物。範囲に含まれない見出しの宛先を作らず、残る下位見出しは一番近い含まれる上位見出しへ接続する。上位がなければ最上位にする。目次の印字番号は抜粋用に振り直さない。リンクだけを省く。
+
+## 番号系列・末尾調整・図の説明
+
+SectionPropertiesのnumberStart/numberFormatは番号系列の区切り。開始番号は0〜100000、形式はdecimal/roman/Roman。局所指定と章スタイルを解決し、区切りの章は少なくとも改ページする。最終ページ列の章先頭から印字番号を生成し、目次・柱・PDF参照は同じ列を使う。物理ページの偶奇は変更しない。
+
+BookStyle.pageCountMultipleは1/2/4/8/16。内容がある本の末尾へ必要な実白ページを生成し、正本へ空段落や特殊ページを挿入しない。生成白ページには番号と柱を付けない。
+
+ParagraphProperties.orphans/widowsは1〜10の最少行数。名前付き・章・範囲・段落局所の同じ解決を使う。未指定は1、容量内で満たせない場合は診断して緩める。
+
+SpecialPageDefinition.captionは素材ページのtext/numbered/fontPt（5〜14）。説明は1000文字まで。番号は配置済み参照の順序から生成し、画像枠の内側へ説明用の領域を確保する。本文の座標を正本に追加しない。

@@ -1,6 +1,6 @@
 import type { CharacterProperties, ParagraphProperties } from './contracts.js';
 import type { DocumentTree, LocalStyle, NamedStyle, StyleCatalog, TreeBlock, PageProperties, SectionProperties } from './model.js';
-import { finite } from './style.js';
+import { finite, integer } from './style.js';
 import { identifier, object, textValue } from './validation.js';
 
 export function defaultCatalog(): StyleCatalog {
@@ -16,7 +16,8 @@ export function defaultCatalog(): StyleCatalog {
   };
 }
 export function validateParagraph(value: unknown): asserts value is ParagraphProperties {
-  object(value, ['indentEm', 'insetEm', 'endInsetEm', 'beforeEm', 'afterEm', 'lineHeight', 'alignment', 'keepWithNext'], '段落書式');
+  object(value, ['indentEm', 'insetEm', 'endInsetEm', 'beforeEm', 'afterEm', 'lineHeight', 'alignment', 'keepWithNext', 'orphans', 'widows'], '段落書式');
+  for (const key of ['orphans', 'widows']) if (value[key] !== undefined) integer(value[key], '段落の最少行数', 1, 10);
   if (value.indentEm !== undefined) finite(value.indentEm, '字下げ', 0, 8);
   for (const key of ['insetEm', 'endInsetEm', 'beforeEm', 'afterEm']) if (value[key] !== undefined) finite(value[key], '段落の余白', 0, 20);
   if (value.lineHeight !== undefined) finite(value.lineHeight, '行間', 1.55, 3);
@@ -44,7 +45,9 @@ export function validatePage(value: unknown): asserts value is PageProperties {
   for (const key of ['showHeads', 'showFolio']) if (value[key] !== undefined && typeof value[key] !== 'boolean') throw new Error('ページの表示を確認してください。');
 }
 export function validateSection(value: unknown): asserts value is SectionProperties {
-  object(value, ['pageStyleId', 'paragraphStyleId', 'start', 'paragraph', 'character', 'page'], '章書式');
+  object(value, ['pageStyleId', 'paragraphStyleId', 'start', 'numberStart', 'numberFormat', 'paragraph', 'character', 'page'], '章書式');
+  if (value.numberStart !== undefined) integer(value.numberStart, '章の開始番号', 0, 100000);
+  if (value.numberFormat !== undefined && !['decimal', 'roman', 'Roman'].includes(value.numberFormat as string)) throw new Error('章の番号の表し方を確認してください。');
   for (const key of ['pageStyleId', 'paragraphStyleId']) if (value[key] !== undefined) identifier(value[key]);
   if (value.start !== undefined && !['continuous', 'next', 'left', 'right', 'recto'].includes(value.start as string)) throw new Error('章の開始位置を確認してください。');
   if (value.paragraph !== undefined) validateParagraph(value.paragraph);

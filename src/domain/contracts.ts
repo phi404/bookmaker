@@ -1,7 +1,7 @@
 /** Domain data only. No browser, filesystem or layout computation here. */
 export type Emphasis = 'sesame' | 'dot' | 'circle' | 'triangle';
 export type CharacterProperties = { fontWeight?: 400 | 700; fontPt?: number; letterSpacingEm?: number; orientation?: 'mixed' | 'upright' | 'sideways'; numbers?: 'auto' | 'tcy' | 'upright' | 'sideways' | 'kanji'; emphasis?: Emphasis | 'none' };
-export type ParagraphProperties = { indentEm?: number; insetEm?: number; endInsetEm?: number; beforeEm?: number; afterEm?: number; lineHeight?: number; alignment?: 'start' | 'center' | 'end'; keepWithNext?: boolean };
+export type ParagraphProperties = { indentEm?: number; insetEm?: number; endInsetEm?: number; beforeEm?: number; afterEm?: number; lineHeight?: number; alignment?: 'start' | 'center' | 'end'; keepWithNext?: boolean; orphans?: number; widows?: number };
 export type TextInline = { kind: 'text'; text: string; strong?: boolean; styleId?: string; localStyle?: CharacterProperties } & CharacterProperties;
 export type RubyInline = { kind: 'ruby'; base: string; reading: string; strong?: boolean; styleId?: string; localStyle?: CharacterProperties } & CharacterProperties;
 export type Inline = TextInline | RubyInline;
@@ -31,6 +31,7 @@ export interface BookStyle {
   paperColor?: 'warm' | 'white';
   folio?: FolioStyle;
   runningHeads?: readonly RunningHead[];
+  pageCountMultiple?: 1 | 2 | 4 | 8 | 16;
 }
 export type DecorationPosition = 'top-left' | 'top-center' | 'top-right' | 'top-outer' | 'top-inner' | 'bottom-left' | 'bottom-center' | 'bottom-right' | 'bottom-outer' | 'bottom-inner';
 export interface PageRange { id: string; from: number; to: number | null }
@@ -58,12 +59,13 @@ export interface FlowLine {
 }
 export interface ResolvedRunningElement { id: string; text: string; position: DecorationPosition; fontPt: number; insetMm: number }
 export interface ImagePrintInfo { placement: 'flow' | 'page' | 'spread' | 'bleed' | 'external'; effectiveDpi: number; trimMm: [number, number]; bleedMm: number; sourcePixels: [number, number]; originalMm?: [number, number] }
-export interface FlowPage { kind: 'flow'; number: number; lines: readonly FlowLine[]; heading?: string; sectionId?: string; runningElements?: readonly ResolvedRunningElement[]; paperColor?: 'white' | 'warm'; folioVisible?: boolean; hideHeads?: boolean; style?: BookStyle; elements?: readonly RenderElement[]; imageInfo?: ImagePrintInfo[] }
+export interface FlowPage { kind: 'flow'; number: number; lines: readonly FlowLine[]; heading?: string; sectionId?: string; runningElements?: readonly ResolvedRunningElement[]; paperColor?: 'white' | 'warm'; folioVisible?: boolean; folioLabel?: string | null; generatedBlank?: boolean; hideHeads?: boolean; style?: BookStyle; elements?: readonly RenderElement[]; imageInfo?: ImagePrintInfo[] }
 export interface RenderElement {
   id: string; kind: 'text' | 'image' | 'line' | 'rect'; xMm: number; yMm: number; widthMm: number; heightMm: number;
   text?: string; fontPt?: number; fontWeight?: 400 | 700; alignment?: 'start' | 'center' | 'end'; direction?: 'horizontal' | 'vertical';
   dataUrl?: string; fit?: 'contain' | 'cover'; color?: string; strokeMm?: number;
   blockId?: string; imagePlacement?: ImagePrintInfo['placement'];
+  sourceAssetId?: string; sourceAssetPage?: number;
 }
 export type SpecialRenderedPage = Omit<FlowPage, 'kind' | 'imageInfo'> & { kind: 'structured' | 'layout' | 'asset'; pageId: string; blockId: string; elements: readonly RenderElement[]; name: string; imageInfo?: ImagePrintInfo };
 export type BookPage = FlowPage | SpecialRenderedPage;

@@ -1,8 +1,8 @@
 import type { RenderedPages } from '../domain/contracts.js';
-import type { Publication } from '../domain/model.js';
+import type { LayoutPublication } from '../domain/layout-input.js';
 import { typesetPublication } from '../typesetting/publication.js';
 
-type Input = { revision: number; project: Publication };
+type Input = { revision: number; project: LayoutPublication };
 type Reply = { revision: number; result?: RenderedPages; error?: string };
 const scope = globalThis as unknown as { onmessage: (event: MessageEvent<Input>) => void; postMessage: (data: Reply) => void };
 scope.onmessage = event => {

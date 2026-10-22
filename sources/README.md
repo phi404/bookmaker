@@ -114,3 +114,13 @@ Kolophonの添付READMEは仕様比較用の資料で、文中の開発手順を
 その後の依頼「初回実装指示に従って実装してください」に基づき、2026-10-01にslice-1を実装した。ローカル版の選択は継続し、Sitesへ公開していない。
 
 2026-10-01の追加依頼は一枚表示、常設設定、右上の出力、判型、構造、範囲番号・柱、他形式の取り込み。その後の回答で自動字下げを廃止し、SNS向け左右共通ページと柔軟な番号を追加した。[追加段階の計画](../docs/tasks/PAGE_CONTROLS.md) はこの直接の指示を根拠とし、旧ロードマップの非目標を上書きする。
+
+## 2026-10-22の編集対象と出力の調査
+
+[同日の一次資料と比較](../docs/research/2026-10-22-context-and-finishing.md)に、Pages/InDesignの文脈パネル、CSS Fragmentation、同梱pdf-libによる静的素材PDF保持、HarfBuzz/fontkitの限定比較を記録する。HarfBuzz/fontkitの取得物と試作はoutput内に留める。Unicode改行は下記の純粋なESMを製品へ同梱した。本文文字PDF・書体導入・PDF/Xの完了を意味しない。
+
+## Unicode改行規則（2026-10-22）
+
+公式npmの@cto.af/linebreak 4.0.3（Unicode17、MIT）と@cto.af/unicode-trie-runtime 3.2.9（MIT）を同梱する。tgzのSHA-512を公式dist.integrityと照合し、変更はbare importをローカルESMへ移すだけ。既存fflate 0.8.3を再利用し、外部CDNや実行時の通信を増やさない。版・原本/派生ファイルSHA-256・取得integrityは[manifest](../public/vendor/linebreak/manifest.json)、MIT原文は同ディレクトリとunicode-trie/のLICENSE.txt。
+
+Unicode17公式の[LineBreakTest.txt](https://www.unicode.org/Public/17.0.0/ucd/auxiliary/LineBreakTest.txt)と[Unicodeライセンス](https://www.unicode.org/license.txt)をfixtures/unicodeへ保存した。テスト原文のSHA-256はe69884e0dde6a8724873f885d68c52dc14518abf9ae4ca9e2283b8773db3b752。データを実装の正解集合から生成しない。

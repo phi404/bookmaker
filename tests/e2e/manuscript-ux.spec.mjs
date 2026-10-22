@@ -57,9 +57,9 @@ test('@flow body settings remain primary and local settings require an explicit 
   await page.locator('#edit-selection').click(); await expect(page.locator('#block-inspector')).toBeVisible(); await expect(page.locator('#inspector-scope')).toContainText('原稿にも反映');
   await expect(page.locator('#block-local-details')).not.toHaveAttribute('open', '');
   await page.locator('#inspect-book').click(); await expect(page.locator('#book-settings')).toBeVisible(); await expect(page.locator('#block-inspector')).toBeHidden();
-  await page.locator('#inspect-selection').click(); await expect(page.locator('#block-selection-label')).toContainText('次の段落');
+  await page.locator('#inspect-styles').click(); await expect(page.locator('#typography-target option:checked')).toContainText('次の段落');
   await capture(page, '04-local-settings');
   await ui.manuscript().fill('# 第一章\n　この段落の設定だけを変える。'); await ui.ready();
-  await expect(page.locator('#book-settings')).toBeVisible(); await expect(page.locator('#inspect-selection')).toBeDisabled(); await expect(page.locator('#block-inspector')).toBeHidden();
+  await expect(page.locator('#book-settings')).toBeVisible(); await expect(page.locator('#edit-current-target')).toHaveAttribute('disabled', ''); await expect(page.locator('#block-inspector')).toBeHidden();
   await page.locator('#project-home').click(); await page.locator('#edit-project-information').click(); await expect(page.locator('#book-title')).toBeFocused(); await expect(page.locator('#book-title')).toBeInViewport();
 });

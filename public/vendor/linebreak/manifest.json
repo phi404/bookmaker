@@ -1,0 +1,69 @@
+{
+  "packages": [
+    {
+      "name": "@cto.af/linebreak",
+      "version": "4.0.3",
+      "unicode": "17.0.0",
+      "license": "MIT",
+      "url": "https://registry.npmjs.org/@cto.af/linebreak/-/linebreak-4.0.3.tgz",
+      "integrity": "sha512-GiyepYtGQMo4LDynuhyFr0/hBGv0SFNVKnPjHuhFMnkseCBCIMecaCkKL8V3cu9mRas1djpSWznxigw/irV5Lw=="
+    },
+    {
+      "name": "@cto.af/unicode-trie-runtime",
+      "version": "3.2.9",
+      "license": "MIT",
+      "integrity": "sha512-H4FHtvIef/8NlU+NsQolcL9SKu+fYIPMZI++h6rQcM1IN7C/AwiCs9L8WRff+O4hDMamksAEuwBjet2S9uPt4w=="
+    }
+  ],
+  "adaptation": "Only bare imports relocated to local ESM. Rule code and Unicode data are unchanged. Existing fflate 0.8.3 is reused.",
+  "files": [
+    {
+      "file": "break.js",
+      "source": "package/lib/break.js",
+      "originalSHA256": "6c2035a8661a5267a1c24fb655a7aa230015e10df6fdf709d5c73fb5a006f7b5",
+      "sha256": "6c2035a8661a5267a1c24fb655a7aa230015e10df6fdf709d5c73fb5a006f7b5"
+    },
+    {
+      "file": "EastAsianWidth.js",
+      "source": "package/lib/EastAsianWidth.js",
+      "originalSHA256": "53f3f6eb31abe4eb5484debaf08756275b726a9adcece1efeff15bb6020f8342",
+      "sha256": "00373fc65c7eede9e5cfd4aba6da8dcf47d66fcabbf578e53e7474b39041c984"
+    },
+    {
+      "file": "index.js",
+      "source": "package/lib/index.js",
+      "originalSHA256": "a97575eb246b2dc3c8d3dab50c6edceb4521e9b7eac3e2f9c36277e763f3673f",
+      "sha256": "a97575eb246b2dc3c8d3dab50c6edceb4521e9b7eac3e2f9c36277e763f3673f"
+    },
+    {
+      "file": "LineBreak.js",
+      "source": "package/lib/LineBreak.js",
+      "originalSHA256": "9da24d790077def6bb652629d66778f6a4f540feaeb2424d80414cda0e79814b",
+      "sha256": "a1d4607946544c752f265b60f46cb6b1944e8b0797d1597e6e56454a44c8e974"
+    },
+    {
+      "file": "state.js",
+      "source": "package/lib/state.js",
+      "originalSHA256": "4a7cfc3c04c3d3acdc2af2c9f8be5cdf1c698df34701b7e277f59ba2b3364f95",
+      "sha256": "4a7cfc3c04c3d3acdc2af2c9f8be5cdf1c698df34701b7e277f59ba2b3364f95"
+    },
+    {
+      "file": "unicode-trie/index.js",
+      "source": "package/index.js",
+      "originalSHA256": "210d0c0037e20f2cd06a817e55a9fbe8c8bb7e9245a9301c54f79ef41a4f83fc",
+      "sha256": "416665e26e157ae97adfd4d21078afb6c76197da3b58c89859bacca35bf66abd"
+    },
+    {
+      "file": "unicode-trie/constants.js",
+      "source": "package/constants.js",
+      "originalSHA256": "987f7f1ce75ae6bb35fd88153938fe325aad6c1ad24b2b1b53cb4d49ec8de9ea",
+      "sha256": "987f7f1ce75ae6bb35fd88153938fe325aad6c1ad24b2b1b53cb4d49ec8de9ea"
+    },
+    {
+      "file": "unicode-trie/swap.js",
+      "source": "package/swap.js",
+      "originalSHA256": "26077256e5039d97edd77ad2154865a40d3b19cb8099fb63fb0b9fbd669bfe1f",
+      "sha256": "26077256e5039d97edd77ad2154865a40d3b19cb8099fb63fb0b9fbd669bfe1f"
+    }
+  ]
+}

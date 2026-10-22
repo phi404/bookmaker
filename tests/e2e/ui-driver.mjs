@@ -41,7 +41,7 @@ export class BookUI {
   async download(id, file) {
     if (!(await this.page.locator('#export-dialog').isVisible())) await this.page.getByTestId('open-export').click();
     if (['export-png-all', 'export-spread'].includes(id) && !(await this.page.getByTestId(id).isVisible())) await this.page.locator('#more-image-exports summary').click();
-    if (id === 'export-project' && !(await this.page.getByTestId(id).isVisible())) await this.page.getByText('作業ファイルと原稿', { exact: true }).click();
+    if (['export-project', 'export-bundle'].includes(id) && !(await this.page.getByTestId(id).isVisible())) await this.page.getByText('作業ファイルと原稿', { exact: true }).click();
     const pending = this.page.waitForEvent('download');
     await this.page.getByTestId(id).click();
     const download = await pending;

@@ -16,7 +16,7 @@ const kinds = ['characters', 'paragraphs', 'headings', 'pages', 'sections'] as c
 type StyleKind = typeof kinds[number];
 
 function presetStyle(value: unknown): BookStyle {
-  object(value, [...Object.keys(defaultStyle()), 'columnGapMm', 'maxCharsPerLine', 'maxLinesPerPage'], '本の設定');
+  object(value, [...Object.keys(defaultStyle()), 'columnGapMm', 'maxCharsPerLine', 'maxLinesPerPage', 'pageCountMultiple'], '本の設定');
   object(value.page, ['widthMm', 'heightMm'], '用紙');
   object(value.margins, ['topMm', 'bottomMm', 'innerMm', 'outerMm'], '余白');
   object(value.folio, ['enabled', 'fromPage', 'startNumber', 'position', 'fontPt', 'insetMm', 'rules'], '番号');
