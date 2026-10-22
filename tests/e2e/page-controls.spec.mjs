@@ -40,7 +40,7 @@ for (const width of [1440, 375]) test(`@flow DOCX/Markdown/JSON, structure, fine
   const source = await ui.manuscript().inputValue(); expect(source).toContain('# 第一章'); expect(source).toContain('｜薔薇《ばら》'); expect(source).toContain('*静かな言葉*'); expect(source).toContain('---'); expect(source).toContain('\\[未知の指定]');
   await ui.tab('プレビュー'); expect(await ui.pageCount()).toBeGreaterThan(1); await expect(ui.preview().locator('[data-ruby]')).not.toHaveCount(0); await expect(ui.preview().locator('[data-emphasis]')).not.toHaveCount(0); await expect(ui.preview().locator('[data-dash]')).not.toHaveCount(0);
   await ui.importTxt(absolute('fixtures/imports/semantic.md')); await ui.tab('原稿'); expect(await ui.manuscript().inputValue()).toContain('## 第二章');
-  await expect(page.getByTestId('source-syntax')).toHaveValue('markdown');
+  await expect(page.getByTestId('source-syntax')).toHaveCount(0);
   await ui.paste(manuscript); await ui.tab('設定'); await page.getByTestId('page-size').selectOption('b6');
   await page.locator('#detail-layout summary').click(); await page.getByTestId('grid-chars').fill('25'); await page.getByTestId('grid-chars').blur();
   await page.locator('#detail-heads > summary').click(); await page.getByText('通しページで指定する（旧形式）', { exact: true }).click(); await page.locator('#add-head-rule').click();

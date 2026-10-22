@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { absolute, readJson } from './lib.mjs';
 
 const appURL = new URL((await readJson('harness/config.json')).appUrl);
-const env = { ...process.env, PLAYWRIGHT_BROWSERS_PATH: absolute('.cache/browsers'), BOOKMAKER_PORT: appURL.port, BOOKMAKER_HOST: appURL.hostname };
+const env = { ...process.env, PLAYWRIGHT_BROWSERS_PATH: absolute('.cache/browsers'), COMPHOLIO_PORT: appURL.port, COMPHOLIO_HOST: appURL.hostname };
 const args = process.argv.slice(2);
 let server;
 try {

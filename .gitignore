@@ -14,3 +14,11 @@ __pycache__/
 .DS_Store
 Thumbs.db
 *.log
+
+# Local development notes and review evidence
+/AGENTS.md
+/sources/
+/docs/*
+!/docs/guide.md
+!/docs/development.md
+/harness/manual-review.json

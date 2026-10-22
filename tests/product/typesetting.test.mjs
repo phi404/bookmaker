@@ -96,7 +96,8 @@ test('only documented BOM/newline normalization changes the parsed text', async 
 
 if (config.phase === 'mvp') test('project round trip, malformed JSON and invalid numbers', async () => {
   const adapter = await loadAdapter(), source = await readText('fixtures/ruby.txt');
-  const project = { schemaVersion: 1, source, document: adapter.parse(source), style: adapter.defaultStyle() };
+  const { createBook } = await import('../../dist/domain/book.js');
+  const project = createBook(source);
   assert.deepEqual(adapter.restore(adapter.serialize(project)), project);
   assert.throws(() => adapter.restore('{invalid'));
   assert.throws(() => adapter.restore(JSON.stringify({ ...project, style: { ...project.style, fontPt: -1 } })));

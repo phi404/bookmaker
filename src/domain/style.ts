@@ -75,9 +75,9 @@ export function validateStyle(value: unknown): BookStyle {
   }
   if (v.folio) {
     const f = v.folio;
-    if (typeof f.enabled !== 'boolean' || !DECORATION_POSITIONS.includes(f.position) || !Array.isArray(f.rules) || f.rules.length > 50) throw new Error('ページ番号の設定を確認してください。');
+    if (typeof f.enabled !== 'boolean' || !DECORATION_POSITIONS.includes(f.position) || !Array.isArray(f.rules) || f.rules.length > 50) throw new Error('ノンブルの設定を確認してください。');
     const rules = f.rules.map((r: FolioRule) => {
-      range(r); if (typeof r.enabled !== 'boolean') throw new Error('ページ番号の範囲を確認してください。');
+      range(r); if (typeof r.enabled !== 'boolean') throw new Error('ノンブルの範囲を確認してください。');
       return { id: r.id, from: r.from, to: r.to, enabled: r.enabled, ...(r.startNumber === undefined ? {} : { startNumber: integer(r.startNumber, '開始番号', 0) }) };
     });
     style.folio = { enabled: f.enabled, fromPage: integer(f.fromPage, '表示開始ページ'), startNumber: integer(f.startNumber, '開始番号', 0), position: f.position, fontPt: finite(f.fontPt, '番号の大きさ', 5, 12), insetMm: finite(f.insetMm, '番号の端からの距離', 3, 20), rules };
@@ -93,12 +93,12 @@ export function validateStyle(value: unknown): BookStyle {
     const size = fontPt * 25.4 / 72;
     if (position.startsWith('top-') ? insetMm < size || insetMm + size * .3 > style.margins.topMm : insetMm + size > style.margins.bottomMm) throw new Error(`${name}が本文の余白と重なります。${position.startsWith('top-') ? '天' : '地'}の余白を広げるか、端からの距離・大きさを小さくしてください。`);
   };
-  if (style.folio && (style.folio.enabled || style.folio.rules.some(r => r.enabled))) decoration(style.folio.position, style.folio.fontPt, style.folio.insetMm, 'ページ番号');
+  if (style.folio && (style.folio.enabled || style.folio.rules.some(r => r.enabled))) decoration(style.folio.position, style.folio.fontPt, style.folio.insetMm, 'ノンブル');
   for (const head of style.runningHeads ?? []) if (head.text) decoration(head.position, head.fontPt, head.insetMm, '柱');
   if (style.folio?.position.startsWith('top-')) {
     // Every range/parity state changes only at a boundary. Check it and the next parity.
     const bounds = [1, style.folio.fromPage, ...style.folio.rules.flatMap(r => [r.from, ...(r.to === null ? [] : [r.to + 1])]), ...style.runningHeads!.flatMap(h => [h.from, ...(h.to === null ? [] : [h.to + 1])])];
-    for (const page of new Set(bounds.flatMap(p => [p, p + 1]))) if (folioNumber(style.folio, page) !== null && headsForPage(style, page).some(h => decorationSide(style.pageLayout, page, h.position, style.binding) === decorationSide(style.pageLayout, page, style.folio!.position, style.binding))) throw new Error('柱とページ番号が同じ上部の位置にあります。どちらかの位置や対象範囲を変更してください。');
+    for (const page of new Set(bounds.flatMap(p => [p, p + 1]))) if (folioNumber(style.folio, page) !== null && headsForPage(style, page).some(h => decorationSide(style.pageLayout, page, h.position, style.binding) === decorationSide(style.pageLayout, page, style.folio!.position, style.binding))) throw new Error('柱とノンブルが同じ上部の位置にあります。どちらかの位置や対象範囲を変更してください。');
   }
   return style;
 }

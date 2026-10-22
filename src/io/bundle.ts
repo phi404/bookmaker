@@ -17,7 +17,6 @@ export function originalBytes(dataURL: string): Uint8Array {
 /** book.json is the canonical project. The loose source/assets are copies for other tools. */
 export async function productionBundle(project: Publication, signal: AbortSignal): Promise<Blob> {
   const restored = restoreProject(serializeProject(project));
-  if (restored.schemaVersion === 1) throw new Error('現在のBook Modelを保存してください。');
   const book = asBook(restored), files: Record<string, Uint8Array> = Object.create(null);
   files['book.json'] = new TextEncoder().encode(serializeProject(book));
   files[`manuscript.${book.syntax === 'markdown' ? 'md' : 'txt'}`] = new TextEncoder().encode(book.sourceDraft ?? book.source);
@@ -51,7 +50,7 @@ export async function restoreProductionBundle(bytes: Uint8Array): Promise<Public
   const decode = (path: string) => { const file = files[path]; if (!file) throw new Error(`制作データに ${path} がありません。`); return new TextDecoder('utf-8', { fatal: true }).decode(file); };
   let manifest: unknown; try { manifest = JSON.parse(decode('manifest.json')); } catch { throw new Error('Compholioの制作データを選んでください。'); }
   object(manifest, ['schemaVersion', 'kind', 'project', 'originals', 'files'], '制作データ');
-  if (manifest.schemaVersion !== 1 || (manifest.kind !== 'compholio-production' && manifest.kind !== 'folaxis-production') || manifest.project !== 'book.json' || !Array.isArray(manifest.files) || manifest.files.length > 210) throw new Error('未対応の制作データです。元ファイルを保管してください。');
+  if (manifest.schemaVersion !== 1 || manifest.kind !== 'compholio-production' || manifest.project !== 'book.json' || !Array.isArray(manifest.files) || manifest.files.length > 210) throw new Error('未対応の制作データです。元ファイルを保管してください。');
   const paths = new Set(['manifest.json']);
   for (const entry of manifest.files) {
     object(entry, ['path', 'bytes', 'sha256'], '制作データのファイル'); textValue(entry.path, 200, 'ファイル名');
@@ -66,6 +65,5 @@ export async function restoreProductionBundle(bytes: Uint8Array): Promise<Public
   if (fonts[0].family !== bundledFont.family || fonts[0].path !== bundledFont.path || fonts[0].name !== bundledFont.name || fonts[0].license !== bundledFont.license || !files[bundledFont.path] || await hash(files[bundledFont.path]!) !== bundledFont.sha256) throw new Error('制作データの書体が現在のCompholioと異なります。元の書体を保管してください。');
   decode(bundledFont.license); decode('settings.json');
   const restored = restoreProject(decode('book.json'));
-  if (restored.schemaVersion === 1) throw new Error('制作データのBook Modelを確認してください。');
   const book = asBook(restored); decode(`manuscript.${book.syntax === 'markdown' ? 'md' : 'txt'}`); return book;
 }

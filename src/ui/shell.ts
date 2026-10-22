@@ -33,12 +33,8 @@ export function workbenchShell(host: ShellHost): void {
   el('toggle-theme').addEventListener('click', theme);
   const help = el<HTMLDialogElement>('help-dialog');
   const showHelp = () => { if (!help.open) help.showModal(); };
-  for (const id of ['open-help', 'status-help']) el(id).addEventListener('click', showHelp);
+  el('open-help').addEventListener('click', showHelp);
   el('close-help').addEventListener('click', () => help.close());
-  el('help-notation').addEventListener('click', () => {
-    help.close(); host.showLeft('source'); const details = document.querySelector<HTMLDetailsElement>('.notation-help')!;
-    details.open = true; details.querySelector<HTMLElement>('summary')!.focus();
-  });
   const commands: Command[] = [
     { label: '原稿を開く', keywords: '本文 manuscript', icon: 'file-text', run: () => { host.showLeft('source'); el('manuscript').focus(); } },
     { label: '本文を検索・置換', keywords: '原稿 find replace 検索 置換 Ctrl F', icon: 'search', run: () => click('open-source-find') },
@@ -54,7 +50,7 @@ export function workbenchShell(host: ShellHost): void {
     { label: '紙面に集中', keywords: 'focus 表示 パネル', icon: 'maximize-2', desktopOnly: true, run: () => { host.showPreview(); host.focusPaper(); } },
     { label: '章・ページを追加', keywords: '表題紙 目次 奥付 扉 構成', icon: 'plus', run: () => { host.showLeft('structure'); click('add-book-item'); } },
     { label: '版面の詳細', keywords: '字数 行数 段組 横書き 綴じ方 左綴じ 右綴じ 白 紙色 pt mm', icon: 'type', run: () => host.showSettings('detail-layout') },
-    { label: 'ページ番号', keywords: 'ノンブル folio 設定', icon: 'file', run: () => host.showSettings('detail-folio') },
+    { label: 'ノンブル', keywords: 'ページ番号 folio 設定', icon: 'file', run: () => host.showSettings('detail-folio') },
     { label: '柱を設定', keywords: '見出し ページ上部 header', icon: 'pilcrow', run: () => host.showSettings('detail-heads') },
     { label: '共通スタイルを編集', keywords: '段落 文字 見出し 書式 style', icon: 'type', run: () => {
       host.showSettings('shared-styles'); const details = el('catalog-editor').querySelector<HTMLDetailsElement>('details');
@@ -70,6 +66,7 @@ export function workbenchShell(host: ShellHost): void {
     { label: '改丁を入れる', keywords:'recto 奇数 左ページ',icon:'book-open',run:()=>edit('recto') },
     { label: '書き出し', keywords: 'export PNG PDF ZIP 作業 保存 JSON', icon: 'download', run: () => click('open-export') },
     { label: '表示テーマを切り替える', keywords: 'dark light ダーク ライト', icon: 'moon', run: theme },
+    { label: '原稿の書き方', keywords: '見出し ルビ 圏点 Markdown 記法', icon: 'file-text', run: () => { showHelp(); el<HTMLDetailsElement>('help-notation').open = true; el('help-notation').querySelector<HTMLElement>('summary')!.focus(); } },
     { label: '操作ガイド', keywords: 'help ショートカット 使い方', icon: 'circle-help', run: showHelp },
   ];
   function highlight(): void {

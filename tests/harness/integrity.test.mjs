@@ -8,8 +8,8 @@ import { loadAdapter, validateAdapter } from '../product/load-adapter.mjs';
 import { blockedTests } from '../../scripts/check-test-policy.mjs';
 
 const policy = await readJson('harness/boundaries.json');
-test('documents, original source, links, fixtures and requirement routes are consistent', async () => {
-  assert.deepEqual(await checkHarness(), { documents: 57, fixtures: 10, modelFixtures: 6, bookFixtures: 16, requirements: 66 });
+test('public documents, links, fixture hashes and requirement routes are consistent', async () => {
+  assert.deepEqual(await checkHarness(), { documents: 3, fixtures: 10, modelFixtures: 6, bookFixtures: 16, requirements: 66 });
 });
 test('independent long-text expectation is exactly 100k code points', async () => {
   const source = await readText('fixtures/long-chapter.txt');
@@ -62,7 +62,7 @@ test('missing, duplicate or unrouted requirements are rejected', () => {
   assert.ok(validateRequirements([{ ...valid, automated: [] }], new Set(['basic'])).length);
 });
 test('unknown, incomplete and stale visual evidence cannot pass completion', async () => {
-  const review = await readJson('harness/manual-review.json');
+  const review = { items: Object.fromEntries(['default-page-quality', 'vertical-glyphs-and-spacing', 'mobile-usability', 'export-appearance', 'local-first'].map(name => [name, { status: 'unknown' }])) };
   assert.ok(validateManualReview(review, 'current-revision').length);
   const valid = { revision: 'current-revision', reviewer: 'QA', environment: 'fixed environment', items: Object.fromEntries(Object.keys(review.items).map(key => [key, { status: 'pass', evidence: 'output/evidence.png' }])) };
   assert.deepEqual(validateManualReview(valid, 'current-revision'), []);

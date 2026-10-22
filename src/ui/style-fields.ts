@@ -42,6 +42,6 @@ export function styleFields<P extends Values>(parent: HTMLElement, prefix: strin
       const control = document.createElement('input'); control.id = `${prefix}-${key}`; control.type = 'number'; control.min = '5'; control.max = '70'; control.step = '.5'; control.placeholder = '本全体に従う'; control.value = String((current() as PageProperties).margins?.[key] ?? '');
       control.addEventListener('change', () => { const props = { ...current() } as PageProperties, margins = { ...props.margins }; if (!control.value) delete margins[key]; else margins[key] = Number(control.value); if (Object.keys(margins).length) props.margins = margins; else delete props.margins; edit(props as P, 'margins'); }); row.append(control); parent.append(row);
     }
-    add('showHeads', '柱', [['true', '表示'], ['false', 'この範囲では非表示']]); add('showFolio', 'ページ番号', [['true', '表示'], ['false', 'この範囲では非表示']]);
+    add('showHeads', '柱', [['true', '表示'], ['false', 'この範囲では非表示']]); add('showFolio', 'ノンブル', [['true', '表示'], ['false', 'この範囲では非表示']]);
   }
 }

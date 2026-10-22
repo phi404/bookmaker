@@ -23,6 +23,7 @@ if (!harnessOnly) steps.push(
   ['exports', ['scripts/run-export-check.mjs']],
   ['preserved-pdf', ['scripts/check-preserved-pdf.mjs']],
   ['press-pdf', ['scripts/check-press-pdf.mjs']],
+  ['local-source-integrity', ['scripts/check-local-sources.mjs']],
   ['manual-review', ['scripts/check-manual.mjs']],
 );
 const report = { kind: harnessOnly ? 'harness' : 'product', startedAt: new Date().toISOString(), phase: (await readJson('harness/config.json')).phase, node: process.version, platform: process.platform, sourceFingerprint: await fingerprint(), status: 'running', steps: [] };

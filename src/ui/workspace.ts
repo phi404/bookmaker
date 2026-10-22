@@ -117,7 +117,7 @@ export function workspaceViews(host: Host) {
   const insertionAnchor = (): string | undefined => { const s = host.selection(); return s.kind === 'special' ? flattenDocument(host.book().document).find(b => b.kind === 'specialPage' && b.pageId === s.id)?.id : s.kind === 'chapter' || s.kind === 'block' ? s.id : undefined; };
   const pageOptions = () => [['','本全体に従う'],...host.book().styles.pages!.map(p=>[p.id,p.name])] as [string,string][];
   function pageDecorations(parent: HTMLElement, id: string): void {
-    for (const [key,label] of [['showFolio','本のページ番号'],['showHeads','本の柱']] as const) {
+    for (const [key,label] of [['showFolio','本のノンブル'],['showHeads','本の柱']] as const) {
       field(parent,label,`special-${key}`,String(special(id).localStyle?.[key] ?? ''),v => {const local={...special(id).localStyle};if(v==='')delete local[key];else local[key]=v==='true';update(id,{localStyle:local});sync(true);},[['','本の設定に従う'],['false','付けない'],['true','付ける']]);
     }
   }
@@ -138,7 +138,7 @@ export function workspaceViews(host: Host) {
       const item = details('目次の文字と字下げ', parent);
       field(item, '文字サイズ / pt', 'toc-font', toc().fontPt, v => update(id, { toc: { ...toc(), fontPt: Number(v) } }));
       field(item, '階層ごとの字下げ / mm', 'toc-indent', toc().indentMm, v => update(id, { toc: { ...toc(), indentMm: Number(v) } }));
-      caption('見出しとページ番号を自動更新します。', parent);
+      caption('見出しとノンブルを自動更新します。', parent);
     }
     pageDecorations(parent,id);
     const d = details('詳細 / 自由ページへ', parent);
@@ -256,7 +256,7 @@ export function workspaceViews(host: Host) {
       const copy = { ...b, document: structuredClone(b.document), pageOverrides: current ? b.pageOverrides.map(r => r.id === current.id ? rule : r) : [...b.pageOverrides, rule] };
       if (!current) copy.document.nextId++; return copy;
     });
-    field(parent, 'ページ番号', 'pages-folio', existing?.folio === false ? 'hide' : 'inherit', v => edit({ folio: v === 'hide' ? false : undefined }), [['inherit', '本全体の設定に従う'], ['hide', 'このページでは非表示']]);
+    field(parent, 'ノンブル', 'pages-folio', existing?.folio === false ? 'hide' : 'inherit', v => edit({ folio: v === 'hide' ? false : undefined }), [['inherit', '本全体の設定に従う'], ['hide', 'このページでは非表示']]);
     field(parent, '柱', 'pages-heads', existing?.hideHeads ? 'hide' : 'inherit', v => edit({ hideHeads: v === 'hide' ? true : undefined }), [['inherit', '範囲の設定に従う'], ['hide', 'このページでは非表示']]);
     field(parent, '紙の色', 'pages-paper', existing?.paperColor ?? '', v => edit({ paperColor: v || undefined }), [['', '本全体の設定に従う'], ['white', '白'], ['warm', '温かい白']]);
     if (existing) button(actions(parent), 'このページ範囲の例外を解除', () => { change(b => ({ ...b, pageOverrides: b.pageOverrides.filter(r => r.id !== existing.id) })); sync(true); }, 'reset-pages');
@@ -272,7 +272,7 @@ export function workspaceViews(host: Host) {
     const d = details('章全体の書式', parent);
     const current=()=>host.book().document.children.find(s=>s.id===id)!,edit=(patch:object)=>change(b=>({...b,document:{...b.document,children:b.document.children.map(s=>s.id===id?{...s,...patch}:s)}}));
     const sectionLocal=(patch:object)=>{const next={...current().localStyle} as Record<string,unknown>;for(const [key,value] of Object.entries(patch))if(value===undefined)delete next[key];else next[key]=value;edit({localStyle:next});};
-    const numbering = details('ページ番号の区切り', parent);
+    const numbering = details('ノンブルの区切り', parent);
     field(numbering, 'この章の開始番号', 'chapter-number-start', section.localStyle?.numberStart === undefined ? '' : section.localStyle.numberStart, v => sectionLocal({ numberStart: v === '' ? undefined : Number(v) }));
     field(numbering, '番号の表し方', 'chapter-number-format', section.localStyle?.numberFormat ?? '', v => sectionLocal({ numberFormat: v || undefined }), [['', '前の系列に従う'], ['decimal', '1, 2, 3'], ['roman', 'i, ii, iii'], ['Roman', 'I, II, III']]);
     caption('番号を区切る章は、新しいページから始まります。空欄に戻すと指定を解除します。', numbering);

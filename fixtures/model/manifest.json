@@ -9,7 +9,7 @@
     {
       "id": "model-nested",
       "file": "fixtures/model/nested.md",
-      "sourceSha256": "3d5da9217a5dad096a577acdf7d9d4dae9c46491d0819d6bcaead86b085e4d16"
+      "sourceSha256": "707d5ecb5d995314fc0762b46567aadf30b510d9004dd0fcf9e40c2fbdc07880"
     },
     {
       "id": "model-duplicate-chapters",

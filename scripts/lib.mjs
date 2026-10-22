@@ -19,9 +19,10 @@ export async function walk(relative) {
   }
   return files.sort();
 }
+export const publicDocuments = ['README.md', 'docs/guide.md', 'docs/development.md'];
 export async function fingerprint() {
-  const files = ['requirements-qa.txt', 'package.json', 'package-lock.json', 'README.md', 'AGENTS.md', '.gitattributes', '.gitignore', '.node-version', 'eslint.config.mjs', 'playwright.config.mjs', 'playwright.compatibility.config.mjs', 'tsconfig.json', 'tsconfig.build.json', 'harness/config.json', 'harness/boundaries.json', 'harness/requirements.json', 'harness/documents.json', ...await walk('.github'),
-    ...await walk('src'), ...await walk('tests'), ...await walk('fixtures'), ...await walk('docs'), ...await walk('scripts'), ...await walk('public'), ...await walk('sources')];
+  const files = ['requirements-qa.txt', 'package.json', 'package-lock.json', ...publicDocuments, '.gitattributes', '.gitignore', '.node-version', 'eslint.config.mjs', 'playwright.config.mjs', 'playwright.compatibility.config.mjs', 'tsconfig.json', 'tsconfig.build.json', 'harness/config.json', 'harness/boundaries.json', 'harness/requirements.json', 'harness/documents.json', ...await walk('.github'),
+    ...await walk('src'), ...await walk('tests'), ...await walk('fixtures'), ...await walk('scripts'), ...await walk('public')];
   const digests = await Promise.all(files.sort().map(async file => `${file}\0${hash(await readFile(absolute(file)))}`));
   return hash(digests.join('\n'));
 }

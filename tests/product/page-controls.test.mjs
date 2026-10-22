@@ -53,7 +53,7 @@ test('heading ruby stays clear of neighboring columns even at compact line pitch
 });
 test('decoration settings that intrude into the body are rejected with a useful error', async () => {
   const a = await loadAdapter(), style = a.defaultStyle(), doc = a.parse('本文。');
-  assert.throws(() => a.paginate(doc, { ...style, margins: { ...style.margins, bottomMm: 5 } }), /ページ番号.*余白/u);
+  assert.throws(() => a.paginate(doc, { ...style, margins: { ...style.margins, bottomMm: 5 } }), /ノンブル.*余白/u);
   assert.throws(() => a.paginate(doc, { ...style, runningHeads: [{ id: 'h', from: 1, to: null, side: 'both', position: 'top-center', text: '章', fontPt: 7, insetMm: 20 }] }), /柱.*余白/u);
 });
 test('overlapping head ranges resolve by position; active folios cannot occupy that same position', async () => {
@@ -61,7 +61,7 @@ test('overlapping head ranges resolve by position; active folios cannot occupy t
   const h = { id: 'old', from: 1, to: null, side: 'both', position: 'top-left', text: '旧章', fontPt: 7, insetMm: 6 };
   const next = { ...h, id: 'new', text: '新章', insetMm: 8 }, s = { ...style, runningHeads: [h, next] };
   const svg = a.renderSvg(a.paginate(doc, s).pages[0], s); assert.ok(svg.includes('新章')); assert.ok(!svg.includes('旧章'));
-  assert.throws(() => a.paginate(doc, { ...s, folio: { ...style.folio, position: 'top-left' } }), /柱.*ページ番号.*位置/u);
+  assert.throws(() => a.paginate(doc, { ...s, folio: { ...style.folio, position: 'top-left' } }), /柱.*ノンブル.*位置/u);
 });
 test('uniform pages do not insert parity blanks for book-side starts', async () => {
   const a = await loadAdapter(), doc = a.parse('前\n[左ページ]\n後'), style = a.defaultStyle();

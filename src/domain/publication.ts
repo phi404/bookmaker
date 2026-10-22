@@ -1,4 +1,3 @@
-import type { Project } from './contracts.js';
 import { validatePrintSettings } from './print.js';
 import type { DocumentTree, Publication, Section, SourceSyntax, TreeBlock, StyleCatalog } from './model.js';
 import { MAX_SOURCE } from './document.js';
@@ -56,9 +55,9 @@ function treeFrom(blocks: TreeBlock[], previous?: DocumentTree): DocumentTree {
   if (!sections.length) sections.push({ kind: 'section', id: `s-${nextId++}`, role: 'body', children: [] });
   return { schemaVersion: 2, kind: 'document', title: previous?.title ?? '本文', author: previous?.author ?? '', nextId, children: sections };
 }
-export function createPublication(source: string, syntax: SourceSyntax = 'legacy'): Publication {
-  const records = sourceBlocks(source, syntax);
-  return { schemaVersion: 2, source, syntax, document: applySections(treeFrom(records.map(r => r.block)), records), styles: defaultCatalog(), style: defaultStyle(), overrides: [], runningElements: [] };
+export function createPublication(source: string, syntax: SourceSyntax = 'markdown'): Publication {
+  const records = sourceBlocks(source, syntax), document = applySections(treeFrom(records.map(r => r.block)), records);
+  return { schemaVersion: 3, source: syntax === 'markdown' ? source : sourceOf(document, 'markdown'), syntax: 'markdown', document, styles: defaultCatalog(), style: defaultStyle(), overrides: [], runningElements: [], specialPages: records.flatMap(r => r.block.kind === 'specialPage' ? [newSpecialPage(r.block.pageId, r.block.role)] : []), assets: [], pageOverrides: [] };
 }
 /** Linear reconciliation: exact anchors and unambiguous moves first, single edits between anchors second. */
 export function updateSource(project: Publication, source: string, syntax: SourceSyntax = project.syntax): Publication {
@@ -93,11 +92,8 @@ export function updateSource(project: Publication, source: string, syntax: Sourc
   }
   const specialPages = structuredClone(project.specialPages ?? []);
   for (const block of fresh) if (block.kind === 'specialPage' && !specialPages.some(p => p.id === block.pageId)) specialPages.push(newSpecialPage(block.pageId, block.role));
-  return { ...project, syntax, source, document: applySections(treeFrom(fresh, project.document), records), ...(project.schemaVersion === 3 ? { specialPages } : {}) };
-}
-export function migrateProject(project: Project | Publication): Publication {
-  if (project.schemaVersion === 2 || project.schemaVersion === 3) return project as Publication;
-  return { ...createPublication(project.source), style: project.style, ...(project.metadata ? { metadata: project.metadata } : {}) };
+  const document = applySections(treeFrom(fresh, project.document), records);
+  return { ...project, syntax: 'markdown', source: syntax === 'markdown' ? source : sourceOf(document, 'markdown'), document, specialPages };
 }
 export function validateTree(value: unknown): DocumentTree {
   object(value, ['schemaVersion', 'kind', 'title', 'author', 'nextId', 'children'], '文書構造');
@@ -143,12 +139,12 @@ export function validateTree(value: unknown): DocumentTree {
 }
 export function validatePublication(value: unknown): Publication {
   object(value, ['schemaVersion', 'syntax', 'source', 'document', 'styles', 'style', 'overrides', 'runningElements', 'metadata', 'specialPages', 'assets', 'pageOverrides', 'sourceDraft', 'printSettings'], 'プロジェクト');
-  if (![2, 3].includes(value.schemaVersion as number) || !['legacy', 'markdown'].includes(value.syntax as string)) throw new Error('未対応のプロジェクト形式です。');
-  const syntax = value.syntax as SourceSyntax, documentTree = validateTree(value.document), styles = validateCatalog(value.styles), style = validateStyle(value.style);
+  if (value.schemaVersion !== 3 || value.syntax !== 'markdown') throw new Error('未対応のプロジェクト形式です。');
+  const syntax = value.syntax as 'markdown', documentTree = validateTree(value.document), styles = validateCatalog(value.styles), style = validateStyle(value.style);
   object(value.style, ['page', 'writingMode', 'binding', 'columns', 'columnGapMm', 'fontFamily', 'fontPt', 'lineHeight', 'margins', 'maxCharsPerLine', 'maxLinesPerPage', 'pageLayout', 'paragraphIndent', 'paperColor', 'folio', 'runningHeads', 'pageCountMultiple'], '本の組版設定');
   object(value.style.page, ['widthMm', 'heightMm'], '判型'); object(value.style.margins, ['topMm', 'bottomMm', 'innerMm', 'outerMm'], '余白');
   if (value.style.folio) {
-    object(value.style.folio, ['enabled', 'fromPage', 'startNumber', 'position', 'fontPt', 'insetMm', 'rules'], 'ページ番号');
+    object(value.style.folio, ['enabled', 'fromPage', 'startNumber', 'position', 'fontPt', 'insetMm', 'rules'], 'ノンブル');
     for (const rule of value.style.folio.rules as unknown[]) object(rule, ['id', 'from', 'to', 'enabled', 'startNumber'], '番号範囲');
   }
   for (const head of (value.style.runningHeads ?? []) as unknown[]) object(head, ['id', 'from', 'to', 'side', 'position', 'text', 'fontPt', 'insetMm'], '既存の柱');
@@ -175,14 +171,14 @@ export function validatePublication(value: unknown): Publication {
   };
   const source = typeof value.source === 'string' && value.source.length <= MAX_SOURCE && agrees(value.source) ? value.source : sourceOf(documentTree, syntax);
   if (source.length > MAX_SOURCE || !agrees(source)) throw new Error('文書構造を原稿に変換できません。未対応の要素を含む元データを保管してください。');
-  const result: Publication = { schemaVersion: value.schemaVersion as 2 | 3, syntax, source, document: documentTree, styles, style, overrides: structuredClone(value.overrides) as Publication['overrides'], runningElements: structuredClone(value.runningElements) as Publication['runningElements'] };
+  const result: Publication = { schemaVersion: 3, syntax, source, document: documentTree, styles, style, overrides: structuredClone(value.overrides) as Publication['overrides'], runningElements: structuredClone(value.runningElements) as Publication['runningElements'] };
   if (value.schemaVersion === 3) {
     result.specialPages = validateSpecialPages(value.specialPages); result.assets = validateAssets(value.assets); result.pageOverrides = validatePageOverrides(value.pageOverrides);
     for (const p of result.specialPages) if (p.pageStyleId && !styles.pages?.some(e => e.id === p.pageStyleId)) throw new Error('特殊ページの版面スタイルが見つかりません。');
     const refs = new Set<string>();
     for (const b of blocks) if (b.kind === 'specialPage') { if (refs.has(b.pageId)) throw new Error('同じ特殊ページIDが複数配置されています。複製には別のIDを使ってください。'); refs.add(b.pageId); const p = result.specialPages.find(p => p.id === b.pageId); if (!p || p.role !== b.role) throw new Error('特殊ページの参照先が一致しません。'); }
     if (value.sourceDraft !== undefined) { textValue(value.sourceDraft, MAX_SOURCE, '未確定原稿'); result.sourceDraft = value.sourceDraft; }
-  } else if (['specialPages', 'assets', 'pageOverrides', 'sourceDraft'].some(k => value[k] !== undefined) || blocks.some(b => b.kind === 'specialPage')) throw new Error('特殊ページを含む作業は新しいプロジェクト形式で保存してください。');
+  }
   if (value.printSettings !== undefined) result.printSettings = validatePrintSettings(value.printSettings);
   if (value.metadata !== undefined) {
     object(value.metadata, ['filename', 'viewMode', 'selected'], '表示設定'); const m = value.metadata; textValue(m.filename, 200, 'ファイル名');

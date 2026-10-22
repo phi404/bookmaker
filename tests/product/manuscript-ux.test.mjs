@@ -16,21 +16,19 @@ test('Markdown emphasis and English page directives preserve ruby, strong, liter
   assert.ok(b[5].inlines.some(r => r.text === '重なる強調' && r.strong && r.emphasis === 'sesame'));
 });
 
-test('modernizing legacy notation keeps canonical nodes, identifiers, styles and literal Markdown characters', async () => {
-  const { modernizeNotation } = await import('../../dist/domain/book.js');
-  const p = asBook(createPublication('[見出し] 第一章\n　[圏点]｜薔薇《ばら》[/圏点]\n[右ページ]\n# literal * symbols\n[圏点:丸]丸[/圏点]', 'legacy'));
+test('plain-text import projects canonical Markdown without changing nodes or literal characters', async () => {
+  const p = asBook(createPublication('[見出し] 第一章\n　[圏点]｜薔薇《ばら》[/圏点]\n[右ページ]\n# literal * symbols\n[圏点:丸]丸[/圏点]', 'text'));
   p.document.children[0].children[1].localStyle = { paragraph: { indentEm: 2 } };
-  const old = globalThis.structuredClone(p); const modern = modernizeNotation(p);
-  assert.equal(modern.syntax, 'markdown'); assert.deepEqual(modern.document, old.document); assert.equal(p.syntax, 'legacy');
+  const old = globalThis.structuredClone(p); const modern = checkBook(p);
+  assert.equal(modern.syntax, 'markdown'); assert.deepEqual(modern.document, old.document); assert.equal(p.syntax, 'markdown');
   assert.match(modern.source, /# 第一章/u); assert.match(modern.source, /:::page-break side="right"/u); assert.ok(!/\[(?:見出し|圏点|右ページ|改ページ)/u.test(modern.source));
   assert.deepEqual(sourceBlocks(modern.source, 'markdown').map(r => contentKey(r.block)), flattenDocument(p.document).map(contentKey));
   assert.deepEqual(checkBook(modern).document, old.document);
 });
 
 test('notation projection leaves ordinary punctuation and URLs readable while protecting leading directives', async () => {
-  const { modernizeNotation } = await import('../../dist/domain/book.js');
   const raw = 'URL https://example.invalid/path と 3.14。\n:::center\n# 本文の記号\n> 文字としての括弧\n---\n===\n```\n:::colophon id="literal"\n[圏点]言葉と｜薔薇《ばら》[/圏点]';
-  const original = asBook(createPublication(raw, 'legacy')), projected = modernizeNotation(original);
+  const original = asBook(createPublication(raw, 'text')), projected = checkBook(original);
   assert.ok(projected.source.includes('URL https://example.invalid/path と 3.14。'));
   assert.deepEqual(sourceBlocks(projected.source, 'markdown').map(r => contentKey(r.block)), flattenDocument(original.document).map(contentKey));
 });

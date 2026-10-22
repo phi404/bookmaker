@@ -16,7 +16,7 @@
       "manual": [
         "mobile-usability"
       ],
-      "specification": "docs/SOURCE_FORMAT.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-02",
@@ -32,7 +32,7 @@
       "manual": [
         "default-page-quality"
       ],
-      "specification": "docs/ARCHITECTURE.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-03",
@@ -50,7 +50,7 @@
       "manual": [
         "vertical-glyphs-and-spacing"
       ],
-      "specification": "docs/TYPOGRAPHY.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-04",
@@ -67,7 +67,7 @@
       "manual": [
         "vertical-glyphs-and-spacing"
       ],
-      "specification": "docs/TYPOGRAPHY.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-05",
@@ -84,7 +84,7 @@
       "manual": [
         "default-page-quality"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-06",
@@ -102,7 +102,7 @@
       "manual": [
         "vertical-glyphs-and-spacing"
       ],
-      "specification": "docs/TYPOGRAPHY.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-07",
@@ -118,7 +118,7 @@
       "manual": [
         "default-page-quality"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-08",
@@ -134,7 +134,7 @@
       "manual": [
         "export-appearance"
       ],
-      "specification": "docs/CAPABILITIES.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-09",
@@ -150,7 +150,7 @@
       "manual": [
         "mobile-usability"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-10",
@@ -167,7 +167,7 @@
       "manual": [
         "local-first"
       ],
-      "specification": "docs/PRINCIPLES.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-11",
@@ -183,7 +183,7 @@
       "manual": [
         "vertical-glyphs-and-spacing"
       ],
-      "specification": "docs/TYPOGRAPHY.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-12",
@@ -200,7 +200,7 @@
       "manual": [
         "default-page-quality"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-13",
@@ -218,7 +218,7 @@
         "vertical-glyphs-and-spacing",
         "export-appearance"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-14",
@@ -236,7 +236,7 @@
       "manual": [
         "local-first"
       ],
-      "specification": "docs/ARCHITECTURE.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-15",
@@ -253,7 +253,7 @@
         "export-appearance",
         "mobile-usability"
       ],
-      "specification": "docs/CAPABILITIES.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-16",
@@ -272,7 +272,7 @@
         "default-page-quality",
         "mobile-usability"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-17",
@@ -290,7 +290,7 @@
         "default-page-quality",
         "export-appearance"
       ],
-      "specification": "docs/CAPABILITIES.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-18",
@@ -308,7 +308,7 @@
       "manual": [
         "vertical-glyphs-and-spacing"
       ],
-      "specification": "docs/TYPOGRAPHY.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-19",
@@ -325,7 +325,7 @@
         "vertical-glyphs-and-spacing",
         "export-appearance"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-20",
@@ -343,7 +343,7 @@
         "default-page-quality",
         "export-appearance"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-21",
@@ -363,7 +363,7 @@
         "mobile-usability",
         "local-first"
       ],
-      "specification": "docs/SOURCE_FORMAT.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-22",
@@ -382,7 +382,7 @@
       "manual": [
         "local-first"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-23",
@@ -399,7 +399,7 @@
       "manual": [
         "default-page-quality"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-24",
@@ -417,7 +417,7 @@
         "default-page-quality",
         "mobile-usability"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-25",
@@ -434,7 +434,7 @@
       "manual": [
         "export-appearance"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-26",
@@ -451,7 +451,7 @@
       "manual": [
         "vertical-glyphs-and-spacing"
       ],
-      "specification": "docs/SOURCE_FORMAT.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-27",
@@ -467,7 +467,7 @@
       "manual": [
         "mobile-usability"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-28",
@@ -484,7 +484,7 @@
       "manual": [
         "local-first"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-29",
@@ -500,7 +500,7 @@
       "manual": [
         "local-first"
       ],
-      "specification": "docs/SOURCE_FORMAT.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-30",
@@ -517,7 +517,7 @@
         "default-page-quality",
         "mobile-usability"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-31",
@@ -535,7 +535,7 @@
       "manual": [
         "default-page-quality"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-32",
@@ -553,7 +553,7 @@
       "manual": [
         "export-appearance"
       ],
-      "specification": "docs/CAPABILITIES.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-33",
@@ -570,7 +570,7 @@
         "default-page-quality",
         "mobile-usability"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-34",
@@ -589,7 +589,7 @@
         "local-first",
         "export-appearance"
       ],
-      "specification": "docs/ARCHITECTURE.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-35",
@@ -610,7 +610,7 @@
         "mobile-usability",
         "local-first"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-36",
@@ -629,7 +629,7 @@
       "manual": [
         "local-first"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-37",
@@ -648,7 +648,7 @@
       "manual": [
         "vertical-glyphs-and-spacing"
       ],
-      "specification": "docs/TYPOGRAPHY.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-38",
@@ -668,7 +668,7 @@
         "default-page-quality",
         "vertical-glyphs-and-spacing"
       ],
-      "specification": "docs/TYPOGRAPHY.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-39",
@@ -686,7 +686,7 @@
       "manual": [
         "export-appearance"
       ],
-      "specification": "docs/CAPABILITIES.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-40",
@@ -706,7 +706,7 @@
         "default-page-quality",
         "mobile-usability"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-41",
@@ -727,7 +727,7 @@
         "mobile-usability",
         "export-appearance"
       ],
-      "specification": "docs/CAPABILITIES.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-42",
@@ -746,7 +746,7 @@
         "mobile-usability",
         "local-first"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-43",
@@ -770,7 +770,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-44",
@@ -789,7 +789,7 @@
         "local-first",
         "export-appearance"
       ],
-      "specification": "docs/DEPLOYMENT.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-45",
@@ -814,7 +814,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-46",
@@ -833,7 +833,7 @@
         "local-first",
         "mobile-usability"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-47",
@@ -852,7 +852,7 @@
         "local-first",
         "mobile-usability"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-48",
@@ -871,7 +871,7 @@
         "local-first",
         "mobile-usability"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-49",
@@ -889,7 +889,7 @@
         "local-first",
         "mobile-usability"
       ],
-      "specification": "docs/ARCHITECTURE.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-50",
@@ -908,7 +908,7 @@
         "local-first",
         "mobile-usability"
       ],
-      "specification": "docs/ARCHITECTURE.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-51",
@@ -929,7 +929,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-52",
@@ -950,7 +950,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-53",
@@ -971,7 +971,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-54",
@@ -991,7 +991,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/ARCHITECTURE.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-55",
@@ -1010,7 +1010,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-56",
@@ -1029,7 +1029,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-57",
@@ -1048,7 +1048,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/TYPOGRAPHY.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-58",
@@ -1067,7 +1067,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/PUBLISHING_MODEL.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-59",
@@ -1086,7 +1086,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/ARCHITECTURE.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-60",
@@ -1106,7 +1106,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/ARCHITECTURE.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-61",
@@ -1125,7 +1125,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-62",
@@ -1143,7 +1143,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/ARCHITECTURE.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-63",
@@ -1161,7 +1161,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/TYPOGRAPHY.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-64",
@@ -1180,7 +1180,7 @@
         "export-appearance",
         "local-first"
       ],
-      "specification": "docs/CAPABILITIES.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-65",
@@ -1199,7 +1199,7 @@
         "mobile-usability",
         "local-first"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     },
     {
       "id": "R-66",
@@ -1217,7 +1217,7 @@
         "mobile-usability",
         "local-first"
       ],
-      "specification": "docs/UI.md"
+      "specification": "docs/guide.md"
     }
   ]
 }

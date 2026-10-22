@@ -3,9 +3,9 @@ import { absolute } from './lib.mjs';
 import { createStaticServer, normalizeBasePath } from './static-server.mjs';
 
 export async function serveBuiltApp() {
-  const port = Number(process.env.BOOKMAKER_PORT ?? 5174), host = process.env.BOOKMAKER_HOST ?? '127.0.0.1';
+  const port = Number(process.env.COMPHOLIO_PORT ?? 5174), host = process.env.COMPHOLIO_HOST ?? '127.0.0.1';
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('Invalid server port');
-  const basePath = normalizeBasePath(process.env.BOOKMAKER_BASE_PATH ?? '/');
+  const basePath = normalizeBasePath(process.env.COMPHOLIO_BASE_PATH ?? '/');
   const server = await createStaticServer(absolute('dist'), { basePath });
   server.on('error', error => { console.error(error.message); process.exitCode = 1; });
   function shutdown() { server.closeAllConnections(); server.close(() => { if (process.connected) process.disconnect(); }); }

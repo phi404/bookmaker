@@ -1,8 +1,8 @@
 import type { RenderedPages, ViewMode, BookPage } from '../domain/contracts.js';
 import { MAX_SOURCE } from '../domain/document.js';
-import type { BookModel, SourceSyntax } from '../domain/model.js';
-import { createPublication, flattenDocument, migrateProject, validatePublication } from '../domain/publication.js';
-import { asBook, editBookSource, sourceRangeFor, modernizeNotation } from '../domain/book.js';
+import type { BookModel } from '../domain/model.js';
+import { createPublication, flattenDocument, validatePublication } from '../domain/publication.js';
+import { asBook, editBookSource, sourceRangeFor } from '../domain/book.js';
 import { SAMPLE } from '../domain/sample.js';
 import { validateStyle, geometry } from '../domain/style.js';
 import { adjacentPage, spreadPages } from '../domain/page-order.js';
@@ -110,13 +110,12 @@ function syncSource(): void {
   if (manuscript.value !== source) { const start = manuscript.selectionStart, end = manuscript.selectionEnd, scroll = manuscript.scrollTop; manuscript.value = source; manuscript.setSelectionRange(Math.min(start, source.length), Math.min(end, source.length)); manuscript.scrollTop = scroll; }
   el('sample-manuscript').hidden = !!source || !!project.assets.length;
   el('source-draft-status').hidden = project.sourceDraft === undefined; el('source-draft-status').textContent = project.sourceDraft !== undefined ? '指定を入力中' : '';
-  setValue('source-syntax', project.syntax); el('character-count').textContent = `${Array.from(source).length.toLocaleString('ja-JP')} 字`; el('project-name').textContent = filename;
-  el('syntax-label').textContent = project.syntax === 'markdown' ? 'Markdown' : '旧形式';
+  el('character-count').textContent = `${Array.from(source).length.toLocaleString('ja-JP')} 字`; el('project-name').textContent = filename;
   const empty = project.source.length === 0; el('preview-empty').hidden = !empty; spread.hidden = empty; panel.dataset.empty = String(empty);
   setValue('book-title', project.document.title === '本文' ? '' : project.document.title); setValue('book-author', project.document.author);
   searchTools?.sync();
 }
-function applyDraft(draft: Draft): void { project = modernizeNotation(asBook(draft.project)); style = project.style; marginOffset = draft.marginOffset; filename = project.metadata?.filename ?? '原稿'; viewMode = project.metadata?.viewMode ?? 'spread'; selected = project.metadata?.selected ?? 1; syncSource(); }
+function applyDraft(draft: Draft): void { project = asBook(draft.project); style = project.style; marginOffset = draft.marginOffset; filename = project.metadata?.filename ?? '原稿'; viewMode = project.metadata?.viewMode ?? 'spread'; selected = project.metadata?.selected ?? 1; syncSource(); }
 function syncHistory(): void { el<HTMLButtonElement>('undo').disabled = !history.length; el<HTMLButtonElement>('redo').disabled = !future.length; }
 function snapshot(edit = false): void { if (!edit || Date.now() - lastEditAt > 800 || !history.length) { history.push(currentDraft()); if (history.length > 40) history.shift(); } future.length = 0; lastEditAt = edit ? Date.now() : 0; syncHistory(); }
 function restoreHistory(back: boolean): void {
@@ -341,7 +340,7 @@ function edited(): void {
   if(!edit.error&&chosen.kind==='range'){const existing=new Set(flattenDocument(project.document).filter(b=>'inlines'in b).map(b=>b.id)),ids=chosen.ids.filter(id=>existing.has(id));if(ids.length!==chosen.ids.length)select(ids.length>1?{kind:'range',ids}:ids[0]?{kind:'block',id:ids[0]}:{kind:'book'},false);}
   importUndo = undefined; el('undo-import').hidden = true; reflow();
 }
-manuscript.addEventListener('input', edited); manuscriptTools(manuscript, edited, notify, () => project.syntax, () => openCommonStyles(), formatSelection);
+manuscript.addEventListener('input', edited); manuscriptTools(manuscript, edited, notify, () => openCommonStyles(), formatSelection);
 function highlightSourceMatch(): void {
   spread.querySelectorAll('[data-search-hit]').forEach(node => node.removeAttribute('data-search-hit'));
   if (!searchRange || project.sourceDraft !== undefined) return;
@@ -360,10 +359,6 @@ searchTools = sourceSearch(manuscript, { showSource: () => showLeft('source'), n
   highlightSourceMatch(); if (showPaper) { if (mobile.matches) activePanel('preview'); else panel.focus(); }
 } });
 el('open-paper-source').addEventListener('click', () => { if (paperSourceSelection) revealSource(paperSourceSelection.id); });
-el('source-syntax').addEventListener('change', () => {
-  const syntax = el<HTMLSelectElement>('source-syntax').value as SourceSyntax; if (project.specialPages.length && syntax !== 'markdown') { notify('特殊ページを含む原稿にはMarkdownの読み方を使います。'); setValue('source-syntax', project.syntax); return; }
-  snapshot(); project = editBookSource(project, source, syntax).book; reflow();
-});
 function formatSelection(): void {
   if (project.sourceDraft !== undefined) { notify('原稿の参照を確定してから段落を選んでください。'); return; }
   const raw = rawSourceOffsets(manuscript.value), ranges = sourceBlocks(manuscript.value, project.syntax).map(r => ({ ...r, from: raw[r.from]!, to: raw[r.to]! })), at = manuscript.selectionStart, end = manuscript.selectionEnd, all = flattenDocument(project.document);
@@ -380,7 +375,7 @@ async function readManuscript(file: File): Promise<void> {
   try {
     const imported = await importFile(file); if (operation !== importSerial) return; if (atRevision !== revision) { notify('読み込み中に作業が変更されました。上書きせず読み込みを中止しました。'); return; }
     importUndo = currentDraft(); snapshot(); filename = file.name.replace(/(?:\.book)?\.[^.]+$/u, '').slice(0, 180) || '原稿'; selected = 1;
-    project = modernizeNotation(asBook(imported.project ? migrateProject(imported.project) : { ...createPublication(imported.source, imported.syntax), style }));
+    project = asBook(imported.project ?? { ...createPublication(imported.source, imported.syntax), style });
     if (imported.project) { style = project.style; filename = project.metadata?.filename ?? filename; viewMode = project.metadata?.viewMode ?? 'spread'; selected = project.metadata?.selected ?? 1; marginOffset = 0; }
     selection = { kind: 'book' }; inspectorMode = 'body'; inspector.clear(); views.sync(true); syncSource(); notify(`${file.name} を読み込みました。${imported.format === 'UTF-8' ? '' : ` ${imported.format}。`} ${imported.warnings.join(' ')}`, true); reflow();
   } catch (error) { if (operation === importSerial) notify(error instanceof Error ? error.message : 'ファイルを読み込めませんでした。'); } finally {
@@ -408,6 +403,12 @@ for (const id of ['inspect-book', 'edit-project-information']) el(id).addEventLi
 });
 const fileMenu = el('file-menu');
 fileMenu.addEventListener('click',event=>{if((event.target as Element).closest('button'))fileMenu.hidePopover();});
+fileMenu.addEventListener('beforetoggle', event => {
+  if ((event as ToggleEvent).newState !== 'open') return;
+  const bounds = el('project-home').getBoundingClientRect();
+  fileMenu.style.left = Math.max(12, Math.min(bounds.left, innerWidth - Math.min(280, innerWidth - 24) - 12)) + 'px';
+  fileMenu.style.top = bounds.bottom + 6 + 'px';
+});
 fileMenu.addEventListener('keydown',event=>{
   const items=[...fileMenu.querySelectorAll<HTMLButtonElement>('button')],at=items.indexOf(document.activeElement as HTMLButtonElement);
   if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){event.preventDefault();const next=event.key==='Home'?0:event.key==='End'?items.length-1:(at+(event.key==='ArrowDown'?1:-1)+items.length)%items.length;items[next]!.focus();}
@@ -444,7 +445,7 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('[data-canvas-
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-canvas-add]')) button.addEventListener('click', () => { const p = result?.pages[selected - 1]; if (p?.kind !== 'layout') return; select({ kind: 'special', id: p.pageId }, false); inspectorMode = 'selection'; views.sync(true); el(`add-element-${button.dataset.canvasAdd}`).click(); });
 el('edit-selection').addEventListener('click', () => { if (selection.kind !== 'book') select(selection); });
 el('sample-manuscript').addEventListener('click', () => {
-  if (source || project.assets.length) return; snapshot(); project = modernizeNotation(asBook({ ...createPublication(SAMPLE, 'legacy'), style })); filename = '組版サンプル'; syncSource(); reflow(true); manuscript.focus();
+  if (source || project.assets.length) return; snapshot(); project = asBook({ ...createPublication(SAMPLE, 'text'), style }); filename = '組版サンプル'; syncSource(); reflow(true); manuscript.focus();
 });
 el('expand-manuscript').addEventListener('click', () => {
   if (!editorWide) { normalWidth = workspace.style.getPropertyValue('--left-width') || `${el('left-source').parentElement!.getBoundingClientRect().width}px`; normalRightOpen = workspace.dataset.rightOpen !== 'false'; workspace.style.setProperty('--left-width', `${Math.min(860, Math.max(540, Math.round(workspace.clientWidth * .53)))}px`); openPane('right', false); }

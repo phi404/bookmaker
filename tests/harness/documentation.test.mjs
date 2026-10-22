@@ -1,23 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readJson, readText, walk } from '../../scripts/lib.mjs';
+import { readJson, readText, publicDocuments } from '../../scripts/lib.mjs';
 import { validateDocuments, validateRequirements } from '../../scripts/check-harness.mjs';
 
 test('every maintained document has a purpose and each current purpose has one owner', async () => {
   const registry = await readJson('harness/documents.json');
-  const files = ['README.md', 'AGENTS.md', ...await walk('docs'), ...await walk('sources')].filter(file => file.endsWith('.md'));
+  const files = publicDocuments;
   assert.deepEqual(validateDocuments(registry, files), []);
-  assert.equal(registry.owners.capabilities, 'docs/CAPABILITIES.md');
-  assert.equal(registry.owners.roadmap, 'docs/ROADMAP.md');
-  assert.equal(registry.owners['source-format'], 'docs/SOURCE_FORMAT.md');
-  assert.equal(registry.owners.deployment, 'docs/DEPLOYMENT.md');
+  assert.equal(registry.owners.guide, 'docs/guide.md');
+  assert.equal(registry.owners.development, 'docs/development.md');
+  assert.equal(registry.documents.length, 3);
 });
 
 test('missing owners, duplicate documents and unregistered files are rejected', async () => {
   const registry = await readJson('harness/documents.json');
   const files = registry.documents.map(item => item.path);
-  const missing = globalThis.structuredClone(registry); delete missing.owners.capabilities;
-  assert.ok(validateDocuments(missing, files).some(error => error.includes('Missing owner: capabilities')));
+  const missing = globalThis.structuredClone(registry); delete missing.owners.guide;
+  assert.ok(validateDocuments(missing, files).some(error => error.includes('Missing owner: guide')));
   const duplicate = globalThis.structuredClone(registry); duplicate.documents.push(duplicate.documents[0]);
   assert.ok(validateDocuments(duplicate, files).some(error => error.includes('Duplicate document')));
   assert.ok(validateDocuments(registry, [...files, 'docs/UNREGISTERED.md']).some(error => error.includes('Unregistered document')));
@@ -25,9 +24,9 @@ test('missing owners, duplicate documents and unregistered files are rejected', 
 
 test('historical or source files cannot become current specification owners', async () => {
   const registry = await readJson('harness/documents.json');
-  const bad = globalThis.structuredClone(registry); bad.owners.product = 'docs/PRODUCT_OVERVIEW.md';
+  const bad = globalThis.structuredClone(registry); bad.documents.push({ path: 'docs/notes.md', kind: 'history', purpose: 'guide' }); bad.owners.guide = 'docs/notes.md';
   assert.ok(validateDocuments(bad, bad.documents.map(item => item.path)).some(error => error.includes('Owner must be current')));
-  const doubled = globalThis.structuredClone(registry); doubled.owners.roadmap = doubled.owners.capabilities;
+  const doubled = globalThis.structuredClone(registry); doubled.owners.development = doubled.owners.guide;
   assert.ok(validateDocuments(doubled, doubled.documents.map(item => item.path)).some(error => error.includes('Shared owner')));
 });
 

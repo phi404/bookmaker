@@ -2,7 +2,7 @@ import type { Draft } from './draft.js';
 import { restoreDraft, saveDraft } from './draft.js';
 import { validatePublication } from '../domain/publication.js';
 
-const KEY = 'bookmaker-slice-draft-v1', BACKUP = 'bookmaker-draft-backup-before-book-v3';
+const KEY = 'bookmaker-slice-draft-v1';
 let observed: string | null | undefined;
 const RECOVERY = 'bookmaker-active-recovery', owner = crypto.randomUUID(), recoveryKeys = new Set<string>();
 let recoveryKey: string | undefined;
@@ -38,9 +38,10 @@ async function restore(): Promise<Draft | null> {
   const raw = localStorage.getItem(KEY); observed = raw; if (!raw) return null;
   let marker: { schemaVersion?: number; snapshot?: string }; try { marker = JSON.parse(raw) as typeof marker; } catch { return restoreDraft(); }
   if (marker.schemaVersion !== 4) return restoreDraft();
-  const db = await database();
+  if (typeof marker.snapshot !== 'string' || !/^snapshot-[a-zA-Z0-9-]+$/u.test(marker.snapshot)) throw new Error('端末内の保存先を読み込めません。元データを保護し、自動保存を停止しています。');
+  const snapshot = marker.snapshot, db = await database();
   try {
-    const value = await new Promise<Draft>((resolve, reject) => { const request = db.transaction('drafts').objectStore('drafts').get(marker.snapshot ?? 'current'); request.onsuccess = () => resolve(request.result as Draft); request.onerror = () => reject(new Error('作業を復元できません。')); });
+    const value = await new Promise<Draft>((resolve, reject) => { const request = db.transaction('drafts').objectStore('drafts').get(snapshot); request.onsuccess = () => resolve(request.result as Draft); request.onerror = () => reject(new Error('作業を復元できません。')); });
     if (!value || value.schemaVersion !== 3 || !Number.isFinite(value.marginOffset) || value.marginOffset < -3 || value.marginOffset > 5) throw new Error('端末内の作業が破損しています。元データを保護し、自動保存を停止しています。');
     return { ...value, project: validatePublication(value.project) };
   } finally { db.close(); }
@@ -62,14 +63,12 @@ async function save(draft: Draft, order: number): Promise<void> {
   const previous = localStorage.getItem(KEY);
   if (observed === undefined) observed = previous;
   if (previous !== observed) throw new DraftConflict();
-  if (previous && (JSON.parse(previous) as { project?: { schemaVersion?: number } }).project?.schemaVersion === 2 && localStorage.getItem(BACKUP) === null) localStorage.setItem(BACKUP, previous);
   if (!draft.project.assets?.length) { saveDraft(draft); finishSave(order); return; }
   // Write a new snapshot before moving the pointer: interruption/quota cannot replace the committed book.
   const db = await database();
   try {
     const snapshot = `snapshot-${crypto.randomUUID()}`;
     await new Promise<void>((resolve, reject) => { const transaction = db.transaction('drafts', 'readwrite'); transaction.objectStore('drafts').put(draft, snapshot); transaction.oncomplete = () => resolve(); transaction.onerror = () => reject(new Error('素材を含む作業を端末に保存できません。JSONも保存してください。')); transaction.onabort = transaction.onerror; });
-    if (previous && (JSON.parse(previous) as { schemaVersion?: number }).schemaVersion !== 4 && localStorage.getItem(BACKUP) === null) localStorage.setItem(BACKUP, previous);
     localStorage.setItem(KEY, JSON.stringify({ schemaVersion: 4, storage: 'indexedDB', snapshot })); finishSave(order);
     // Keep the previous committed snapshot; discard only older snapshots and interrupted writes.
     const old = previous ? (JSON.parse(previous) as { snapshot?: string }).snapshot : undefined;

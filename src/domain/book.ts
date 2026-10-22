@@ -5,13 +5,8 @@ import { rawSourceOffsets } from './source-map.js';
 import { newSpecialPage } from './special.js';
 import { identifier } from './validation.js';
 
-/** Publication grows into the canonical book; there is no second ordered model. */
-export function asBook(project: Publication): BookModel {
-  if (project.schemaVersion === 3) return project as BookModel;
-  const specialPages = structuredClone(project.specialPages ?? []);
-  for (const b of flattenDocument(project.document)) if (b.kind === 'specialPage' && !specialPages.some(p => p.id === b.pageId)) specialPages.push(newSpecialPage(b.pageId, b.role));
-  return { ...project, schemaVersion: 3, specialPages, assets: [], pageOverrides: [] };
-}
+/** Book operations share the current publication model. */
+export function asBook(project: Publication): BookModel { return project as BookModel; }
 export const createBook = (source: string) => asBook(createPublication(source, 'markdown'));
 export function movePageElement(book: BookModel, pageId: string, elementId: string, x: number, y: number, snapMm?: number): BookModel {
   const p = book.specialPages.find(p => p.id === pageId), e = p?.elements.find(e => e.id === elementId);
@@ -27,11 +22,6 @@ export function alignPageElement(book: BookModel, pageId: string, elementId: str
   const x = alignment === 'left' ? 0 : alignment === 'center-x' ? (book.style.page.widthMm - e.widthMm) / 2 : alignment === 'right' ? book.style.page.widthMm - e.widthMm : e.xMm;
   const y = alignment === 'top' ? 0 : alignment === 'center-y' ? (book.style.page.heightMm - e.heightMm) / 2 : alignment === 'bottom' ? book.style.page.heightMm - e.heightMm : e.yMm;
   return movePageElement(book, pageId, elementId, x, y, 0);
-}
-/** Change notation by projecting the canonical tree, never by replacing substrings. */
-export function modernizeNotation(book: BookModel): BookModel {
-  if (book.syntax === 'markdown' || book.sourceDraft !== undefined) return book;
-  return checkBook({ ...book, syntax: 'markdown', source: sourceOf(book.document, 'markdown') });
 }
 export function editBookSource(book: BookModel, source: string, syntax = book.syntax): { book: BookModel; error?: string } {
   try {
@@ -57,9 +47,8 @@ function mutable(book: BookModel): BookModel {
   return { ...book, document: structuredClone(book.document), specialPages: structuredClone(book.specialPages), pageOverrides: structuredClone(book.pageOverrides), assets: book.assets };
 }
 function projectSource(book: BookModel): BookModel { book.source = sourceOf(book.document, book.syntax); return book; }
-function markdown(book: BookModel): void { if (book.syntax !== 'markdown') { book.syntax = 'markdown'; book.source = sourceOf(book.document, 'markdown'); } }
 export function addSpecialPage(book: BookModel, role: SpecialRole, afterId?: string): { book: BookModel; id: string } {
-  const next = mutable(book); markdown(next);
+  const next = mutable(book);
   const id = `page-${next.document.nextId++}`, definition = newSpecialPage(id, role);
   if (role === 'title' || role === 'colophon' || role === 'chapter-title') { definition.fields.title = next.document.title === '本文' ? '' : next.document.title; definition.fields.author = next.document.author; }
   next.specialPages.push(definition);
@@ -119,7 +108,7 @@ export function convertToFree(book: BookModel, id: string, elements: readonly Pa
   return updateSpecialPage(book, id, { representation: 'layout', elements: structuredClone([...elements]), originalTemplate: { template: p.template, fields: structuredClone(p.fields) } });
 }
 export function addChapter(book: BookModel, title: string): BookModel {
-  const next = mutable(book); markdown(next); const b = `b-${next.document.nextId++}`;
+  const next = mutable(book); const b = `b-${next.document.nextId++}`;
   next.document.children.push({ kind: 'section', id: `s-${next.document.nextId++}`, role: 'chapter', headingId: b, children: [
     { kind: 'heading', id: b, level: 1, keepWithNext: true, inlines: [{ kind: 'text', text: title || '新しい章' }] },
     { kind: 'paragraph', id: `b-${next.document.nextId++}`, indent: 'auto', inlines: [] }

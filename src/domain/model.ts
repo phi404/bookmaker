@@ -1,6 +1,6 @@
 import type { Block, BookStyle, CharacterProperties, DecorationPosition, ParagraphProperties, ViewMode } from './contracts.js';
 
-export type SourceSyntax = 'legacy' | 'markdown';
+export type SourceSyntax = 'text' | 'markdown';
 export interface PageProperties { writingMode?: BookStyle['writingMode']; columns?: 1 | 2; columnGapMm?: number; fontPt?: number; lineHeight?: number; margins?: Partial<BookStyle['margins']>; maxCharsPerLine?: number; maxLinesPerPage?: number; showHeads?: boolean; showFolio?: boolean }
 export interface SectionProperties { pageStyleId?: string; paragraphStyleId?: string; start?: 'continuous' | 'next' | 'left' | 'right' | 'recto'; numberStart?: number; numberFormat?: 'decimal' | 'roman' | 'Roman'; paragraph?: ParagraphProperties; character?: CharacterProperties; page?: PageProperties }
 export interface LocalStyle { paragraph?: ParagraphProperties; character?: CharacterProperties; page?: PageProperties; pageStyleId?: string }
@@ -29,7 +29,7 @@ export interface RunningElement {
 }
 export interface PrintSettings { purpose: 'screen' | 'print'; bleedMm: number; marks: 'none' | 'corners' | 'all'; dpi: 300 | 350 | 600; color: 'rgb' | 'gray'; pdfSource: 'raster' | 'preserve' }
 export interface Publication {
-  schemaVersion: 2 | 3; syntax: SourceSyntax; source: string; document: DocumentTree; styles: StyleCatalog; style: BookStyle;
+  schemaVersion: 3; syntax: 'markdown'; source: string; document: DocumentTree; styles: StyleCatalog; style: BookStyle;
   overrides: ScopedStyle[]; runningElements: RunningElement[];
   printSettings?: PrintSettings;
   metadata?: { filename: string; viewMode: ViewMode; selected: number };

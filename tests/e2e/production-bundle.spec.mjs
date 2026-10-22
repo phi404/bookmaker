@@ -29,7 +29,8 @@ test('@flow production bundle contains originals and a complete font, restores, 
   const restored = JSON.parse(await readFile(absolute('output/remaining-2026-10-22/bundle-restored.book.json'), 'utf8'));
   expect(restored.assets[0].original).toBe(book.assets[0].original); expect(restored.styles).toEqual(book.styles);
   const previousFiles={...files,'manifest.json':Buffer.from(JSON.stringify({...manifest,kind:'folaxis-production'}))};
-  await ui.paste('改名前の保存を開く。');await ui.importTxt({name:'previous.folaxis.zip',mimeType:'application/zip',buffer:Buffer.from(zipSync(previousFiles))});await ui.tab('原稿');expect(await ui.manuscript().inputValue()).toBe(book.source);
+  await ui.paste('改名前の保存を開く。');await ui.importTxt({name:'previous.folaxis.zip',mimeType:'application/zip',buffer:Buffer.from(zipSync(previousFiles))});await expect(page.locator('#notice')).toContainText('未対応の制作データ');await ui.tab('原稿');expect(await ui.manuscript().inputValue()).toBe('改名前の保存を開く。');
+  await ui.importTxt({name:'production.compholio.zip',mimeType:'application/zip',buffer:bytes});await ui.tab('原稿');expect(await ui.manuscript().inputValue()).toBe(book.source);
   const changedFont = { ...files, 'book.json': Buffer.from(JSON.stringify(createBook('別の書体では開かない原稿。'))), 'fonts/NotoSerifJP-Regular.otf': new Uint8Array([0, 1, 2, 3]) };
   changedFont['manifest.json'] = Buffer.from(JSON.stringify({ ...manifest, files: manifest.files.map(entry => ({ ...entry, bytes: changedFont[entry.path].length, sha256: hash(changedFont[entry.path]) })) }));
   await ui.importTxt({ name: 'different-font.compholio.zip', mimeType: 'application/zip', buffer: Buffer.from(zipSync(changedFont)) });

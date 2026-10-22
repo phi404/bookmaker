@@ -16,7 +16,7 @@ if (manifest.expectedPages !== adapter.paginate(adapter.parse(await readText(fix
 for (const file of [config.exportManifest, ...(config.additionalExportManifests ?? [])]) {
   const additional = await readJson(file);
   if (additional.sourceFingerprint !== await fingerprint() || additional.phase !== config.phase) throw new Error(`STALE_EXPORTS: ${file}`);
-  const result = spawnSync(process.env.BOOKMAKER_PYTHON ?? 'python', [absolute('scripts/verify-exports.py'), absolute(file), config.phase, config.pdfProfile], { cwd: absolute(''), stdio: 'inherit' });
+  const result = spawnSync(process.env.COMPHOLIO_PYTHON ?? 'python', [absolute('scripts/verify-exports.py'), absolute(file), config.phase, config.pdfProfile], { cwd: absolute(''), stdio: 'inherit' });
   if (result.error) throw result.error;
   if (result.status !== 0) { process.exitCode = result.status ?? 1; break; }
 }

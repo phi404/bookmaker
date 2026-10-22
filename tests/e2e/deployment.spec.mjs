@@ -6,15 +6,16 @@ import { createStaticServer } from '../../scripts/static-server.mjs';
 import { BookUI } from './ui-driver.mjs';
 
 test('@flow project-prefix deployment loads local resources, edits and exports', async ({ page }) => {
-  const server = await createStaticServer(absolute('dist'), { basePath: '/bookmaker/' });
+  const server = await createStaticServer(absolute('dist'), { basePath: '/compholio/' });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
-  const base = `http://127.0.0.1:${server.address().port}/bookmaker/`, failures = [], requests = [];
+  const base = `http://127.0.0.1:${server.address().port}/compholio/`, failures = [], requests = [];
   page.on('response', response => { if (response.status() >= 400) failures.push(response.url()); });
   page.on('request', request => { if (/^https?:/u.test(request.url())) requests.push(request.url()); });
   try {
     await page.goto(base, { waitUntil: 'networkidle' });
     await expect(page).toHaveTitle('Compholio');
-    await expect(page.getByRole('link', { name: 'Compholio', exact: true })).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Compholio', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Compholio', exact: true })).toHaveCount(0);
     expect(failures, 'All app resources must resolve inside the project path').toEqual([]);
     const ui = new BookUI(page);
     await ui.paste('# 配下URLの確認\n｜薔薇《ばら》と*圏点*。\n次の文章。');

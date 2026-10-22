@@ -37,7 +37,7 @@ export function parseInlines(text: string, emphasis?: Emphasis, markdown = false
           validateCharacter(style); flush(); runs.push(...nested(attribute[1]!, i + 1).map(run => ({ ...run, ...(styleId ? { styleId } : {}), ...(Object.keys(style).length ? { localStyle: style } : {}) }))); i += attribute[0].length; continue;
         } catch { literal(attribute[0], i); i += attribute[0].length; continue; }
       }
-      const mark = /^\[圏点(?::(丸))?\]/u.exec(text.slice(i));
+      const mark = !markdown ? /^\[圏点(?::(丸))?\]/u.exec(text.slice(i)) : null;
       if (mark) {
         const end = text.indexOf('[/圏点]', i + mark[0].length);
         if (end !== -1) { flush(); runs.push(...nested(text.slice(i + mark[0].length, end), i + mark[0].length, mark[1] ? 'dot' : 'sesame')); i = end + 5; continue; }

@@ -1,4 +1,3 @@
-import type { Project } from '../domain/contracts.js';
 import type { Publication, SourceSyntax } from '../domain/model.js';
 import { createPublication } from '../domain/publication.js';
 import { escapeSourceText, MAX_SOURCE, parseDocument } from '../domain/document.js';
@@ -8,7 +7,7 @@ import { readWordXML } from './zip.js';
 import { MAX_PROJECT_BYTES } from '../domain/special.js';
 import { MAX_BUNDLE_BYTES, restoreProductionBundle } from './bundle.js';
 
-export interface Imported { source: string; format: string; warnings: readonly string[]; syntax?: SourceSyntax; project?: Project | Publication }
+export interface Imported { source: string; format: string; warnings: readonly string[]; syntax?: SourceSyntax; project?: Publication }
 export function markdownSource(text: string): Imported {
   const warnings: string[] = [];
   if (/^\s*(?:```|[-*+]\s|\|)|!\[|\[[^\]]+\]\(/mu.test(text)) warnings.push('Markdownのリスト・リンク・表・画像・コードは本文に残します。');
@@ -66,7 +65,7 @@ export function wordSource(xml: string, stylesXML?: string): Imported {
     return prefix + (level ? `[見出し:${level}] ` : '') + content;
   });
   const source = paragraphs.join('\n'); parseDocument(source);
-  return { source, format: 'DOCX', warnings: [...new Set(warnings)] };
+  return { source, syntax: 'text', format: 'DOCX', warnings: [...new Set(warnings)] };
 }
 export async function importFile(file: File): Promise<Imported> {
   const extension = file.name.split('.').at(-1)?.toLowerCase();
@@ -88,5 +87,5 @@ export async function importFile(file: File): Promise<Imported> {
     return markdownSource(decodeText(await file.arrayBuffer()).text);
   }
   if (extension !== 'txt') throw new Error('TXT、Markdown、DOCX、作業用JSONを選んでください。');
-  const result = await readManuscript(file); return { source: result.source, format: result.encoding, warnings: [] };
+  const result = await readManuscript(file); return { source: result.source, syntax: 'text', format: result.encoding, warnings: [] };
 }

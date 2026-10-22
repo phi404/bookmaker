@@ -15,12 +15,12 @@ export function normalizedSource(source: string): string {
 const markdownInlines = (text: string): Inline[] => parseInlines(text, undefined, true);
 export function sourceBlocks(source: string, syntax: SourceSyntax): SourceBlock[] {
   const normalized = normalizedSource(source), lines = normalized.split('\n'), out: SourceBlock[] = [];
-  const legacy = syntax === 'legacy' ? parseDocument(normalized).blocks : undefined;
+  const plain = syntax === 'text' ? parseDocument(normalized).blocks : undefined;
   let offset = 0, fence = false, section: SourceBlock['section'];
   const formats: { localStyle?: LocalStyle; styleId?: string }[] = [];
   for (const [index, line] of lines.entries()) {
     const from = offset; offset += line.length + 1;
-    if (legacy) { const prefix = /^\[見出し(?::[1-3])?\][　 ]?/u.exec(line)?.[0].length ?? 0; out.push({ block: legacy[index]!, from, to: offset - 1, contentFrom: from + prefix }); continue; }
+    if (plain) { const prefix = /^\[見出し(?::[1-3])?\][　 ]?/u.exec(line)?.[0].length ?? 0; out.push({ block: plain[index]!, from, to: offset - 1, contentFrom: from + prefix }); continue; }
     if (/^```/u.test(line)) fence = !fence;
     const open = !fence ? /^:::(center|end|format)(?:\s+(.*))?\s*$/u.exec(line) : null;
     if (open) { formats.push(open[1] === 'format' ? readFormat(open[2] ?? '') : { localStyle: { paragraph: { alignment: open[1] as 'center' | 'end' } } }); continue; }

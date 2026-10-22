@@ -35,15 +35,14 @@ for (const width of [1440, 375]) test(`@flow canonical paragraph styles survive 
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1)).toBe(false);
 });
 
-test('@flow legacy draft migrates with an exact backup before the first canonical save', async ({ page }) => {
+test('@flow obsolete draft is rejected without replacing its bytes', async ({ page }) => {
   const { defaultStyle } = await import('../../dist/domain/style.js');
-  const raw = JSON.stringify({ schemaVersion: 2, source: '　旧原稿の文字。', style: defaultStyle(), filename: '旧作業', marginOffset: 0, viewMode: 'single', selected: 1 });
+  const raw = JSON.stringify({ schemaVersion: 2, source: '元の作業', style: defaultStyle(), filename: '旧作業', marginOffset: 0, viewMode: 'single', selected: 1 });
   await page.addInitScript(({ key, raw }) => { if (globalThis.localStorage.getItem(key) === null) globalThis.localStorage.setItem(key, raw); }, { key: KEY, raw });
-  await page.goto('/'); const ui = new BookUI(page); await ui.ready(); await expect(page.getByTestId('save-state')).toHaveAttribute('data-state', 'saved');
-  const saved = await draft(page); expect(saved.schemaVersion).toBe(3); expect(saved.project.source).toBe('　旧原稿の文字。'); expect(saved.project.metadata.filename).toBe('旧作業');
-  expect(await page.evaluate(() => globalThis.localStorage.getItem('bookmaker-draft-backup-before-v3'))).toBe(raw);
-  await ui.paste('編集した原稿。'); await page.reload(); await ui.tab('原稿'); await expect(ui.manuscript()).toHaveValue('編集した原稿。');
-  expect(await page.evaluate(() => globalThis.localStorage.getItem('bookmaker-draft-backup-before-v3'))).toBe(raw);
+  await page.goto('/'); const ui = new BookUI(page); await ui.ready();
+  await expect(page.locator('#save-state')).toHaveText('保存を停止');
+  await ui.paste('別の入力を保持する。');
+  expect(await page.evaluate(key => globalThis.localStorage.getItem(key), KEY)).toBe(raw);
 });
 
 test('@flow scoped running elements render and export from the canonical document', async ({ page }) => {
@@ -62,16 +61,12 @@ test('@flow scoped running elements render and export from the canonical documen
   await writeFile(absolute('output/foundation/manifest.json'), JSON.stringify({ schemaVersion: 1, phase: 'mvp', sourceFingerprint: await fingerprint(), inputSha256: hash('挿入する本文\n' + p.source.replace('後章', '新しい章名')), expectedPages: 3, pngPageNumber: 2, dpi: 300, pageMm: [105, 148], png: 'page-002.png', pdf: 'book.pdf', zip: 'pages.zip', spread: 'spread.png', spreadPages: { left: 3, right: 2 } }, null, 2));
 });
 
-test('@flow backup write failure preserves the legacy draft and stops automatic replacement', async ({ page }) => {
-  const { defaultStyle } = await import('../../dist/domain/style.js');
-  const raw = JSON.stringify({ schemaVersion: 2, source: '上書きしない元原稿', style: defaultStyle(), filename: '旧作業', marginOffset: 0, viewMode: 'single', selected: 1 });
-  await page.addInitScript(({ key, raw }) => {
-    const write = globalThis.Storage.prototype.setItem;
-    if (globalThis.localStorage.getItem(key) === null) write.call(globalThis.localStorage, key, raw);
-    globalThis.Storage.prototype.setItem = function(key, value) { if (key === 'bookmaker-draft-backup-before-v3') throw new Error('Simulated quota failure'); return write.call(this, key, value); };
-  }, { key: KEY, raw });
-  await page.goto('/'); const ui = new BookUI(page); await ui.ready(); await expect(page.locator('#save-state')).toHaveText('保存できません');
-  await ui.paste('変更しても旧値を破壊しない。'); await page.goto('/app.css');
+test('@flow incomplete storage pointer is rejected and never guessed as an old snapshot', async ({ page }) => {
+  const raw = JSON.stringify({ schemaVersion: 4, storage: 'indexedDB' });
+  await page.addInitScript(({ key, raw }) => { if (globalThis.localStorage.getItem(key) === null) globalThis.localStorage.setItem(key, raw); }, { key: KEY, raw });
+  await page.goto('/'); const ui = new BookUI(page); await ui.ready();
+  await expect(page.locator('#save-state')).toHaveText('保存を停止');
+  await ui.paste('保存先が壊れていても入力を残す。');
   expect(await page.evaluate(key => globalThis.localStorage.getItem(key), KEY)).toBe(raw);
 });
 

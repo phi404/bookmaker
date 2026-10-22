@@ -159,7 +159,7 @@ export function typesetPublication(project: LayoutPublication): RenderedPages {
     }
     for (const element of elements.values()) {
       const side = decorationSide(style.pageLayout, page.number, element.position, style.binding), f = style.folio;
-      if (visibleFolio && f && folioNumber(f, page.number) !== null && element.position.split('-')[0] === f.position.split('-')[0] && side === decorationSide(style.pageLayout, page.number, f.position, style.binding)) throw new Error('柱とページ番号が同じ位置にあります。配置を変更してください。');
+      if (visibleFolio && f && folioNumber(f, page.number) !== null && element.position.split('-')[0] === f.position.split('-')[0] && side === decorationSide(style.pageLayout, page.number, f.position, style.binding)) throw new Error('柱とノンブルが同じ位置にあります。配置を変更してください。');
       if (element.position.startsWith('top-') && headsForPage(style, page.number).some(h => decorationSide(style.pageLayout, page.number, h.position, style.binding) === side)) throw new Error('既存の柱と章の柱が同じ位置にあります。どちらかの配置を変更してください。');
     }
     const decorated = { ...page, style:resolvedStyle, ...(sectionId ? { sectionId } : {}), runningElements: [...elements.values()],...(hiddenHeads?{hideHeads:true}:{}),...(!visibleFolio?{folioVisible:false}:{}) };

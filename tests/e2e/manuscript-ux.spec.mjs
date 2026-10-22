@@ -4,7 +4,7 @@ import { absolute } from '../../scripts/lib.mjs';
 import { BookUI } from './ui-driver.mjs';
 
 const capture = async (page, name) => {
-  const dir = `output/ux/${process.env.BOOKMAKER_UX_CAPTURE === 'before' ? 'before' : 'after'}`;
+  const dir = `output/ux/${process.env.COMPHOLIO_UX_CAPTURE === 'before' ? 'before' : 'after'}`;
   await mkdir(absolute(dir), { recursive: true }); await page.screenshot({ path: absolute(`${dir}/${name}.png`) });
 };
 for (const width of [1440, 1024, 375]) test(`@flow manuscript first, readable wrapping and local pane controls ${width}px`, async ({ page }) => {

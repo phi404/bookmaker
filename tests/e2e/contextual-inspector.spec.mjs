@@ -32,7 +32,7 @@ test('@flow chapter numbering and finishing controls persist through saving and 
   await page.setViewportSize({ width: 1440, height: 900 }); await page.goto('/'); const ui = new BookUI(page);
   await ui.paste('# 前書き\n前付の文章。\n# 本文\n本文の文章。');
   await page.locator('#tab-structure').click(); await page.locator('.outline-row[data-kind=chapter]').filter({ hasText: '前書き' }).click();
-  await page.getByText('ページ番号の区切り', { exact: true }).click();
+  await page.getByText('ノンブルの区切り', { exact: true }).click();
   await page.locator('#chapter-number-start').fill('1'); await page.locator('#chapter-number-start').blur(); await ui.ready();
   await page.locator('#chapter-number-format').selectOption('roman'); await ui.ready();
   await ui.tab('原稿'); expect(await ui.manuscript().inputValue()).toContain('numberFormat="roman"');

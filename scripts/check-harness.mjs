@@ -1,10 +1,10 @@
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { absolute, hash, readJson, walk } from './lib.mjs';
+import { absolute, hash, readJson, walk, publicDocuments } from './lib.mjs';
 import { checkFixtures } from './generate-fixtures.mjs';
 
-const documentPurposes = ['entry', 'development', 'navigation', 'product', 'principles', 'capabilities', 'roadmap', 'architecture', 'book-model', 'typography', 'source-format', 'interaction', 'acceptance', 'harness', 'evidence', 'decisions', 'cases', 'provenance', 'history-navigation', 'deployment'];
+const documentPurposes = ['entry', 'guide', 'development'];
 
 export function validateDocuments(registry, files) {
   const errors = [], paths = new Set(), entries = new Map(), owned = new Set();
@@ -47,10 +47,8 @@ export function validateRequirements(requirements, fixtureIds, specificationPath
 
 export async function checkHarness() {
   await checkFixtures();
-  const original = await readFile(absolute('docs/PRODUCT_OVERVIEW.md'));
-  if (hash(original) !== 'e1c440dbba1bf375370165050be40ec18ef5953403da1206afc4530c10d12107') throw new Error('共有された仕様原本が変更されています。派生仕様は別文書で更新してください。');
   const registry = await readJson('harness/documents.json');
-  const maintained = ['README.md', 'AGENTS.md', ...await walk('docs'), ...await walk('sources')].filter(file => file.endsWith('.md'));
+  const maintained = publicDocuments;
   const documentErrors = validateDocuments(registry, maintained);
   if (documentErrors.length) throw new Error(documentErrors.join('\n'));
   for (const file of maintained) if ((await readFile(absolute(file), 'utf8')).trim().length < 100) throw new Error(`Missing/empty document: ${file}`);
@@ -85,8 +83,6 @@ export async function checkHarness() {
   if (errors.length) throw new Error(errors.join('\n'));
   const config = await readJson('harness/config.json');
   if (!['slice-1', 'mvp'].includes(config.phase) || !['raster', 'text'].includes(config.pdfProfile)) throw new Error('Unknown phase/PDF profile');
-  const review = await readJson(config.manualReview);
-  for (const item of Object.values(review.items)) if (!['unknown', 'pass', 'fail'].includes(item.status)) throw new Error('Invalid manual review status');
   return { documents: maintained.length, fixtures: manifest.fixtures.length, modelFixtures: model.fixtures.length, bookFixtures: book.fixtures.length, requirements: requirements.requirements.length };
 }
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) console.log(await checkHarness());

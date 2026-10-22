@@ -11,7 +11,7 @@ test('canonical sections, Markdown marks and literal unsupported syntax retain c
   assert.equal(blocks.filter(b => b.kind === 'pageBreak').length, 1);
   assert.ok(blocks.some(b => b.role === 'quote')); assert.ok(blocks.some(b => b.localStyle?.paragraph?.alignment === 'center'));
   assert.ok(blocks.some(b => b.inlines?.some(i => i.strong))); assert.ok(blocks.some(b => text(b).includes('未知の[指定]と<sample>')));
-  assert.ok(a.flattenDocument(a.createPublication('# 本文\n**文字**', 'legacy').document).every(b => b.kind === 'paragraph'));
+  assert.ok(a.flattenDocument(a.createPublication('# 本文\n**文字**', 'text').document).every(b => b.kind === 'paragraph'));
 });
 
 test('source insertion and heading rename preserve IDs, styles and chapter scope', async () => {
@@ -74,14 +74,14 @@ test('missing section references are diagnosed and never rebound to the next cha
   assert.equal(p.runningElements[0].scope.sectionId, removed);
 });
 
-test('canonical project restores AST rather than a stale source cache; legacy projects remain readable', async () => {
+test('canonical project restores AST rather than a stale source cache and rejects obsolete projects', async () => {
   const a = await modules(), { restoreProject, serializeProject } = await import('../../dist/domain/project.js');
   const p = a.createPublication('正本の文字。', 'markdown'), id = a.flattenDocument(p.document)[0].id;
   p.document = a.applyLocalStyle(p.document, id, { character: { fontWeight: 700 } });
   const restored = restoreProject(serializeProject({ ...p, source: '古いキャッシュ。' }));
   assert.match(restored.source, /:::format fontWeight="700"\n正本の文字。/u); assert.equal(restored.document.children[0].children[0].localStyle.character.fontWeight, 700);
   const legacy = { schemaVersion: 1, source: '旧原稿。', document: (await import('../../dist/domain/document.js')).parseDocument('旧原稿。'), style: p.style };
-  assert.equal(restoreProject(JSON.stringify(legacy)).source, '旧原稿。');
+  assert.throws(() => restoreProject(JSON.stringify(legacy)), /未対応/u);
   assert.throws(() => restoreProject(JSON.stringify({ ...p, document: { ...p.document, unknown: 'lost' } })), /未対応/u);
 });
 
