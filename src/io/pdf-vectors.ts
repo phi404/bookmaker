@@ -1,7 +1,7 @@
 import type { BookPage, BookStyle, RenderElement } from '../domain/contracts.js';
 import type { Publication } from '../domain/model.js';
 import { originalBytes } from './bundle.js';
-import { rasterize, pngBlob } from './raster.js';
+import { rasterize, pngBlob, type RasterOptions } from './raster.js';
 
 interface PDFBox { x: number; y: number; width: number; height: number }
 interface SourcePage { node: { get(key: unknown): unknown }; getCropBox(): PDFBox; getMediaBox(): PDFBox; getRotation(): { angle: number } }
@@ -27,7 +27,7 @@ export interface VectorLibrary {
   drawObject(name: unknown): unknown; rectangle(x: number, y: number, width: number, height: number): unknown;
   clip(): unknown; endPath(): unknown; rgb(r: number, g: number, b: number): unknown;
 }
-export function preservedPDFPages(pdf: VectorDocument, lib: VectorLibrary, book: Publication, style: BookStyle, signal: AbortSignal, usedBytes: (bytes: number) => void) {
+export function preservedPDFPages(pdf: VectorDocument, lib: VectorLibrary, book: Publication, style: BookStyle, signal: AbortSignal, usedBytes: (bytes: number) => void, raster: RasterOptions = {}) {
   const assets = new Map((book.assets ?? []).filter(a => a.mediaType === 'application/pdf').map(a => [a.id, a]));
   const sources = new Map<string, Promise<SourcePDF>>(), embedded = new Map<string, Promise<{ form: EmbeddedPage; crop: PDFBox; rotation: number }>>();
   const isPDF = (element: RenderElement) => element.kind === 'image' && assets.has(element.sourceAssetId ?? '');
@@ -55,15 +55,15 @@ export function preservedPDFPages(pdf: VectorDocument, lib: VectorLibrary, book:
   async function layer(page: BookPage, target: VectorPage, elements: readonly RenderElement[], decorations: boolean): Promise<void> {
     if (!elements.length && !decorations) return;
     const content: BookPage = { ...page, elements, ...(!decorations ? { lines: [], runningElements: [], hideHeads: true, folioVisible: false } : {}) };
-    const canvas = await rasterize(content, style, true);
-    try { signal.throwIfAborted(); const bytes = new Uint8Array(await (await pngBlob(canvas)).arrayBuffer()); usedBytes(bytes.byteLength); target.drawImage(await pdf.embedPng(bytes), { x: 0, y: 0, width, height }); }
+    const canvas = await rasterize(content, style, true, raster);
+    try { signal.throwIfAborted(); const bytes = new Uint8Array(await (await pngBlob(canvas)).arrayBuffer()); usedBytes(bytes.byteLength); target.drawImage(await pdf.embedPng(bytes), { x: -(raster.bleedMm ?? 0) * pt, y: -(raster.bleedMm ?? 0) * pt, width: width + 2 * (raster.bleedMm ?? 0) * pt, height: height + 2 * (raster.bleedMm ?? 0) * pt }); }
     finally { canvas.width = 0; canvas.height = 0; }
   }
   return {
     hasPDF(page: BookPage): boolean { return (page.elements ?? []).some(isPDF); },
     async draw(page: BookPage, target: VectorPage): Promise<void> {
       const warm = (page.paperColor ?? style.paperColor) === 'warm';
-      target.drawRectangle({ x: 0, y: 0, width, height, color: lib.rgb(1, warm ? 254 / 255 : 1, warm ? 250 / 255 : 1) });
+      target.drawRectangle({ x: -(raster.bleedMm ?? 0) * pt, y: -(raster.bleedMm ?? 0) * pt, width: width + 2 * (raster.bleedMm ?? 0) * pt, height: height + 2 * (raster.bleedMm ?? 0) * pt, color: lib.rgb(1, warm ? 254 / 255 : 1, warm ? 250 / 255 : 1) });
       let pending: RenderElement[] = [];
       for (const element of page.elements ?? []) {
         signal.throwIfAborted();

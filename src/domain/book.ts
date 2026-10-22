@@ -142,3 +142,37 @@ export function newElement(book: BookModel, kind: PageElement['kind']): PageElem
     : kind === 'image' ? { ...common, kind, assetId: book.assets[0]?.id ?? 'unassigned', assetPage: 1, fit: 'contain' }
     : { ...common, kind, heightMm: kind === 'line' ? .2 : 20, color: '#333333', strokeMm: .2 };
 }
+
+/** Clone a whole chapter with fresh structural IDs; assets and named styles remain shared. */
+export function duplicateBookItem(book: BookModel, id: string): { book: BookModel; id: string } {
+  const section = book.document.children.find(s => s.id === id);
+  if (!section) return duplicateSpecialPage(book, id);
+  if (section.role !== 'chapter') throw new Error('章または特殊ページを選んでください。');
+  const next = mutable(book), clone = structuredClone(section), ids = new Map<string, string>();
+  const used = new Set([...next.document.children.flatMap(s => [s.id, ...s.children.map(b => b.id)]), ...next.specialPages.flatMap(p => [p.id, ...p.elements.map(e => e.id)]), ...next.overrides.map(r => r.id), ...next.runningElements.map(r => r.id)]);
+  const fresh = (old: string, prefix: string) => { let value: string; do { value = `${prefix}-${next.document.nextId++}`; } while (used.has(value)); used.add(value); if (prefix === 's' || prefix === 'b') ids.set(old, value); return value; };
+  clone.id = fresh(section.id, 's');
+  for (const block of clone.children) {
+    block.id = fresh(block.id, 'b');
+    if (block.kind === 'specialPage') {
+      const original = next.specialPages.find(p => p.id === block.pageId); if (!original) throw new Error('複製元のページが見つかりません。');
+      const page = structuredClone(original); page.id = fresh(page.id, 'page');
+      for (const element of page.elements) element.id = fresh(element.id, 'el');
+      next.specialPages.push(page); block.pageId = page.id;
+    }
+  }
+  if (clone.headingId) clone.headingId = ids.get(clone.headingId)!;
+  const heading = clone.children.find(b => b.id === clone.headingId);
+  if (heading && 'inlines' in heading) heading.inlines = [...heading.inlines, { kind: 'text', text: 'の複製' }];
+  next.document.children.splice(next.document.children.findIndex(s => s.id === id) + 1, 0, clone);
+  const cloneScope = (scope: import('./model.js').Scope): import('./model.js').Scope | undefined => {
+    if (scope.kind === 'section' && ids.has(scope.sectionId)) return { ...scope, sectionId: ids.get(scope.sectionId)! };
+    if (scope.kind === 'block' && ids.has(scope.blockId)) return { ...scope, blockId: ids.get(scope.blockId)! };
+    if (scope.kind === 'blockRange' && ids.has(scope.fromId) && ids.has(scope.toId)) return { ...scope, fromId: ids.get(scope.fromId)!, toId: ids.get(scope.toId)! };
+    if (scope.kind === 'untilSection' && ids.has(scope.fromId)) return { ...scope, fromId: ids.get(scope.fromId)! };
+    return undefined;
+  };
+  next.overrides = [...next.overrides, ...book.overrides.flatMap(rule => { const scope = cloneScope(rule.scope); return scope ? [{ ...structuredClone(rule), id: fresh(rule.id, 'override'), scope }] : []; })];
+  next.runningElements = [...next.runningElements, ...book.runningElements.flatMap(rule => { const scope = cloneScope(rule.scope); return scope ? [{ ...structuredClone(rule), id: fresh(rule.id, 'running'), scope }] : []; })];
+  return { book: checkBook(projectSource(next)), id: clone.id };
+}

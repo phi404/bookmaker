@@ -117,10 +117,10 @@ test('@flow PNG and JPEG originals survive insertion, reorder, duplicate, remova
     await expect(page.locator('.asset-card')).toHaveCount(i + 1); await page.locator('.asset-card').nth(i).getByRole('button', { name: 'ページとして挿入' }).click(); await ui.ready();
   }
   await openView(page, ui, '構成'); const ids = await page.locator('.outline-row[data-kind=special]').evaluateAll(rows => rows.map(row => row.dataset.itemId));
-  await selectItem(page, ids[1]); await page.locator('#item-up').click(); await ui.ready();
+  await selectItem(page, ids[1]); await page.locator('.outline-row[data-item-id="' + ids[1] + '"]').press('Alt+ArrowUp'); await ui.ready();
   let refs = await page.locator('.outline-row[data-kind=special]').evaluateAll(rows => rows.map(row => row.dataset.itemId)); expect(refs).toEqual([ids[1], ids[0]]);
-  await page.locator('#item-copy').click(); await ui.ready(); expect(await page.locator('.outline-row[data-kind=special]').count()).toBe(3);
-  await page.locator('#item-delete').click(); await ui.ready(); expect(await page.locator('.outline-row[data-kind=special]').count()).toBe(2);
+  await page.locator('[data-menu-item-id="' + ids[1] + '"]').click(); await page.getByRole('menuitem', { name: '複製', exact: true }).click(); await ui.ready(); expect(await page.locator('.outline-row[data-kind=special]').count()).toBe(3);
+  const copiedId = await page.locator('.outline-row[aria-current=true]').getAttribute('data-item-id'); await page.locator('[data-menu-item-id="' + copiedId + '"]').click(); await page.getByRole('menuitem', { name: '削除', exact: true }).click(); await ui.ready(); expect(await page.locator('.outline-row[data-kind=special]').count()).toBe(2);
   await page.locator('#undo').click(); await ui.ready(); await openView(page, ui, '構成'); expect(await page.locator('.outline-row[data-kind=special]').count()).toBe(3);
   await ui.download('export-project', absolute('output/book/images.book.json')); const exported = JSON.parse(await readFile(absolute('output/book/images.book.json'), 'utf8'));
   expect(exported.assets.map(asset => asset.original)).toEqual(originals); expect(exported.source).not.toContain('base64');

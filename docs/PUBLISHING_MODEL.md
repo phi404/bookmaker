@@ -113,3 +113,12 @@ BookStyle.pageCountMultipleは1/2/4/8/16。内容がある本の末尾へ必要�
 ParagraphProperties.orphans/widowsは1〜10の最少行数。名前付き・章・範囲・段落局所の同じ解決を使う。未指定は1、容量内で満たせない場合は診断して緩める。
 
 SpecialPageDefinition.captionは素材ページのtext/numbered/fontPt（5〜14）。説明は1000文字まで。番号は配置済み参照の順序から生成し、画像枠の内側へ説明用の領域を確保する。本文の座標を正本に追加しない。
+
+
+## PDFの出力設定
+
+Publication.printSettingsは、purpose（screen/print）、bleedMm、marks、dpi、color、pdfSourceを一度だけ保存する。省略時は従来の閲覧用設定を解決する。値と上限は[CAPABILITIES](CAPABILITIES.md)、操作は[UI](UI.md)。版面・意味的Scope・原稿記法へ混ぜず、設定テンプレートの対象にも加えない。
+
+JSON・端末保存・制作データZIPとUndo/Redoは同じ値を保持する。原稿だけの書き出しには含めない。未知の属性や範囲外の値は復元時に拒否する。既存のv3ファイルへ既定値を強制書き込みしない。
+
+章の複製は、章と子ブロック、参照する特殊ページと要素を新しいIDへ割り当てる。素材原本と名前付きスタイルは共有する。複製した章の内側に閉じた範囲書式・柱は、新しい構造IDへ対応させて複製する。本全体・物理ページ・章をまたぐ範囲を別の固定範囲へコピーしない。構造IDと要素IDの名前空間を混同せず、元の本は変更しない。

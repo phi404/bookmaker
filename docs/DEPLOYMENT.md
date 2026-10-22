@@ -2,7 +2,7 @@
 
 ## 対象
 
-公開先は [phi404/bookmaker](https://github.com/phi404/bookmaker)、試用URLは [GitHub Pages](https://phi404.github.io/bookmaker/) を使う。Folaxisの静的な試用環境を配布する。リリース・タグ・npm公開はまだ行わない。名称変更に伴うURLや保存領域の変更は行わない。
+公開先は [phi404/bookmaker](https://github.com/phi404/bookmaker)、試用URLは [GitHub Pages](https://phi404.github.io/bookmaker/) を使う。Compholioの静的な試用環境を配布する。リリース・タグ・npm公開はまだ行わない。名称変更に伴うURLや保存領域の変更は行わない。
 
 配布するサイトは dist/ の静的ファイルだけ。原稿・取り込んだ素材・作業JSON・端末内の保存値はビルドへ入らず、サイト側へアップロードしない。公開ページを取得した後の組版、PDF素材の画像化、書き出しはブラウザー内で行う。ローカル版も維持する。
 
@@ -22,7 +22,7 @@ PowerShellで BOOKMAKER_BASE_PATH に /bookmaker/、BOOKMAKER_PORT に5175を設
 
 ## GitHub Actions
 
-.github/workflows/preview.yml はmainへのpush、mainへのPull Request、手動実行を扱う。harness・型・境界・モデル/組版の検査、3分割した全操作検査を実行する。操作検査は通常のルートとプロジェクト配下URLで同じ本・フォント・Worker・PDF素材・実出力を確認する。
+.github/workflows/preview.yml はmainへのpush、mainへのPull Request、手動実行を扱う。harness・型・境界・モデル/組版の検査、4分割した全操作検査を実行する。操作検査は通常のルートとプロジェクト配下URLで同じ本・フォント・Worker・PDF素材・実出力を確認する。
 
 main/手動の検査が通れば dist/ のみをPagesのartifactとして配置する。Pull Requestは検証だけ。Firefox/WebKitの限定した保存・出力経路も別ジョブで実行し、失敗時は配置しない。deployジョブだけがpages:write / id-token:writeを持ち、github-pages環境へ出す。releaseイベント、タグ作成、Release作成、npm publishは設定しない。
 
@@ -41,3 +41,5 @@ CIの自動検査とローカルの完了ゲートを区別する。CIはWindows
 GitHub PagesとローカルURLは別の保存領域。必要な本はローカル版から作業JSONを書き出し、公開版で読み込む。サーバーへ送る操作にはならず、読み込みもブラウザー内で行う。初回にはフォント等の静的ファイル取得が必要で、オフライン再起動保証はまだ提供しない。
 
 配置結果、実行コマンド、終了コード、ソース指紋、公開側の読み込み/保存/出力確認はoutput/deploymentへ残す。サイトが開けること、CI成功、全体ゲート成功をそれぞれ確認する。
+
+印刷用PDFは操作検査とFirefox/WebKit検査が生成した合成データをartifactとして渡し、print-checkで同じソース指紋・固定したpypdf/Pillowの独立解析を確認してから配信する。requirements-qa.txtは検査用で、アプリ実行時の依存ではない。ユーザーのローカル原稿やoutputを公開ソースへ含めない。

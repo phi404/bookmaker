@@ -20,12 +20,12 @@ test('@flow mixed range formatting is explicit and changing one property preserv
   await page.setViewportSize({width:1440,height:1000}); await page.goto('/'); const ui = new BookUI(page);
   await ui.paste(':::format alignment="center" fontPt="12"\n一行目\n:::\n:::format alignment="end" fontPt="14"\n二行目\n:::');
   await ui.tab('原稿'); await ui.manuscript().focus(); await ui.manuscript().press('ControlOrMeta+a'); await page.locator('#select-block-style').click(); await page.locator('#block-local-details > summary').click();
-  await expect(page.locator('#block-align')).toHaveValue('__mixed__');
+  await expect(page.locator('#block-align')).toHaveAttribute('data-value', '__mixed__');
   await page.locator('#block-character-details > summary').click(); await expect(page.locator('#block-character-fontPt')).toHaveAttribute('placeholder','混在');
-  await page.locator('#block-weight').selectOption('700'); await ui.ready();
-  await expect(page.locator('#block-align')).toHaveValue('__mixed__');
-  await page.locator('#block-align').selectOption(''); await ui.ready();
-  await expect(page.locator('#block-align')).toHaveValue('');
+  await page.locator('#block-weight').getByRole('button', { name: '太字', exact: true }).click(); await ui.ready();
+  await expect(page.locator('#block-align')).toHaveAttribute('data-value', '__mixed__');
+  await page.locator('#block-align').getByRole('button', { name: '書式を継承', exact: true }).click(); await ui.ready();
+  await expect(page.locator('#block-align')).toHaveAttribute('data-value', '');
   await expect(ui.manuscript()).toHaveValue(/fontPt="12"/u); await expect(ui.manuscript()).toHaveValue(/fontPt="14"/u);
   await page.locator('#selection-scope').selectOption('book');await expect(page.locator('#settings-heading')).toHaveText('すべての文章');
 });

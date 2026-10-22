@@ -1,3 +1,4 @@
+import { iconChoices, alignmentOptions, weightOptions } from './choices.js';
 import type { CharacterProperties, ParagraphProperties } from '../domain/contracts.js';
 import type { PageProperties } from '../domain/model.js';
 
@@ -5,6 +6,12 @@ type Values = CharacterProperties | ParagraphProperties | PageProperties;
 export function styleFields<P extends Values>(parent: HTMLElement, prefix: string, kind: 'character' | 'paragraph' | 'page', current: () => P, edit: (value: P, key: string) => void, omit: string[] = []): void {
   const add = (key: string, label: string, options?: readonly (readonly [string, string])[], min = 0, max = 20, step = .1) => {
     if (omit.includes(key)) return;
+    if (key === 'alignment' || key === 'fontWeight') {
+      iconChoices(parent, `${prefix}-${key}`, label, key === 'alignment' ? alignmentOptions : weightOptions, (current() as Record<string, unknown>)[key], value => {
+        const props = { ...current() } as Record<string, unknown>; if (!value) delete props[key]; else props[key] = key === 'fontWeight' ? Number(value) : value; edit(props as P, key);
+      });
+      return;
+    }
     const row = document.createElement('label'); row.className = 'select-label'; row.textContent = label;
     const control = options ? document.createElement('select') : document.createElement('input'); control.id = `${prefix}-${key}`;
     if (control instanceof HTMLSelectElement) { control.append(new Option('基本の書式に従う', '')); for (const [value, text] of options!) control.append(new Option(text, value)); }

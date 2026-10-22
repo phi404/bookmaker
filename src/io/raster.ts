@@ -15,15 +15,20 @@ function fontDataURL(): Promise<string> {
 export const DPI = 300;
 export const PAGE_PIXELS = { width: Math.round(105 * DPI / 25.4), height: Math.round(148 * DPI / 25.4) };
 export const pagePixels = (style: BookStyle) => ({ width: Math.round(style.page.widthMm * DPI / 25.4), height: Math.round(style.page.heightMm * DPI / 25.4) });
-export async function rasterize(page: BookPage, style: BookStyle, transparent = false): Promise<HTMLCanvasElement> {
+export interface RasterOptions { dpi?: number; bleedMm?: number; blackText?: boolean }
+export async function rasterize(page: BookPage, style: BookStyle, transparent = false, options: RasterOptions = {}): Promise<HTMLCanvasElement> {
   await document.fonts.ready;
-  const svg = renderPageSVG(page, style, await fontDataURL(), transparent);
+  const svg = renderPageSVG(page, style, await fontDataURL(), transparent, options);
   const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
-  const pixels = pagePixels(style), canvas = document.createElement('canvas'); canvas.width = pixels.width; canvas.height = pixels.height;
+  const bleed = options.bleedMm ?? 0, dpi = options.dpi ?? DPI, size = page.style?.page ?? style.page;
+  const pixels = { width: Math.round((size.widthMm + 2 * bleed) * dpi / 25.4), height: Math.round((size.heightMm + 2 * bleed) * dpi / 25.4) }, canvas = document.createElement('canvas');
+  if (pixels.width * pixels.height > 40_000_000) throw new Error('ページ画像が大きすぎます。判型か解像度を小さくしてください。');
+  canvas.width = pixels.width; canvas.height = pixels.height;
   const image = new Image();
   try {
     await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error('ページ画像を生成できませんでした。')); image.src = url; });
     const context = canvas.getContext('2d'); if (!context) throw new Error('画像を生成できません。');
+    if (!transparent) { context.fillStyle = (page.style?.paperColor ?? style.paperColor) === 'warm' ? '#fffefa' : '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height); }
     context.drawImage(image, 0, 0, canvas.width, canvas.height); return canvas;
   } finally { URL.revokeObjectURL(url); image.src = ''; }
 }

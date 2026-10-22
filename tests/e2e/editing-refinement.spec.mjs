@@ -15,7 +15,7 @@ test('@flow range formatting roundtrips source, keeps identities and provides re
   await page.setViewportSize({ width: 1440, height: 1000 }); await page.goto('/'); const ui = new BookUI(page);
   await ui.paste('# 章\n冒頭。\n｜薔薇《ばら》の文章。\n二行目。\n末尾。'); const before = await saved(page);
   await ui.tab('原稿'); await ui.manuscript().evaluate(editor => { const from = editor.value.indexOf('｜薔薇'), to = editor.value.indexOf('末尾'); editor.focus(); editor.setSelectionRange(from, to); });
-  await page.locator('#select-block-style').click(); await expect(page.locator('#settings-heading')).toHaveText('選択範囲'); await page.locator('#block-local-details > summary').click(); await page.locator('#block-align').selectOption('center'); await ui.ready();
+  await page.locator('#select-block-style').click(); await expect(page.locator('#settings-heading')).toHaveText('選択範囲'); await page.locator('#block-local-details > summary').click(); await page.locator('#block-align').getByRole('button', { name: '中央揃え', exact: true }).click(); await ui.ready();
   const b = await saved(page); expect((b.source.match(/:::format/g) ?? []).length).toBe(1); expect(b.source).toContain('alignment="center"\n｜薔薇《ばら》の文章。\n二行目。\n:::');
   expect(b.document.children[0].children.map(b => b.id)).toEqual(before.document.children[0].children.map(b => b.id));
   await ui.tab('原稿'); await ui.manuscript().fill(b.source.replace('alignment="center"', 'alignment="end"')); await ui.ready(); expect((await saved(page)).document.children[0].children[2].localStyle.paragraph.alignment).toBe('end');
@@ -26,11 +26,11 @@ test('@flow range formatting roundtrips source, keeps identities and provides re
 
 test('@flow shared typography edits all text and H1 H2 H3 through the same style catalog', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 }); await page.goto('/'); const ui = new BookUI(page);
-  await ui.paste('# 一\n本文。\n## 二\n本文。\n### 三\n本文。'); await page.locator('#inspect-styles').click(); await page.locator('#type-character-fontWeight').selectOption('700'); await ui.ready();
+  await ui.paste('# 一\n本文。\n## 二\n本文。\n### 三\n本文。'); await page.locator('#inspect-styles').click(); await page.locator('#type-character-fontWeight').getByRole('button', { name: '太字', exact: true }).click(); await ui.ready();
   expect((await saved(page)).styles.characters.find(s => s.id === 'text').properties.fontWeight).toBe(700);
   for (const [id, size] of [['chapter', 14], ['section', 12], ['small-heading', 10]]) {
     await page.locator('#typography-target').selectOption(id); await page.locator('#type-character-fontPt').fill(String(size)); await page.locator('#type-character-fontPt').blur(); await ui.ready();
-    await page.locator('#type-paragraph-alignment').selectOption('center'); await ui.ready();
+    await page.locator('#type-paragraph-alignment').getByRole('button', { name: '中央揃え', exact: true }).click(); await ui.ready();
   }
   const b = await saved(page); for (const [id, size] of [['chapter',14],['section',12],['small-heading',10]]) { const h=b.styles.headings.find(s=>s.id===id); expect(b.styles.characters.find(c=>c.id===h.characterStyleId).properties.fontPt).toBe(size); expect(h.properties.alignment).toBe('center'); }
   await page.reload(); await ui.ready(); await page.locator('#inspect-styles').click(); await page.locator('#typography-target').selectOption('section'); await expect(page.locator('#type-character-fontPt')).toHaveValue('12');
@@ -67,7 +67,7 @@ test('@flow free page handles, keyboard, layer order, lock, undo and all-page PN
 for (const width of [375, 320]) test(`@flow range, shared headings and canvas controls fit ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height:812 }); await page.goto('/'); const ui = new BookUI(page);
   await ui.paste('第一行\n第二行\n:::recto\n末尾'); await ui.tab('原稿'); await ui.manuscript().evaluate(e=>{e.focus();e.setSelectionRange(0,7);});
-  await page.locator('#select-block-style').click();await page.locator('#block-local-details > summary').click();await page.locator('#block-align').selectOption('center');await ui.ready();
+  await page.locator('#select-block-style').click();await page.locator('#block-local-details > summary').click();await page.locator('#block-align').getByRole('button', { name: '中央揃え', exact: true }).click();await ui.ready();
   await page.locator('#inspect-styles').click();await page.locator('#typography-target').selectOption('section');await page.locator('#type-character-fontPt').fill('12');await page.locator('#type-character-fontPt').blur();await ui.ready();
   await addPage(page,ui,'blank');await page.locator('#add-element-text').click();await page.locator('#element-text').fill('小さなページ');await page.locator('#element-text').blur();await ui.ready();await ui.tab('プレビュー');
   await expect(page.locator('#free-page-tools')).toBeVisible();await expect(ui.preview().locator('.paper')).toHaveCount(1);
@@ -79,7 +79,7 @@ test('@visual range source and free page canvas at 1440px', async ({ page }) => 
   await page.setViewportSize({ width:1440, height:1000 }); await page.goto('/'); const ui = new BookUI(page);
   await ui.paste('# 本のかたち\n冒頭の文章。\n　｜雨音《あまおと》を聞いた。\n短い手紙を、ここに置く。\n:::recto\n## 次の節\n次の文章。');
   await ui.tab('原稿'); await ui.manuscript().evaluate(e => { const from=e.value.indexOf('　｜雨音'),to=e.value.indexOf(':::recto');e.focus();e.setSelectionRange(from,to); });
-  await page.locator('#select-block-style').click();await page.locator('#block-local-details > summary').click();await page.locator('#block-align').selectOption('center');await ui.ready();await saved(page);await ui.manuscript().evaluate(e=>{e.scrollTop=0;e.blur();});
+  await page.locator('#select-block-style').click();await page.locator('#block-local-details > summary').click();await page.locator('#block-align').getByRole('button', { name: '中央揃え', exact: true }).click();await ui.ready();await saved(page);await ui.manuscript().evaluate(e=>{e.scrollTop=0;e.blur();});
   await expect(page).toHaveScreenshot('range-source.png',{maxDiffPixels:0,animations:'disabled'});
   await addPage(page,ui,'title');await page.locator('#view-single').click();await page.locator('.element-list button').first().click();await ui.ready();await saved(page);
   await expect(page).toHaveScreenshot('free-canvas.png',{maxDiffPixels:0,animations:'disabled'});

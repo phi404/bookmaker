@@ -14,13 +14,15 @@ const steps = [
 if (!harnessOnly) steps.push(
   ['build', ['scripts/build.mjs']],
   ['product-tests', ['--test', ...(await walk('tests/product')).filter(file => file.endsWith('.test.mjs'))]],
-  ['e2e-1', ['scripts/browser-test.mjs', '--grep', '@flow', '--shard', '1/3']],
-  ['e2e-2', ['scripts/browser-test.mjs', '--grep', '@flow', '--shard', '2/3']],
-  ['e2e-3', ['scripts/browser-test.mjs', '--grep', '@flow', '--shard', '3/3']],
+  ['e2e-1', ['scripts/browser-test.mjs', '--grep', '@flow', '--fully-parallel', '--shard', '1/4']],
+  ['e2e-2', ['scripts/browser-test.mjs', '--grep', '@flow', '--fully-parallel', '--shard', '2/4']],
+  ['e2e-3', ['scripts/browser-test.mjs', '--grep', '@flow', '--fully-parallel', '--shard', '3/4']],
+  ['e2e-4', ['scripts/browser-test.mjs', '--grep', '@flow', '--fully-parallel', '--shard', '4/4']],
   ['compatibility', ['scripts/browser-test.mjs', '--config=playwright.compatibility.config.mjs']],
   ['visual', ['scripts/browser-test.mjs', '--grep', '@visual']],
   ['exports', ['scripts/run-export-check.mjs']],
   ['preserved-pdf', ['scripts/check-preserved-pdf.mjs']],
+  ['press-pdf', ['scripts/check-press-pdf.mjs']],
   ['manual-review', ['scripts/check-manual.mjs']],
 );
 const report = { kind: harnessOnly ? 'harness' : 'product', startedAt: new Date().toISOString(), phase: (await readJson('harness/config.json')).phase, node: process.version, platform: process.platform, sourceFingerprint: await fingerprint(), status: 'running', steps: [] };

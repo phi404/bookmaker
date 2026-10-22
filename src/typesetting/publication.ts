@@ -83,7 +83,7 @@ export function typesetPublication(project: LayoutPublication): RenderedPages {
           const bleed=page.imageMode==='bleed'?page.bleedMm??3:0;
           elements = [{ id: 'asset-image', kind: 'image', xMm: -bleed, yMm: -bleed, widthMm: effective.page.widthMm+bleed*2, heightMm: effective.page.heightMm+bleed*2, ...(image.dataUrl ? { dataUrl: image.dataUrl } : {}), fit: page.fit, sourceAssetId: asset!.id, sourceAssetPage: page.assetPage, imagePlacement:page.imageMode??(page.role==='external'?'external':'page') }];
           if (image.width / style.page.widthMm * 25.4 < 150 || image.height / style.page.heightMm * 25.4 < 150) diagnostics.push({ code: 'image-resolution', blockId: block.id, message: '150dpi未満の画像があります。印刷時の解像度を確認してください。' });
-          if (image.widthMm && image.heightMm && (Math.abs(image.widthMm - style.page.widthMm) > .5 || Math.abs(image.heightMm - style.page.heightMm) > .5)) diagnostics.push({ code: 'asset-page-size', blockId: block.id, message: '外部PDFの仕上がり寸法が本と異なります。フィットで表示しています。' });
+          if (image.widthMm && image.heightMm && (Math.abs(image.widthMm - (effective.page.widthMm * (page.imageMode === 'spread' ? 2 : 1) + 2 * bleed)) > .5 || Math.abs(image.heightMm - (effective.page.heightMm + 2 * bleed)) > .5)) diagnostics.push({ code: 'asset-page-size', blockId: block.id, message: '外部PDFの仕上がり寸法が本と異なります。フィットで表示しています。' });
         } else diagnostics.push({ code: 'asset-missing', blockId: block.id, message: '挿絵・外部ページの素材を指定してください。' });
       }
       if (page.representation === 'template' && page.role !== 'toc' && !page.fields.title) diagnostics.push({ code: 'template-title-missing', blockId: block.id, message: '特殊ページの書名・章名が未入力です。「構成」でこのページを選び、内容を入力してください。' });

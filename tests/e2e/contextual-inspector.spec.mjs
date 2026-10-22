@@ -13,7 +13,7 @@ test('@flow edit panel shares one explicit target picker for local and common fo
   await page.locator('#edit-selection').click();
   await expect(page.locator('#typography-target')).toHaveValue('context');
   await expect(page.locator('#block-align')).toBeVisible();
-  await page.locator('#block-align').selectOption('center'); await ui.ready();
+  await page.locator('#block-align').getByRole('button', { name: '中央揃え', exact: true }).click(); await ui.ready();
   expect(await ui.manuscript().inputValue()).toContain('alignment="center"');
   const source = await ui.manuscript().inputValue();
   await mkdir(absolute(review), { recursive: true }); await page.screenshot({ path: absolute(review + '/desktop-context.png') });
@@ -45,17 +45,17 @@ test('@flow chapter numbering and finishing controls persist through saving and 
 test('@flow undo and redo keep the common style being edited', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 }); await page.goto('/'); const ui = new BookUI(page); await ui.paste('そのままの本文。');
   await page.locator('#inspect-styles').click(); await page.locator('#typography-target').selectOption('body');
-  await page.locator('#type-character-fontWeight').selectOption('700'); await ui.ready();
+  await page.locator('#type-character-fontWeight').getByRole('button', { name: '太字', exact: true }).click(); await ui.ready();
   await page.locator('#undo').click(); await ui.ready();
-  await expect(page.locator('#typography-settings')).toBeVisible(); await expect(page.locator('#typography-target')).toHaveValue('body'); await expect(page.locator('#type-character-fontWeight')).toHaveValue('');
-  await page.locator('#redo').click(); await ui.ready(); await expect(page.locator('#type-character-fontWeight')).toHaveValue('700'); expect(await ui.manuscript().inputValue()).toBe('そのままの本文。');
+  await expect(page.locator('#typography-settings')).toBeVisible(); await expect(page.locator('#typography-target')).toHaveValue('body'); await expect(page.locator('#type-character-fontWeight')).toHaveAttribute('data-value', '');
+  await page.locator('#redo').click(); await ui.ready(); await expect(page.locator('#type-character-fontWeight')).toHaveAttribute('data-value', '700'); expect(await ui.manuscript().inputValue()).toBe('そのままの本文。');
 });
 
 test('@flow compact edit panel exposes the actual target without repeating its heading', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 }); await page.goto('/'); const ui = new BookUI(page); await ui.paste('# 章\n一つ目の段落。\n二つ目の段落。'); await ui.tab('原稿');
   await ui.manuscript().evaluate(input => { input.focus(); input.setSelectionRange(input.value.indexOf('一つ目'), input.value.length); }); await page.locator('#select-block-style').click();
   await expect(page.locator('#typography-target')).toHaveValue('context'); await expect(page.locator('#block-align')).toBeInViewport();
-  await page.locator('#block-align').selectOption('center'); await ui.ready(); expect(await page.locator('#manuscript').inputValue()).toContain('alignment="center"');
+  await page.locator('#block-align').getByRole('button', { name: '中央揃え', exact: true }).click(); await ui.ready(); expect(await page.locator('#manuscript').inputValue()).toContain('alignment="center"');
   await page.locator('#selection-scope').selectOption('book'); await expect(page.locator('#edit-current-target')).toHaveText('すべての文章');
   await page.locator('#typography-target').selectOption('body'); await expect(page.locator('#typography-settings')).toBeVisible();
   expect(await page.evaluate(() => globalThis.document.documentElement.scrollWidth - globalThis.document.documentElement.clientWidth)).toBeLessThanOrEqual(1);

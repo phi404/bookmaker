@@ -26,7 +26,7 @@ test('@flow external PDF resources retain vectors, rotated crop geometry, and pa
   await ui.download('export-pdf', dir + '/preserved.pdf');
   await ui.download('export-project', dir + '/book.book.json');
   const pdf = await PDFDocument.load(await import('node:fs/promises').then(fs => fs.readFile(dir + '/preserved.pdf')), { updateMetadata: false });
-  expect(pdf.getPageCount()).toBe(5); expect(pdf.getProducer()).toBe('Folaxis');
+  expect(pdf.getPageCount()).toBe(5); expect(pdf.getProducer()).toBe('Compholio');
   for (const sheet of pdf.getPages()) expect(sheet.getSize()).toEqual({ width: 105 * 72 / 25.4, height: 148 * 72 / 25.4 });
   await writeFile(dir + '/manifest.json', JSON.stringify({ sourceFingerprint: await fingerprint(), pageMm: [105, 148], pages: 5, rotations: [0, 90, 180, 270], source: 'source.pdf', pdf: 'preserved.pdf', preview: 'preview.zip' }, null, 2));
 });

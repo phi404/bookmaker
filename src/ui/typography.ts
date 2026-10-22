@@ -1,6 +1,7 @@
 import type { BookModel } from '../domain/model.js';
 import type { CharacterProperties, ParagraphProperties } from '../domain/contracts.js';
 import { inheritedStyle } from '../domain/styles.js';
+import { setIconChoice } from './choices.js';
 import { styleFields } from './style-fields.js';
 import { el } from './dom.js';
 
@@ -40,9 +41,9 @@ export function typographyEditor(host: { book(): BookModel; change(book: BookMod
   }
   choose.addEventListener('change', () => { if (choose.value === 'context') return; target = choose.value; render(); });
   function sync(): void {
-    for (const control of parent.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select')) {
+    for (const control of parent.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLFieldSetElement>('input, select, [data-choice-field]')) {
       if (control === document.activeElement) continue;
-      const family = control.id.startsWith('type-character-') ? character() : entry()?.properties ?? {}, key = control.id.replace(/^type-(?:character|paragraph)-/u, ''); control.value = String((family as Record<string, unknown>)[key] ?? '');
+      const family = control.id.startsWith('type-character-') ? character() : entry()?.properties ?? {}, key = control.id.replace(/^type-(?:character|paragraph)-/u, ''); if (control instanceof HTMLFieldSetElement) { setIconChoice(control, (family as Record<string, unknown>)[key]); control.dataset.vertical = String(host.book().style.writingMode === 'vertical-rl'); } else control.value = String((family as Record<string, unknown>)[key] ?? '');
     }
   }
   render(); return { sync, open(value = 'all') { target = value; choose.value = value; render(); } };

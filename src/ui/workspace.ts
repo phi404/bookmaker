@@ -1,7 +1,8 @@
 import type { BookModel, BookAsset, SpecialPageDefinition, SpecialRole, PageElement, RunningElement, Scope, PageProperties } from '../domain/model.js';
 import type { RenderedPages, DecorationPosition } from '../domain/contracts.js';
 import { flattenDocument } from '../domain/publication.js';
-import { addChapter, addSpecialPage, updateSpecialPage, removeBookItem, moveBookItem, duplicateSpecialPage, convertToFree, newElement, renameChapter, movePageElement, alignPageElement } from '../domain/book.js';
+import { addChapter, addSpecialPage, updateSpecialPage, removeBookItem, moveBookItem, duplicateBookItem, convertToFree, newElement, renameChapter, movePageElement, alignPageElement } from '../domain/book.js';
+import { iconChoices, alignmentOptions, weightOptions, iconElement } from './choices.js';
 import { styleFields } from './style-fields.js';
 import { el, input } from './dom.js';
 import { importAsset } from '../io/assets.js';
@@ -20,6 +21,7 @@ const node = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) => {
 export function workspaceViews(host: Host) {
   const context = el('context-inspector'); let contextKey = '', abort: AbortController | undefined, replaceAssetId: string | undefined, insertingAssetId: string | undefined, assetAnchor: string | undefined;
   const folded = new Set<string>(), expandedLayers = new Set<string>();
+  let assetListKey = '', assetThumbnails: string[] = [];
   function change(fn: (book: BookModel) => BookModel, message?: string): void {
     try { const book = host.book(); if (book.sourceDraft !== undefined) throw new Error('原稿の参照指定を完成・確定させてから操作してください。入力内容は保存されています。'); const next = fn(book); if (next !== book) host.change(next, message); }
     catch (error) { host.notify(error instanceof Error ? error.message : '設定を確認してください。'); sync(true); }
@@ -35,7 +37,9 @@ export function workspaceViews(host: Host) {
     control.value = String(value); control.addEventListener(control instanceof HTMLTextAreaElement || control instanceof HTMLInputElement && control.type === 'text' ? 'input' : 'change', () => callback(control.value)); l.append(control); parent.append(l); return control;
   }
   function button(parent: HTMLElement, label: string, callback: () => void, id?: string): HTMLButtonElement {
-    const b = node('button', label); b.type = 'button'; if (id) b.id = id; b.addEventListener('click', callback); parent.append(b); return b;
+    const b = node('button', label); b.type = 'button';
+    const alignIcons: Record<string, string> = { '左端': 'align-horizontal-justify-start', '左右中央': 'align-horizontal-justify-center', '右端': 'align-horizontal-justify-end', '上端': 'align-vertical-justify-start', '上下中央': 'align-vertical-justify-center', '下端': 'align-vertical-justify-end' };
+    if (alignIcons[label]) { b.replaceChildren(iconElement(alignIcons[label]!)); b.className = 'icon-button'; b.setAttribute('aria-label', label); b.title = label; } if (id) b.id = id; b.addEventListener('click', callback); parent.append(b); return b;
   }
   const details = (label: string, parent: HTMLElement) => { const d = node('details'); d.className = 'style-details'; d.append(node('summary', label)); parent.append(d); return d; };
   const actions = (parent: HTMLElement) => { const a = node('div'); a.className = 'context-actions'; parent.append(a); return a; };
@@ -52,18 +56,28 @@ export function workspaceViews(host: Host) {
       b.setAttribute('aria-current', String('id' in sel && sel.id === scope)); const name = node('span', label); name.className = 'outline-label'; b.append(name, node('small', range(ids)));
       if (kind !== 'book') {
         b.draggable = host.book().sourceDraft === undefined; b.title = 'ドラッグで移動 · Alt + ↑ / ↓';
-        const grip = node('span', '⠿'); grip.className = 'outline-grip'; grip.setAttribute('aria-hidden', 'true'); b.prepend(grip);
+        const grip = iconElement('grip-vertical'); grip.classList.add('outline-grip'); grip.setAttribute('aria-hidden', 'true'); b.prepend(grip);
         b.addEventListener('dragstart', event => { if (!event.dataTransfer) return; event.dataTransfer.setData('application/x-book-item', scope); event.dataTransfer.effectAllowed = 'move'; b.dataset.dragging = 'true'; });
         b.addEventListener('dragend', () => { delete b.dataset.dragging; list.querySelectorAll<HTMLElement>('[data-drop]').forEach(e => delete e.dataset.drop); });
         b.addEventListener('dragover', event => { if (!event.dataTransfer?.types.includes('application/x-book-item')) return; event.preventDefault(); event.dataTransfer.dropEffect = 'move'; b.dataset.drop = event.clientY < b.getBoundingClientRect().top + b.clientHeight / 2 ? 'before' : 'after'; });
         b.addEventListener('dragleave', () => { delete b.dataset.drop; });
         b.addEventListener('drop', event => { const id = event.dataTransfer?.getData('application/x-book-item'); if (!id) return; event.preventDefault(); event.stopPropagation(); const position = b.dataset.drop === 'after' ? 'after' : 'before'; delete b.dataset.drop; change(book => reorderBookItem(book, id, scope, position), '構成を移動しました。'); });
         b.addEventListener('keydown', event => {
+          if (event.key === 'ContextMenu' || event.shiftKey && event.key === 'F10') { event.preventDefault(); const trigger = b.parentElement?.querySelector<HTMLButtonElement>('[data-menu-item-id]'); if (trigger) openItemMenu(selection, scope, trigger); return; }
           if (event.altKey && ['ArrowUp', 'ArrowDown'].includes(event.key)) { event.preventDefault(); host.select(selection, false); change(book => moveBookItem(book, scope, event.key === 'ArrowUp' ? -1 : 1)); return; }
           if (['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const rows = [...list.querySelectorAll<HTMLButtonElement>('.outline-row')].filter(r=>r.offsetParent!==null), at = rows.indexOf(b), target = event.key === 'Home' ? 0 : event.key === 'End' ? rows.length - 1 : Math.max(0, Math.min(rows.length - 1, at + (event.key === 'ArrowUp' ? -1 : 1))); rows[target]?.focus(); }
         });
       }
-      b.addEventListener('click', () => { host.select(selection); const page = host.result()?.pages.find(p => p.kind === 'flow' ? p.lines.some(l => ids.has(l.blockId)) || p.elements?.some(e=>e.blockId&&ids.has(e.blockId)) : ids.has(p.blockId)); if (page) host.choosePage(page.number); }); const row = node('div'); row.setAttribute('role', 'listitem'); row.append(b); parent.append(row);return row;
+      b.addEventListener('click', () => { host.select(selection); const page = host.result()?.pages.find(p => p.kind === 'flow' ? p.lines.some(l => ids.has(l.blockId)) || p.elements?.some(e=>e.blockId&&ids.has(e.blockId)) : ids.has(p.blockId)); if (page) host.choosePage(page.number); }); const row = node('div'); row.setAttribute('role', 'listitem'); row.append(b);
+      if (kind !== 'book') {
+        row.className = 'outline-item';
+        const more = node('button'); more.type = 'button'; more.className = 'icon-button outline-more'; more.dataset.menuItemId = scope;
+        more.setAttribute('aria-label', label + 'の操作'); more.setAttribute('aria-haspopup', 'menu'); more.setAttribute('aria-controls', 'outline-menu'); more.setAttribute('aria-expanded', 'false'); more.append(iconElement('ellipsis'));
+        more.addEventListener('click', () => openItemMenu(selection, scope, more));
+        more.addEventListener('keydown', event => { if (event.key === 'ArrowDown') { event.preventDefault(); openItemMenu(selection, scope, more); } });
+        row.append(more);
+      }
+      parent.append(row);return row;
     };
     item('本全体', 'book', { kind: 'book' }, 'book', new Set(flattenDocument(host.book().document).map(b => b.id)));
     for (const section of host.book().document.children) {
@@ -73,23 +87,24 @@ export function workspaceViews(host: Host) {
         const row=item(title || '章', section.id, { kind: 'chapter', id: section.id }, 'chapter', new Set(section.children.map(b => b.id)));
         if(section.children.some(b=>b.kind==='specialPage')){
           const children=node('div');children.className='outline-children';children.setAttribute('role','list');children.hidden=folded.has(section.id);
-          const toggle=node('button',folded.has(section.id)?'›':'⌄');toggle.className='outline-fold';toggle.type='button';toggle.setAttribute('aria-label',`${title}の構成を開閉`);toggle.setAttribute('aria-expanded',String(!children.hidden));
-          toggle.addEventListener('click',()=>{if(folded.has(section.id))folded.delete(section.id);else folded.add(section.id);children.hidden=folded.has(section.id);toggle.textContent=children.hidden?'›':'⌄';toggle.setAttribute('aria-expanded',String(!children.hidden));});row.className='outline-chapter';row.prepend(toggle);row.append(children);parent=children;
+          const toggle=node('button');toggle.append(iconElement('chevron-right'));toggle.className='outline-fold';toggle.type='button';toggle.setAttribute('aria-label',`${title}の構成を開閉`);toggle.setAttribute('aria-expanded',String(!children.hidden));
+          toggle.addEventListener('click',()=>{if(folded.has(section.id))folded.delete(section.id);else folded.add(section.id);children.hidden=folded.has(section.id);toggle.setAttribute('aria-expanded',String(!children.hidden));});row.className='outline-item outline-chapter';row.prepend(toggle);row.append(children);parent=children;
         }
       }
       for (const ref of section.children) if (ref.kind === 'specialPage') { const p = special(ref.pageId); if (p) item(p.name, p.id, { kind: 'special', id: p.id }, 'special', new Set([ref.id]),parent); }
     }
-    el('outline-actions').hidden = !['chapter', 'special'].includes(sel.kind);
-    el('item-copy').hidden = sel.kind !== 'special';
-    el<HTMLButtonElement>('item-delete').disabled = host.book().sourceDraft !== undefined;
     if (focused) list.querySelector<HTMLButtonElement>(`[data-item-id="${focused}"]`)?.focus({ preventScroll: true });
   }
   function assets(): void {
+    const book = host.book(), usage = book.assets.map(asset => assetReferences(book, asset.id).length);
+    const key = JSON.stringify(book.assets.map((asset, index) => [asset.id, asset.name, asset.bytes, asset.images.length, usage[index]])), thumbnails = book.assets.map(asset => asset.images[0]!.dataUrl);
+    if (key === assetListKey && thumbnails.every((url, index) => url === assetThumbnails[index])) return;
+    assetListKey = key; assetThumbnails = thumbnails;
     const list = el('asset-list'); list.replaceChildren();
-    if (!host.book().assets.length) { const p = node('p', '挿絵や完成ページを、ここに読み込みます。'); p.className = 'empty-view'; list.append(p); }
-    for (const asset of host.book().assets) {
+    if (!book.assets.length) { const p = node('p', '挿絵や完成ページを、ここに読み込みます。'); p.className = 'empty-view'; list.append(p); }
+    for (const [index, asset] of book.assets.entries()) {
       const card = node('div'); card.className = 'asset-card'; const img = node('img'); img.className = 'asset-thumb'; img.src = asset.images[0]!.dataUrl; img.alt = asset.name;
-      const used=assetReferences(host.book(),asset.id).length, body = node('div'); body.append(node('p', asset.name), node('small', `${asset.images.length}ページ · ${Math.max(.1,asset.bytes / 1024).toFixed(1)} KB · ${used}件が参照`));
+      const used=usage[index]!, body = node('div'); body.append(node('p', asset.name), node('small', `${asset.images.length}ページ · ${Math.max(.1,asset.bytes / 1024).toFixed(1)} KB · ${used}件が参照`));
       button(body, 'ページとして挿入', () => {
         if(asset.images.length===1){change(b=>{const inserted=insertAssetPages(b,asset.id,1,1,insertionAnchor());host.select({kind:'special',id:inserted.ids[0]!});return inserted.book;});return;}
         insertingAssetId=asset.id;assetAnchor=insertionAnchor();input('asset-insert-from').value='1';input('asset-insert-to').value=String(asset.images.length);input('asset-insert-from').max=input('asset-insert-to').max=String(asset.images.length);el('asset-insert-name').textContent=asset.name;
@@ -160,8 +175,8 @@ export function workspaceViews(host: Host) {
     pageDecorations(parent,p.id);
     caption('素材ビューから読み込んだ画像・PDFを指定します。', parent);
     const info=node('p');info.className='setting-caption';info.dataset.imageInfo=p.id;parent.append(info);
-    if(p.imageMode==='bleed')field(parent,'塗り足しの想定 / mm','special-bleed',p.bleedMm??3,v=>update(p.id,{bleedMm:Number(v)}));
-    caption('PDFは端末内で画像化します。現在の書き出しは仕上がり寸法まで。塗り足しを含む入稿用PDF・色分解・PDF/Xには未対応です。', parent);
+    if(p.imageMode==='bleed')field(parent,'素材の裁ち落とし幅 / mm','special-bleed',p.bleedMm??3,v=>update(p.id,{bleedMm:Number(v)}));
+    caption('素材に含まれる塗り足し幅です。出力側の塗り足しは書き出しで設定します。', parent);
     button(actions(parent), '素材を読み込む', () => openAssetImport());
     pageStyleFields(parent,'special',()=>special(p.id),patch=>update(p.id,patch));
   }
@@ -199,9 +214,9 @@ export function workspaceViews(host: Host) {
     if (element.kind === 'text') {
       field(parent, 'テキスト', 'element-text', element.text, v => edit({ text: v }), undefined, true);
       field(parent, '文字サイズ / pt', 'element-font', element.fontPt, v => edit({ fontPt: Number(v) }));
-      field(parent, '揃え', 'element-align', element.alignment, v => edit({ alignment: v }), [['start', '先頭'], ['center', '中央'], ['end', '末尾']]);
+      iconChoices(parent, 'element-align', '揃え', alignmentOptions.filter(([value]) => value !== ''), element.alignment, v => edit({ alignment: v }), element.direction === 'vertical');
       field(parent, '書字方向', 'element-direction', element.direction, v => edit({ direction: v }), [['horizontal', '横書き'], ['vertical', '縦書き']]);
-      field(parent, '太さ', 'element-weight', element.fontWeight, v => edit({ fontWeight: Number(v) }), [['400', '標準'], ['700', '太字']]);
+      iconChoices(parent, 'element-weight', '太さ', weightOptions.filter(([value]) => value !== ''), element.fontWeight, v => edit({ fontWeight: Number(v) }));
     } else if (element.kind === 'image') {
       field(parent, '素材', 'element-asset', element.assetId, v => edit({ assetId: v, assetPage: 1 }), [['unassigned', '素材を選ぶ'], ...host.book().assets.map(a => [a.id, a.name] as const)]);
       const asset = host.book().assets.find(a => a.id === element.assetId);
@@ -213,7 +228,7 @@ export function workspaceViews(host: Host) {
     const align=actions(d); for(const [value,label] of [['left','左端'],['center-x','左右中央'],['right','右端'],['top','上端'],['center-y','上下中央'],['bottom','下端']] as const)button(align,label,()=>{change(b=>alignPageElement(b,pageId,id,value));sync(true);},`align-${value}`);
     const layer = actions(parent); for (const [action, label] of [['backward', '背面へ'], ['forward', '前面へ'], ['back', '最背面'], ['front', '最前面']] as const) button(layer, label, () => elementAction(action), `element-${action}`);
     const a = actions(parent); button(a, '複製', () => elementAction('duplicate'), 'duplicate-element'); button(a, element.locked ? '固定を解除' : '固定', () => elementAction('lock'), 'lock-element'); button(a, '削除', () => elementAction('delete'), 'delete-element');
-    if (element.locked) parent.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea').forEach(e => { e.disabled = true; });
+    if (element.locked) parent.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea, fieldset').forEach(e => { (e as HTMLInputElement | HTMLFieldSetElement).disabled = true; });
   }
   function elementAction(action: Parameters<typeof editPageElement>[3]): void {
     const selected = host.selection(); if (selected.kind !== 'special' || !selected.elementId) return;
@@ -314,6 +329,7 @@ export function workspaceViews(host: Host) {
     el('inspector-scope').textContent = s.kind === 'book' ? mode === 'styles' ? '同じ書式の文章をまとめて変更' : '判型・版面・ページの装飾' : s.kind === 'range' ? '原稿にも反映' : s.kind === 'chapter' ? `この章全体 · ${range(new Set(b.document.children.find(x => x.id === s.id)?.children.map(x => x.id) ?? []))}` : s.kind === 'pages' ? '通しページに固定' : s.kind === 'running' ? '内容・配置・適用範囲' : s.kind === 'block' ? '原稿にも反映' : 'このページに適用';
     if (mode === 'selection' && canvasTargets) { el('settings-heading').textContent = currentTarget.textContent; el('inspector-scope').textContent = canvasTargets > 1 ? '選んだ要素に適用' : 'この要素に適用'; }
     if(s.kind==='block'||s.kind==='range'){const target=host.textTarget();if(target.scope!=='selection'){el('settings-heading').textContent=target.label;currentTarget.textContent=target.label;el('inspector-scope').textContent=`${target.count}段落 · 原稿にも反映`;}}
+    for (const choice of document.querySelectorAll<HTMLElement>('[data-choice-field]:not(#element-align)')) choice.dataset.vertical = String(b.style.writingMode === 'vertical-rl');
     const key = JSON.stringify(s);
     if (key !== contextKey || force) {
       const detailPath = (detail: HTMLDetailsElement): string => {
@@ -336,7 +352,7 @@ export function workspaceViews(host: Host) {
       if (sameTarget) for (const detail of context.querySelectorAll<HTMLDetailsElement>('details')) { const state = detailState.get(detailPath(detail)); if (state !== undefined) detail.open = state; }
       if (focused) { const control = document.getElementById(focused); if (control && context.contains(control) && control.offsetParent !== null) control.focus({ preventScroll: true }); }
     }
-    for(const el of context.querySelectorAll<HTMLElement>('[data-image-info]')){const ref=flattenDocument(b.document).find(x=>x.kind==='specialPage'&&x.pageId===el.dataset.imageInfo),pages=host.result()?.pages??[],info=pages.flatMap(p=>{if(p.kind!=='flow')return p.pageId===el.dataset.imageInfo&&p.imageInfo?[p.imageInfo]:[];const at=p.elements?.findIndex(e=>e.blockId===ref?.id)??-1;return at>=0&&p.imageInfo?.[at]?[p.imageInfo[at]]:[];})[0];el.textContent=info?`${info.sourcePixels.join(' × ')} px · 配置後 約${Math.round(info.effectiveDpi)} dpi · 仕上がり ${info.trimMm.join(' × ')} mm${info.bleedMm?` · 塗り足し想定 ${info.bleedMm} mm`:''}${info.originalMm?` · 元のPDF ${info.originalMm.map(n=>n.toFixed(1)).join(' × ')} mm`:''}`:'素材が未指定、または再組版中です。';}
+    for(const el of context.querySelectorAll<HTMLElement>('[data-image-info]')){const ref=flattenDocument(b.document).find(x=>x.kind==='specialPage'&&x.pageId===el.dataset.imageInfo),pages=host.result()?.pages??[],info=pages.flatMap(p=>{if(p.kind!=='flow')return p.pageId===el.dataset.imageInfo&&p.imageInfo?[p.imageInfo]:[];const at=p.elements?.findIndex(e=>e.blockId===ref?.id)??-1;return at>=0&&p.imageInfo?.[at]?[p.imageInfo[at]]:[];})[0];el.textContent=info?`${info.sourcePixels.join(' × ')} px · 配置後 約${Math.round(info.effectiveDpi)} dpi · 仕上がり ${info.trimMm.join(' × ')} mm${info.bleedMm?` · 塗り足し ${info.bleedMm} mm`:''}${info.originalMm?` · 元のPDF ${info.originalMm.map(n=>n.toFixed(1)).join(' × ')} mm`:''}`:'素材が未指定、または再組版中です。';}
     const convert=context.querySelector<HTMLButtonElement>('#convert-free');
     if(convert&&s.kind==='special'){const parts=host.result()?.pages.filter(p=>p.kind==='structured'&&p.pageId===s.id)??[],tooMany=parts.some(p=>p.kind!=='flow'&&p.elements.length>50);convert.disabled=!parts.length||tooMany;convert.textContent=parts.length>1?`全${parts.length}ページを自由ページに変換`:'自由ページに変換';convert.title=tooMany?'50要素を超えるページがあります。自動目次のまま使用してください。':'';}
     const heads = el('semantic-heads'); heads.replaceChildren();
@@ -357,11 +373,56 @@ export function workspaceViews(host: Host) {
   });
   el('new-page-role').addEventListener('change', () => { el('new-page-template-row').hidden = el<HTMLSelectElement>('new-page-role').value !== 'layout'; });
   const specialFrom = (b: BookModel, id: string) => b.specialPages.find(p => p.id === id)!;
-  for (const [id, direction] of [['item-up', -1], ['item-down', 1]] as const) el(id).addEventListener('click', () => { const s = host.selection(); if ('id' in s) change(b => moveBookItem(b, s.id, direction)); });
-  el('item-copy').addEventListener('click', () => { const s = host.selection(); if (s.kind === 'special') change(b => { const r = duplicateSpecialPage(b, s.id); host.select({ kind: 'special', id: r.id }); return r.book; }); });
+  const itemMenu = el('outline-menu');
+  let menuSelection: Selection | undefined, menuScope = '';
+  function openItemMenu(selection: Selection, scope: string, trigger: HTMLButtonElement): void {
+    const rect = trigger.getBoundingClientRect(); menuSelection = selection; menuScope = scope;
+    host.select(selection, false);
+    for (const button of itemMenu.querySelectorAll<HTMLButtonElement>('button')) button.disabled = host.book().sourceDraft !== undefined;
+    itemMenu.style.left = Math.max(8, Math.min(window.innerWidth - 196, rect.right - 188)) + 'px';
+    itemMenu.style.top = Math.max(8, Math.min(window.innerHeight - 160, rect.bottom + 4)) + 'px';
+    if (!itemMenu.matches(':popover-open')) itemMenu.showPopover();
+    listMenuTrigger()?.setAttribute('aria-expanded', 'true');
+    itemMenu.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+  }
+  function listMenuTrigger(): HTMLButtonElement | null { return el('book-outline').querySelector<HTMLButtonElement>(`[data-menu-item-id="${menuScope}"]`); }
+  const closeItemMenu = () => { if (itemMenu.matches(':popover-open')) itemMenu.hidePopover(); };
+  itemMenu.addEventListener('toggle', () => { const open = itemMenu.matches(':popover-open'); listMenuTrigger()?.setAttribute('aria-expanded', String(open)); if (!open && !el<HTMLDialogElement>('move-item-dialog').open) listMenuTrigger()?.focus({ preventScroll: true }); });
+  itemMenu.addEventListener('keydown', event => {
+    if (event.key === 'Tab') { closeItemMenu(); return; }
+    if (event.key === 'Escape') { event.preventDefault(); closeItemMenu(); return; }
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault(); const buttons = [...itemMenu.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')], at = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    buttons[event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (at + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
+  });
+  el('item-copy').addEventListener('click', () => {
+    const s = menuSelection; closeItemMenu(); if (!s || !('id' in s)) return;
+    change(book => { const copy = duplicateBookItem(book, s.id); host.select({ kind: s.kind === 'chapter' ? 'chapter' : 'special', id: copy.id }, false); return copy.book; }, '複製しました。');
+    sync(true);
+  });
   el('item-delete').addEventListener('click', () => {
-    const s = host.selection(); if (!('id' in s) || !['chapter', 'special'].includes(s.kind)) return;
-    change(b => removeBookItem(b, s.id), '構成から削除しました。元に戻す操作で復元できます。'); host.select({ kind: 'book' });
+    const s = menuSelection; closeItemMenu(); if (!s || !('id' in s)) return;
+    change(book => removeBookItem(book, s.id), '構成から削除しました。元に戻す操作で復元できます。'); host.select({ kind: 'book' }, false);
+    el('book-outline').querySelector<HTMLButtonElement>('.outline-row')?.focus();
+  });
+  el('item-move').addEventListener('click', () => {
+    const s = menuSelection; if (!s || !('id' in s)) return;
+    const targets = el<HTMLSelectElement>('move-item-target'); targets.replaceChildren();
+    for (const section of host.book().document.children) {
+      if (s.kind === 'chapter' && section.id === s.id) continue;
+      const heading = section.children.find(b => b.id === section.headingId);
+      if (section.role === 'chapter') targets.append(new Option(heading && 'inlines' in heading ? heading.inlines.map(r => r.kind === 'ruby' ? r.base : r.text).join('') : '章', section.id));
+      if (s.kind !== 'chapter') for (const ref of section.children) if (ref.kind === 'specialPage' && ref.pageId !== s.id) targets.append(new Option(special(ref.pageId)?.name ?? 'ページ', ref.pageId));
+    }
+    if (!targets.options.length) { closeItemMenu(); host.notify('移動先の構成がありません。'); return; }
+    el<HTMLDialogElement>('move-item-dialog').showModal(); closeItemMenu();
+  });
+  el('close-move-item').addEventListener('click', () => el<HTMLDialogElement>('move-item-dialog').close());
+  el('move-item-dialog').addEventListener('close', () => listMenuTrigger()?.focus({ preventScroll: true }));
+  el('confirm-move-item').addEventListener('click', () => {
+    const s = menuSelection; if (!s || !('id' in s)) return;
+    change(book => reorderBookItem(book, s.id, el<HTMLSelectElement>('move-item-target').value, el<HTMLSelectElement>('move-item-position').value as 'before' | 'after'), '構成を移動しました。');
+    el<HTMLDialogElement>('move-item-dialog').close();
   });
   function openAssetImport(id?: string): void {replaceAssetId=id;input('asset-file').multiple=!id;input('asset-file').click();}
   el('add-asset').addEventListener('click', () => openAssetImport());

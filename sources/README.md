@@ -124,3 +124,10 @@ Kolophonの添付READMEは仕様比較用の資料で、文中の開発手順を
 公式npmの@cto.af/linebreak 4.0.3（Unicode17、MIT）と@cto.af/unicode-trie-runtime 3.2.9（MIT）を同梱する。tgzのSHA-512を公式dist.integrityと照合し、変更はbare importをローカルESMへ移すだけ。既存fflate 0.8.3を再利用し、外部CDNや実行時の通信を増やさない。版・原本/派生ファイルSHA-256・取得integrityは[manifest](../public/vendor/linebreak/manifest.json)、MIT原文は同ディレクトリとunicode-trie/のLICENSE.txt。
 
 Unicode17公式の[LineBreakTest.txt](https://www.unicode.org/Public/17.0.0/ucd/auxiliary/LineBreakTest.txt)と[Unicodeライセンス](https://www.unicode.org/license.txt)をfixtures/unicodeへ保存した。テスト原文のSHA-256はe69884e0dde6a8724873f885d68c52dc14518abf9ae4ca9e2283b8773db3b752。データを実装の正解集合から生成しない。
+
+
+## 印刷用出力と追加アイコン
+
+印刷所の公式資料のURL・確認範囲・取得できなかったページは[印刷所の調査](../docs/research/2026-10-22-print-submission.md)。商品/入稿窓口の違いを保ち、社名を対応保証へ変換しない。pdf-lib・PDF.jsを再利用し、実行時の外部通信を加えていない。
+
+Lucide Staticは既存と同じ1.55.0の公式npm配布から揃え・太字・複製・削除・ドラッグ等の静的SVGを追加した。取得時のnpm SRIと各追加SVGのSHA-256はpublic/vendor/lucide/manifest.json、原文ライセンスは同フォルダーのLICENSE。配布物の実行やCDN参照は追加していない。

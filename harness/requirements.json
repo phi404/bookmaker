@@ -1162,6 +1162,62 @@
         "local-first"
       ],
       "specification": "docs/TYPOGRAPHY.md"
+    },
+    {
+      "id": "R-64",
+      "phase": "mvp",
+      "summary": "原寸と同じページ列から印刷用の塗り足し・トンボ・RGB/グレースケール・原本解像度を持つ汎用PDFを保存する",
+      "fixtures": [
+        "book-print",
+        "book-local-page"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/CAPABILITIES.md"
+    },
+    {
+      "id": "R-65",
+      "phase": "mvp",
+      "summary": "構成の項目メニューから複製・削除・移動先指定を行い、章と内側の参照を新しいIDで保つ",
+      "fixtures": [
+        "book-mixed",
+        "book-move-before-chapter"
+      ],
+      "automated": [
+        "product",
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "local-first"
+      ],
+      "specification": "docs/UI.md"
+    },
+    {
+      "id": "R-66",
+      "phase": "mvp",
+      "summary": "揃えと太さを共通アイコンで操作し、継承・混在・原稿投影・Undoを保つ",
+      "fixtures": [
+        "book-range-format",
+        "book-style-exceptions"
+      ],
+      "automated": [
+        "e2e"
+      ],
+      "manual": [
+        "default-page-quality",
+        "mobile-usability",
+        "local-first"
+      ],
+      "specification": "docs/UI.md"
     }
   ]
 }

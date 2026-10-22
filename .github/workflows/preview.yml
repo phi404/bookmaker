@@ -42,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4]
     env:
       PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/browsers
     steps:
@@ -53,7 +53,16 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: node scripts/browser-test.mjs --grep @flow --shard ${{ matrix.shard }}/3
+      - run: node scripts/browser-test.mjs --grep @flow --fully-parallel --shard ${{ matrix.shard }}/4
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: press-output-${{ matrix.shard }}
+          path: |
+            output/press-2026-10-22/*.pdf
+            output/press-2026-10-22/*.json
+          if-no-files-found: ignore
+          retention-days: 7
 
   compatibility:
     needs: checks
@@ -70,9 +79,39 @@ jobs:
       - run: npx playwright install --with-deps firefox webkit
       - run: npm run test:compatibility
 
+      - uses: actions/upload-artifact@v7
+        with:
+          name: press-output-compatibility
+          path: |
+            output/press-2026-10-22/compat-*.pdf
+            output/press-2026-10-22/compat-*.json
+          if-no-files-found: error
+          retention-days: 7
+
+  print-check:
+    needs: [checks, flows, compatibility]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-qa.txt
+      - run: python -m pip install -r requirements-qa.txt
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: press-output-*
+          path: output/press-2026-10-22
+          merge-multiple: true
+      - run: node scripts/check-press-pdf.mjs
+
   deploy:
     if: github.event_name != 'pull_request'
-    needs: [checks, flows, compatibility]
+    needs: [checks, flows, compatibility, print-check]
     runs-on: ubuntu-latest
     permissions:
       pages: write

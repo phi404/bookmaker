@@ -13,7 +13,7 @@ for (const width of [1440, 375]) test(`@flow canonical paragraph styles survive 
   await ui.manuscript().evaluate(editor => { const at = editor.value.indexOf('本文を残す。'); editor.focus(); editor.setSelectionRange(at, at); });
   await page.locator('#select-block-style').click(); await expect(page.locator('#block-inspector')).toBeVisible();
   await page.getByTestId('block-style').selectOption('centered'); await page.locator('#block-local-details > summary').click();
-  await page.getByTestId('block-indent').fill('2'); await page.getByTestId('block-indent').blur(); await page.getByTestId('block-weight').selectOption('700');
+  await page.getByTestId('block-indent').fill('2'); await page.getByTestId('block-indent').blur(); await page.getByTestId('block-weight').getByRole('button', { name: '太字', exact: true }).click();
   await expect(page.locator('#block-local-count')).toHaveText('中央揃えから継承 · 個別指定 2件');
   await ui.tab('プレビュー'); await ui.ready(); await page.getByTestId('page-select').fill('2');
   await expect(ui.preview().locator('[data-body][font-weight="700"]').first()).toBeVisible();

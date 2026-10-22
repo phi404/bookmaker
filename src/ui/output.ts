@@ -1,6 +1,8 @@
 import type { BookStyle, BookPage, ViewMode, Diagnostic } from '../domain/contracts.js';
-import type { Publication } from '../domain/model.js';
+import type { Publication, PrintSettings } from '../domain/model.js';
 import { serializeProject } from '../domain/project.js';
+import { printSettings, screenPDF, monoPDF, colorPDF, printGeometry, printRasterSize, printIssues, validatePrintSettings } from '../domain/print.js';
+import { renderPrintProof } from '../render/print.js';
 import { bookNavigation } from '../domain/navigation.js';
 import { spreadPages } from '../domain/page-order.js';
 import { rasterize, rasterizeSpread, pngBlob } from '../io/raster.js';
@@ -12,11 +14,11 @@ import { imageExportPlan } from '../domain/image-export.js';
 import { el, input, setValue } from './dom.js';
 
 interface OutputState { revision: number; diagnostics: readonly Diagnostic[]; source: string; project: Publication; filename: string; style: BookStyle; pages: readonly BookPage[]; selected: number; viewMode: ViewMode }
-interface OutputHost { state(): OutputState; ready(): boolean; rename(name: string): void; active(open: boolean): void; revealIssue(blockId?: string, elementId?: string, pageNumber?: number): void }
+interface OutputHost { state(): OutputState; ready(): boolean; rename(name: string): void; printSettings(settings: PrintSettings): void; active(open: boolean): void; revealIssue(blockId?: string, elementId?: string, pageNumber?: number): void }
 type Format = 'png' | 'pdf' | 'zip' | 'spread' | 'project' | 'source' | 'bundle';
 export function output(host: OutputHost) {
-  const dialog = el<HTMLDialogElement>('export-dialog'); let controller: AbortController | undefined, savedURL: string | undefined, savedKey = '', newProjectReady = false, checkRevision = -1, preflightKey = '';
-  const key = (s: OutputState) => `${s.revision}:${s.filename}:${s.selected}:${el<HTMLSelectElement>('export-scope').value}:${input('export-from').value}:${input('export-to').value}:${el<HTMLSelectElement>('export-batch-size').value}:${el<HTMLSelectElement>('export-pdf-mode').value}`;
+  const dialog = el<HTMLDialogElement>('export-dialog'); let controller: AbortController | undefined, savedURL: string | undefined, savedKey = '', newProjectReady = false, checkRevision = -1, preflightKey = '', proofKey = '';
+  const key = (s: OutputState) => `${s.revision}:${s.filename}:${s.selected}:${el<HTMLSelectElement>('export-scope').value}:${input('export-from').value}:${input('export-to').value}:${el<HTMLSelectElement>('export-batch-size').value}:${JSON.stringify(printSettings(s.project))}`;
   const lossCodes = new Set(['element-overflow', 'text-box-overflow', 'asset-missing']);
   function clearResult(): void {
     if (savedURL) URL.revokeObjectURL(savedURL); savedURL = undefined; savedKey = ''; newProjectReady = false; el('export-result').hidden = true; el('new-project-confirmation').hidden = true;
@@ -32,7 +34,10 @@ export function output(host: OutputHost) {
   function sync(): void {
     const s = host.state(); if (savedURL && savedKey !== key(s)) clearResult();
     if (checkRevision !== s.revision) { checkRevision = s.revision; input('export-accept-loss').checked = false; }
-    const issues = s.diagnostics.filter((d, i, all) => all.findIndex(v => v.code === d.code && v.blockId === d.blockId && v.elementId === d.elementId && v.pageNumber === d.pageNumber) === i), hasLoss = issues.some(d => lossCodes.has(d.code)), draft = s.project.sourceDraft !== undefined;
+    const settings = printSettings(s.project);
+    let outputPages: readonly BookPage[] = s.pages; try { outputPages = range(s); } catch { outputPages = []; }
+    const printWarnings = printIssues(outputPages, s.style, settings, s.project).map(v => ({ ...v, code: 'print-warning' }));
+    const issues = [...s.diagnostics, ...printWarnings].filter((d, i, all) => all.findIndex(v => v.code === d.code && v.blockId === d.blockId && v.elementId === d.elementId && v.pageNumber === d.pageNumber) === i), hasLoss = issues.some(d => lossCodes.has(d.code)), draft = s.project.sourceDraft !== undefined;
     const enabled = host.ready() && !controller && (!hasLoss || input('export-accept-loss').checked);
     const currentPreflight = JSON.stringify([draft, host.ready(), issues]);
     if (preflightKey !== currentPreflight) {
@@ -48,10 +53,19 @@ export function output(host: OutputHost) {
     for (const id of ['export-project', 'export-source', 'export-bundle']) el<HTMLButtonElement>(id).disabled = !!controller;
     el<HTMLButtonElement>('start-new-project').disabled = !canStartNew(); el<HTMLButtonElement>('new-project-save').disabled = !!controller;
     const size = s.pages[s.selected-1]?.style?.page ?? s.style.page, pixels = [size.widthMm, size.heightMm].map(mm => Math.round(mm / 25.4 * 300));
-    el('png-label').textContent = `${s.selected}ページを一枚の画像に`; el('export-info').textContent = `${pixels.join(' × ')} px · ${s.pages.length}ページ · 300 dpi`;
+    el('png-label').textContent = `${s.selected}ページを一枚の画像に`; el('export-info').textContent = `${s.pages.length}ページ · PNG ${pixels.join(' × ')} px`;
     el('spread-label').textContent = `${s.selected}ページを含む見開き`;
-    el('pdf-label').textContent = el<HTMLSelectElement>('export-scope').value === 'all' ? 'すべてのページ' : '指定した範囲';
+    el('pdf-label').textContent = (el<HTMLSelectElement>('export-scope').value === 'all' ? 'すべてのページ' : '指定した範囲') + ` · ${settings.dpi} dpi`;
     el('png-all-label').textContent = el<HTMLSelectElement>('export-scope').value === 'all' ? '全ページをまとめて保存（ZIP）' : '指定範囲をまとめて保存（ZIP）';
+    const preset = settings.purpose === 'screen' ? 'screen' : JSON.stringify(settings) === JSON.stringify(monoPDF) ? 'mono' : JSON.stringify(settings) === JSON.stringify(colorPDF) ? 'color' : 'custom';
+    setValue('export-pdf-preset', preset); setValue('export-bleed', settings.bleedMm); setValue('export-marks', settings.marks); setValue('export-dpi', settings.dpi); setValue('export-color', settings.color); setValue('export-pdf-mode', settings.pdfSource);
+    const sheet = printGeometry(s.style, settings), mm = (v: number) => Number(v.toFixed(2));
+    el('export-sheet-info').textContent = `仕上がり ${mm(sheet.trim.width)} × ${mm(sheet.trim.height)} mm · PDF用紙 ${mm(sheet.media.width)} × ${mm(sheet.media.height)} mm`;
+    const proof = el('export-print-proof'), showProof = dialog.open && dialog.dataset.intent === 'export' && el<HTMLDetailsElement>('export-pdf-details').open && settings.purpose === 'print' && !!s.pages.length;
+    el('export-print-note').hidden = settings.purpose !== 'print'; proof.hidden = !showProof; proof.setAttribute('aria-busy', String(showProof && !host.ready()));
+    const nextProof = JSON.stringify([s.revision, s.selected, settings]);
+    if (showProof && host.ready() && proofKey !== nextProof) { proofKey = nextProof; proof.innerHTML = renderPrintProof(s.pages[s.selected - 1] ?? s.pages[0]!, s.style, settings); }
+    else if (!showProof) { proofKey = ''; proof.replaceChildren(); }
     el('export-range').hidden = el<HTMLSelectElement>('export-scope').value !== 'range';
     input('export-from').max = String(s.pages.length); input('export-to').max = String(s.pages.length);
     setValue('export-name', s.filename);
@@ -65,7 +79,7 @@ export function output(host: OutputHost) {
     const s = host.state();
     if (!input('export-from').value || el<HTMLSelectElement>('export-scope').value === 'all') { input('export-from').value = '1'; input('export-to').value = String(s.pages.length); }
     else { input('export-from').value = String(Math.max(1, Math.min(s.pages.length, Number(input('export-from').value)))); input('export-to').value = String(Math.max(Number(input('export-from').value), Math.min(s.pages.length, Number(input('export-to').value)))); }
-    sync(); dialog.showModal(); host.active(true);
+    sync(); dialog.showModal(); host.active(true); sync();
   }
   async function write(format: Format, forNewProject = false): Promise<boolean> {
     const imageOutput = !['project', 'source', 'bundle'].includes(format);
@@ -80,14 +94,14 @@ export function output(host: OutputHost) {
       if (format === 'project') {
         blob = new Blob([serializeProject({ ...s.project, metadata: { filename: s.filename, viewMode: s.viewMode, selected: s.selected } })], { type: 'application/json' }); name = `${safeName}.book.json`;
       } else if (format === 'source') { blob = new Blob([s.source], { type: 'text/plain;charset=utf-8' }); name = `${safeName}.${s.project.syntax === 'markdown' ? 'md' : 'txt'}`; }
-      else if (format === 'bundle') { blob = await productionBundle({ ...s.project, metadata: { filename: s.filename, viewMode: s.viewMode, selected: s.selected } }, current.signal); name = `${safeName}.folaxis.zip`; }
+      else if (format === 'bundle') { blob = await productionBundle({ ...s.project, metadata: { filename: s.filename, viewMode: s.viewMode, selected: s.selected } }, current.signal); name = `${safeName}.compholio.zip`; }
       else if (format === 'png' || format === 'spread') {
         const spread = spreadPages(s.selected, s.pages.length, s.style.binding), canvas = format === 'png' ? await rasterize(s.pages[s.selected - 1]!, s.style) : await rasterizeSpread(spread.left ? s.pages[spread.left - 1] : undefined, spread.right ? s.pages[spread.right - 1] : undefined, s.style);
         try { current.signal.throwIfAborted(); blob = await pngBlob(canvas); } finally { canvas.width = 0; canvas.height = 0; }
         name = `${safeName}-${format === 'spread' ? '見開き-' : ''}${String(s.selected).padStart(3, '0')}.png`;
       } else {
         const pages = range(s), span = pages.length === s.pages.length ? '' : `-${pages[0]!.number}-${pages.at(-1)!.number}`;
-        if (format === 'pdf') { blob = await exportPDF(pages, s.style, s.filename, current.signal, count => { el('export-progress-text').textContent = `${count} / ${pages.length} ページを準備しました`; }, bookNavigation(s.project, s.pages, pages), el<HTMLSelectElement>('export-pdf-mode').value === 'preserve' ? s.project : undefined); name = `${safeName}${span}.pdf`; }
+        if (format === 'pdf') { blob = await exportPDF(pages, s.style, s.filename, current.signal, count => { el('export-progress-text').textContent = `${count} / ${pages.length} ページを準備しました`; }, bookNavigation(s.project, s.pages, pages), s.project, printSettings(s.project)); name = `${safeName}${span}.pdf`; }
         else {
           const files: Record<string, Uint8Array> = {}, plan = imageExportPlan(pages, Number(el<HTMLSelectElement>('export-batch-size').value)); let total = 0;
           for (const [i, page] of pages.entries()) {
@@ -109,12 +123,25 @@ export function output(host: OutputHost) {
     finally { controller = undefined; el('export-progress').hidden = true; sync(); }
   }
   el('open-export').addEventListener('click', () => open());
-  el('close-export').addEventListener('click', () => dialog.close()); dialog.addEventListener('close', () => { controller?.abort(); host.active(false); });
+  el('close-export').addEventListener('click', () => dialog.close()); dialog.addEventListener('close', () => { controller?.abort(); el('export-print-proof').replaceChildren(); proofKey = ''; host.active(false); });
+  el('export-pdf-details').addEventListener('toggle', () => { if (dialog.open) sync(); });
   el('export-cancel').addEventListener('click', () => controller?.abort());
   el('new-project-save').addEventListener('click', () => { void write('project', true); });
   el('export-scope').addEventListener('change', sync);
   el('export-batch-size').addEventListener('change', sync);
-  el('export-pdf-mode').addEventListener('change', sync);
+  function updatePrint(next: PrintSettings): void {
+    clearResult();
+    try { const valid = validatePrintSettings(next); printRasterSize(host.state().style, valid); host.printSettings(valid); el('output-error').hidden = true; }
+    catch (error) { el('output-error').textContent = error instanceof Error ? error.message : 'PDFの設定を確認してください。'; el('output-error').hidden = false; }
+    sync();
+  }
+  el('export-pdf-preset').addEventListener('change', () => {
+    const value = el<HTMLSelectElement>('export-pdf-preset').value;
+    updatePrint({ ...(value === 'screen' ? screenPDF : value === 'mono' ? monoPDF : value === 'color' ? colorPDF : { ...printSettings(host.state().project), purpose: 'print' as const }) });
+  });
+  for (const id of ['export-bleed', 'export-marks', 'export-dpi', 'export-color', 'export-pdf-mode']) el(id).addEventListener('change', () => {
+    updatePrint({ ...printSettings(host.state().project), purpose: id === 'export-pdf-mode' ? printSettings(host.state().project).purpose : 'print', bleedMm: Number(input('export-bleed').value), marks: el<HTMLSelectElement>('export-marks').value as PrintSettings['marks'], dpi: Number(el<HTMLSelectElement>('export-dpi').value) as PrintSettings['dpi'], color: el<HTMLSelectElement>('export-color').value as PrintSettings['color'], pdfSource: el<HTMLSelectElement>('export-pdf-mode').value as PrintSettings['pdfSource'] });
+  });
   for (const id of ['export-from', 'export-to', 'export-accept-loss']) input(id).addEventListener('change', sync);
   input('export-name').addEventListener('input', () => { host.rename(input('export-name').value); sync(); });
   input('export-name').addEventListener('change', () => { commitName(); sync(); });

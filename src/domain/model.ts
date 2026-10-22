@@ -27,9 +27,11 @@ export interface RunningElement {
   content: { kind: 'text'; text: string } | { kind: 'title' | 'author' | 'chapter' | 'heading' | 'pageNumber' };
   position: DecorationPosition; side: 'both' | 'odd' | 'even'; fontPt: number; insetMm: number; hideOnSectionFirst: boolean;
 }
+export interface PrintSettings { purpose: 'screen' | 'print'; bleedMm: number; marks: 'none' | 'corners' | 'all'; dpi: 300 | 350 | 600; color: 'rgb' | 'gray'; pdfSource: 'raster' | 'preserve' }
 export interface Publication {
   schemaVersion: 2 | 3; syntax: SourceSyntax; source: string; document: DocumentTree; styles: StyleCatalog; style: BookStyle;
   overrides: ScopedStyle[]; runningElements: RunningElement[];
+  printSettings?: PrintSettings;
   metadata?: { filename: string; viewMode: ViewMode; selected: number };
   specialPages?: SpecialPageDefinition[]; assets?: BookAsset[]; pageOverrides?: PageOverride[]; sourceDraft?: string;
 }

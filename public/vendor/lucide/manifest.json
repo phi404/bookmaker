@@ -1,0 +1,69 @@
+{
+  "package": "lucide-static",
+  "version": "1.55.0",
+  "tarball": "https://registry.npmjs.org/lucide-static/-/lucide-static-1.55.0.tgz",
+  "integrity": "sha512-h18lunTFsIJWnY0FMRPjXeO9KcAtNi7fDqtqgWHOFbssfgUWsctn/pA7bpiyrd4g1DuBOJ24CsRnPfkYblwm/A==",
+  "license": "LICENSE",
+  "added": [
+    {
+      "path": "align-left.svg",
+      "sha256": "f00612b6ad7d5bba89ff59aa095b8fb712ba4e25ec4d1c62e3f3ded28c8bc117"
+    },
+    {
+      "path": "align-center.svg",
+      "sha256": "a7e9b134047403f41748fbf90f9522dbc64b8a62cf0fe2cefc01de717a519d8e"
+    },
+    {
+      "path": "align-right.svg",
+      "sha256": "8e3deb97869407cfaeb30ac97be2ece5ab92776b0d266b4bc526ce3b7748ad46"
+    },
+    {
+      "path": "bold.svg",
+      "sha256": "09a7ad7477f36f2bf43d08d4b33943d3b8b37f4cef8053cbf12a111ace6dd692"
+    },
+    {
+      "path": "rotate-ccw.svg",
+      "sha256": "d35a4d7a6c258505a23267351045b095920bd9977a3c8ce1af967b20894cb146"
+    },
+    {
+      "path": "copy.svg",
+      "sha256": "dcc24e46071c268d362508bce5e8973978713a72f531729ebe0c2e5d6bc03267"
+    },
+    {
+      "path": "trash-2.svg",
+      "sha256": "ad74c3aae134512aa51a81a53ccc0185128d973442b9852669226a8eac927547"
+    },
+    {
+      "path": "grip-vertical.svg",
+      "sha256": "0ad62d4923df48098910d381a1fbda64aecf12b8e935e9a860d92d249dc50852"
+    },
+    {
+      "path": "arrow-up-down.svg",
+      "sha256": "70011b70803035a676053e96fe15838c7c115ea980150245582eb47d6edf1eee"
+    },
+    {
+      "path": "align-horizontal-justify-start.svg",
+      "sha256": "31ca1ba93be5bae1f918231a61a2a62f677be22764b4df35930e96f65c84eee0"
+    },
+    {
+      "path": "align-horizontal-justify-center.svg",
+      "sha256": "3b00615ad8aa410de2941053b92840c4091ed688d99394e01833d199210e189d"
+    },
+    {
+      "path": "align-horizontal-justify-end.svg",
+      "sha256": "2581fddd4e6ff403124adf480b730bae9af8889caa136b11cfba0a47dfe7f7ad"
+    },
+    {
+      "path": "align-vertical-justify-start.svg",
+      "sha256": "a893c18a6a99005c3ed3d5675aab5f5d0b145c7d3b42fa5c9559ea670882b194"
+    },
+    {
+      "path": "align-vertical-justify-center.svg",
+      "sha256": "b123f9a8ce6f509f9fd19080abc38ce3310c34b5b2cf91e316d909593983d806"
+    },
+    {
+      "path": "align-vertical-justify-end.svg",
+      "sha256": "b41672cd2ead685114820a932858df3f0bfe65c7b8262fbefbdd7e295f1f5207"
+    }
+  ]
+}

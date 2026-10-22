@@ -42,16 +42,16 @@ export async function productionBundle(project: Publication, signal: AbortSignal
     if (total > MAX_BUNDLE_BYTES) throw new Error('制作データが192MBを超えました。作業JSONを保存してください。');
     entries.push({ path, bytes: data.byteLength, sha256: await hash(data) });
   }
-  files['manifest.json'] = encode({ schemaVersion: 1, kind: 'folaxis-production', project: 'book.json', originals, files: entries });
+  files['manifest.json'] = encode({ schemaVersion: 1, kind: 'compholio-production', project: 'book.json', originals, files: entries });
   signal.throwIfAborted(); return zipBlobs(files);
 }
 export async function restoreProductionBundle(bytes: Uint8Array): Promise<Publication> {
   if (bytes.byteLength > MAX_BUNDLE_BYTES) throw new Error('制作データは192MB以内にしてください。');
   const files = await readProductionFiles(bytes, MAX_BUNDLE_BYTES);
   const decode = (path: string) => { const file = files[path]; if (!file) throw new Error(`制作データに ${path} がありません。`); return new TextDecoder('utf-8', { fatal: true }).decode(file); };
-  let manifest: unknown; try { manifest = JSON.parse(decode('manifest.json')); } catch { throw new Error('Folaxisの制作データを選んでください。'); }
+  let manifest: unknown; try { manifest = JSON.parse(decode('manifest.json')); } catch { throw new Error('Compholioの制作データを選んでください。'); }
   object(manifest, ['schemaVersion', 'kind', 'project', 'originals', 'files'], '制作データ');
-  if (manifest.schemaVersion !== 1 || manifest.kind !== 'folaxis-production' || manifest.project !== 'book.json' || !Array.isArray(manifest.files) || manifest.files.length > 210) throw new Error('未対応の制作データです。元ファイルを保管してください。');
+  if (manifest.schemaVersion !== 1 || (manifest.kind !== 'compholio-production' && manifest.kind !== 'folaxis-production') || manifest.project !== 'book.json' || !Array.isArray(manifest.files) || manifest.files.length > 210) throw new Error('未対応の制作データです。元ファイルを保管してください。');
   const paths = new Set(['manifest.json']);
   for (const entry of manifest.files) {
     object(entry, ['path', 'bytes', 'sha256'], '制作データのファイル'); textValue(entry.path, 200, 'ファイル名');
@@ -63,7 +63,7 @@ export async function restoreProductionBundle(bytes: Uint8Array): Promise<Public
   let fonts: unknown; try { fonts = JSON.parse(decode('fonts.json')); } catch { throw new Error('制作データの書体一覧を読み込めません。'); }
   if (!Array.isArray(fonts) || fonts.length !== 1) throw new Error('未対応の書体を含む制作データです。元ファイルを保管してください。');
   object(fonts[0], ['family', 'name', 'path', 'license'], '制作データの書体');
-  if (fonts[0].family !== bundledFont.family || fonts[0].path !== bundledFont.path || fonts[0].name !== bundledFont.name || fonts[0].license !== bundledFont.license || !files[bundledFont.path] || await hash(files[bundledFont.path]!) !== bundledFont.sha256) throw new Error('制作データの書体が現在のFolaxisと異なります。元の書体を保管してください。');
+  if (fonts[0].family !== bundledFont.family || fonts[0].path !== bundledFont.path || fonts[0].name !== bundledFont.name || fonts[0].license !== bundledFont.license || !files[bundledFont.path] || await hash(files[bundledFont.path]!) !== bundledFont.sha256) throw new Error('制作データの書体が現在のCompholioと異なります。元の書体を保管してください。');
   decode(bundledFont.license); decode('settings.json');
   const restored = restoreProject(decode('book.json'));
   if (restored.schemaVersion === 1) throw new Error('制作データのBook Modelを確認してください。');

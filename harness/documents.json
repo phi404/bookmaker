@@ -297,6 +297,16 @@
       "path": "docs/history/2026-10-22-context-and-finishing.md",
       "purpose": "stage-record",
       "kind": "history"
+    },
+    {
+      "path": "docs/research/2026-10-22-print-submission.md",
+      "purpose": "technical-study",
+      "kind": "history"
+    },
+    {
+      "path": "docs/history/2026-10-22-print-output.md",
+      "purpose": "stage-record",
+      "kind": "history"
     }
   ]
 }

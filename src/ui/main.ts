@@ -142,6 +142,7 @@ const exports = output({
   state: () => ({ revision, diagnostics: result?.diagnostics ?? [], source: project.sourceDraft ?? source, project: currentProject(), filename, style, selected, viewMode, pages: result?.pages ?? [] }),
   ready: () => ready() && project.source.length > 0,
   rename(name) { filename = name; syncSource(); scheduleSave(); },
+  printSettings(settings) { commit({ ...currentProject(), printSettings: settings }); },
   active(open) { document.querySelectorAll<HTMLElement>('.mobile-tabs [role=tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.target === (open ? 'output' : previousPanel)))); },
   revealIssue(blockId,elementId,pageNumber) {
     const block = project.sourceDraft === undefined ? flattenDocument(project.document).find(b => b.id === blockId) : undefined;
@@ -474,7 +475,7 @@ for (const [id, mode] of [['view-single', 'single'], ['view-spread', 'spread'], 
 el('preview-zoom').addEventListener('click', () => { zoomed = !zoomed; panel.dataset.zoom = String(zoomed); const button = el('preview-zoom'); button.setAttribute('aria-pressed', String(zoomed)); button.setAttribute('aria-label', zoomed ? '全体' : '拡大'); button.title = zoomed ? '全体を表示' : '拡大'; button.querySelector<HTMLElement>('[data-icon]')!.dataset.icon = zoomed ? 'zoom-out' : 'zoom-in'; resizePaper(); resetReadingPosition(); });
 el('focus-preview').addEventListener('click', focusPaper);
 workbenchShell({ showLeft, showPreview() { if (mobile.matches) activePanel('preview'); }, focusPaper,
-  edit(command) { showLeft('source'); if(command==='range'||command==='center'){formatSelection();if(command==='center'&&!el('block-inspector').hidden){el<HTMLSelectElement>('block-align').value='center';el('block-align').dispatchEvent(new Event('change'));}}else document.querySelector<HTMLButtonElement>(`[data-insert="${command}"]`)!.click(); },
+  edit(command) { showLeft('source'); if(command==='range'||command==='center'){formatSelection();if(command==='center'&&!el('block-inspector').hidden){inspector.align('center');}}else document.querySelector<HTMLButtonElement>(`[data-insert="${command}"]`)!.click(); },
   showSettings(detail) {
   if (detail === 'shared-styles' || detail === 'typography') openCommonStyles(); else el('inspect-book').click();
   if (detail === 'typography') { el('typography-target').focus(); return; }

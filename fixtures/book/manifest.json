@@ -75,6 +75,11 @@
       "id": "book-word-boundaries",
       "file": "fixtures/book/word-boundaries.md",
       "sourceSha256": "95e7832fdcb2228da7f9304c432c3808086054a318b421e73158312ea82206d9"
+    },
+    {
+      "id": "book-print",
+      "file": "fixtures/book/print.md",
+      "sourceSha256": "892bb5f55ffa13829a47cb57a79a85c8b7302eca855e02b13e65839e5d55e945"
     }
   ]
 }

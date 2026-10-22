@@ -13,8 +13,8 @@ test('@flow project-prefix deployment loads local resources, edits and exports',
   page.on('request', request => { if (/^https?:/u.test(request.url())) requests.push(request.url()); });
   try {
     await page.goto(base, { waitUntil: 'networkidle' });
-    await expect(page).toHaveTitle('Folaxis');
-    await expect(page.getByRole('link', { name: 'Folaxis', exact: true })).toBeVisible();
+    await expect(page).toHaveTitle('Compholio');
+    await expect(page.getByRole('link', { name: 'Compholio', exact: true })).toBeVisible();
     expect(failures, 'All app resources must resolve inside the project path').toEqual([]);
     const ui = new BookUI(page);
     await ui.paste('# 配下URLの確認\n｜薔薇《ばら》と*圏点*。\n次の文章。');

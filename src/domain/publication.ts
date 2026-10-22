@@ -1,4 +1,5 @@
 import type { Project } from './contracts.js';
+import { validatePrintSettings } from './print.js';
 import type { DocumentTree, Publication, Section, SourceSyntax, TreeBlock, StyleCatalog } from './model.js';
 import { MAX_SOURCE } from './document.js';
 import { blockSource, contentKey, identityKey, sourceBlocks } from './source.js';
@@ -141,7 +142,7 @@ export function validateTree(value: unknown): DocumentTree {
   return structuredClone(value as unknown as DocumentTree);
 }
 export function validatePublication(value: unknown): Publication {
-  object(value, ['schemaVersion', 'syntax', 'source', 'document', 'styles', 'style', 'overrides', 'runningElements', 'metadata', 'specialPages', 'assets', 'pageOverrides', 'sourceDraft'], 'プロジェクト');
+  object(value, ['schemaVersion', 'syntax', 'source', 'document', 'styles', 'style', 'overrides', 'runningElements', 'metadata', 'specialPages', 'assets', 'pageOverrides', 'sourceDraft', 'printSettings'], 'プロジェクト');
   if (![2, 3].includes(value.schemaVersion as number) || !['legacy', 'markdown'].includes(value.syntax as string)) throw new Error('未対応のプロジェクト形式です。');
   const syntax = value.syntax as SourceSyntax, documentTree = validateTree(value.document), styles = validateCatalog(value.styles), style = validateStyle(value.style);
   object(value.style, ['page', 'writingMode', 'binding', 'columns', 'columnGapMm', 'fontFamily', 'fontPt', 'lineHeight', 'margins', 'maxCharsPerLine', 'maxLinesPerPage', 'pageLayout', 'paragraphIndent', 'paperColor', 'folio', 'runningHeads', 'pageCountMultiple'], '本の組版設定');
@@ -182,6 +183,7 @@ export function validatePublication(value: unknown): Publication {
     for (const b of blocks) if (b.kind === 'specialPage') { if (refs.has(b.pageId)) throw new Error('同じ特殊ページIDが複数配置されています。複製には別のIDを使ってください。'); refs.add(b.pageId); const p = result.specialPages.find(p => p.id === b.pageId); if (!p || p.role !== b.role) throw new Error('特殊ページの参照先が一致しません。'); }
     if (value.sourceDraft !== undefined) { textValue(value.sourceDraft, MAX_SOURCE, '未確定原稿'); result.sourceDraft = value.sourceDraft; }
   } else if (['specialPages', 'assets', 'pageOverrides', 'sourceDraft'].some(k => value[k] !== undefined) || blocks.some(b => b.kind === 'specialPage')) throw new Error('特殊ページを含む作業は新しいプロジェクト形式で保存してください。');
+  if (value.printSettings !== undefined) result.printSettings = validatePrintSettings(value.printSettings);
   if (value.metadata !== undefined) {
     object(value.metadata, ['filename', 'viewMode', 'selected'], '表示設定'); const m = value.metadata; textValue(m.filename, 200, 'ファイル名');
     if (!['spread', 'single', 'gallery'].includes(m.viewMode as string)) throw new Error('表示設定を確認してください。');
