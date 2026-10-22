@@ -7,7 +7,7 @@ export function validateSourceManifest(manifest) {
   if (manifest?.schemaVersion !== 1 || !Array.isArray(manifest.files) || !manifest.files.length || manifest.files.length > 100) return ['Invalid source manifest'];
   const errors = [], seen = new Set();
   for (const item of manifest.files) {
-    if (typeof item.path !== 'string' || path.isAbsolute(item.path) || item.path.includes('\\') || item.path.split('/').some(part => !part || part === '.' || part === '..')) errors.push('Invalid local source path');
+    if (typeof item.path !== 'string' || path.posix.isAbsolute(item.path) || path.win32.isAbsolute(item.path) || /^[A-Za-z]:/u.test(item.path) || item.path.includes('\\') || item.path.split('/').some(part => !part || part === '.' || part === '..')) errors.push('Invalid local source path');
     if (!/^[a-f0-9]{64}$/u.test(item.sha256 ?? '')) errors.push('Invalid source digest');
     if (seen.has(item.path)) errors.push('Duplicate local source');
     seen.add(item.path);

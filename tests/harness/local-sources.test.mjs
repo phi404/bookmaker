@@ -12,6 +12,6 @@ test('local reference lists reject missing, duplicate or escaping paths', () => 
   assert.deepEqual(validateSourceManifest({ schemaVersion: 1, files: [file] }), []);
   assert.ok(validateSourceManifest({ schemaVersion: 1, files: [] }).length);
   assert.ok(validateSourceManifest({ schemaVersion: 1, files: [file, file] }).length);
-  for (const path of ['../outside', 'C:/outside', 'a/../outside', 'a\\outside']) assert.ok(validateSourceManifest({ schemaVersion: 1, files: [{ ...file, path }] }).length);
+  for (const path of ['../outside', '/outside', 'C:/outside', 'C:outside', '//host/share', 'a/../outside', 'a\\outside']) assert.ok(validateSourceManifest({ schemaVersion: 1, files: [{ ...file, path }] }).length);
   assert.ok(validateSourceManifest({ schemaVersion: 1, files: [{ ...file, sha256: 'bad' }] }).length);
 });

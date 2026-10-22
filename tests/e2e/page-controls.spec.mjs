@@ -27,7 +27,7 @@ test('@flow simple/spread navigation, uniform margins and progressively revealed
   const rule = page.locator('#folio-rules .rule-fields'); await rule.getByLabel('範囲の開始ページ', { exact: true }).fill('3'); await rule.getByLabel('範囲の開始ページ', { exact: true }).blur(); await ui.ready();
   await page.getByRole('button', { name: '次のページ', exact: true }).click(); await expect(ui.preview().getByTestId('folio')).toHaveCount(0);
   await page.getByRole('button', { name: '前のページ', exact: true }).click(); await expect(ui.preview().getByTestId('folio')).toHaveText('42');
-  await page.locator('#detail-heads > summary').click(); await page.getByText('通しページで指定する（旧形式）', { exact: true }).click(); await page.locator('#add-head-rule').click();
+  await page.locator('#detail-heads > summary').click(); await page.getByText('通しページで指定する', { exact: true }).click(); await page.locator('#add-head-rule').click();
   const headPosition = page.getByLabel('柱の位置', { exact: true });
   expect(await headPosition.evaluate(select => [...select.options].filter(option => !option.hidden).length)).toBe(3);
   await expect(headPosition).toHaveValue('top-left');
@@ -43,7 +43,7 @@ for (const width of [1440, 375]) test(`@flow DOCX/Markdown/JSON, structure, fine
   await expect(page.getByTestId('source-syntax')).toHaveCount(0);
   await ui.paste(manuscript); await ui.tab('設定'); await page.getByTestId('page-size').selectOption('b6');
   await page.locator('#detail-layout summary').click(); await page.getByTestId('grid-chars').fill('25'); await page.getByTestId('grid-chars').blur();
-  await page.locator('#detail-heads > summary').click(); await page.getByText('通しページで指定する（旧形式）', { exact: true }).click(); await page.locator('#add-head-rule').click();
+  await page.locator('#detail-heads > summary').click(); await page.getByText('通しページで指定する', { exact: true }).click(); await page.locator('#add-head-rule').click();
   const head = page.locator('#head-rules .rule-fields'); await head.getByLabel('範囲の開始ページ', { exact: true }).fill('2'); await head.getByLabel('範囲の開始ページ', { exact: true }).blur(); await head.getByLabel('柱の文字', { exact: true }).fill('静かな章');
   await ui.tab('プレビュー'); await ui.ready(); expect(await ui.preview().locator('[data-running-head]').count()).toBe(0);
   await page.getByTestId('page-select').fill('2'); await expect(ui.preview().locator('[data-running-head]').first()).toHaveText('静かな章');
@@ -60,7 +60,7 @@ test('@flow actual B6 uniform PNG/range PDF/range ZIP have matching physical pag
   await page.goto('/'); const ui = new BookUI(page); await ui.paste(manuscript); await page.getByTestId('page-layout').selectOption('uniform'); await page.getByTestId('page-size').selectOption('b6'); await ui.ready();
   await page.locator('#detail-folio summary').first().click(); await page.getByTestId('folio-enabled').check();
   await page.getByTestId('folio-from').fill('2'); await page.getByTestId('folio-from').blur(); await page.getByTestId('folio-start').fill('42'); await page.getByTestId('folio-start').blur(); await page.getByTestId('folio-position').selectOption('bottom-center');
-  await page.locator('#detail-heads > summary').click(); await page.getByText('通しページで指定する（旧形式）', { exact: true }).click(); await page.locator('#add-head-rule').click();
+  await page.locator('#detail-heads > summary').click(); await page.getByText('通しページで指定する', { exact: true }).click(); await page.locator('#add-head-rule').click();
   const head = page.locator('#head-rules .rule-fields'); await head.getByLabel('範囲の開始ページ', { exact: true }).fill('2'); await head.getByLabel('範囲の開始ページ', { exact: true }).blur(); await head.getByLabel('柱の文字', { exact: true }).fill('SNS本文サンプル'); await ui.ready();
   await page.getByTestId('page-select').fill('2'); await mkdir(absolute('output/exports-b6'), { recursive: true });
   await ui.download('export-png', absolute('output/exports-b6/page-002.png'));
