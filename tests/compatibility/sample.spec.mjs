@@ -1,0 +1,34 @@
+import { test, expect } from '@playwright/test';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { absolute, fingerprint } from '../../scripts/lib.mjs';
+import { BookUI } from '../e2e/ui-driver.mjs';
+import { SAMPLE } from '../../dist/domain/sample.js';
+
+test('optional Gongitsune sample works offline, restores metadata and exports the complete book', async ({ page, context, browser }, testInfo) => {
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/'); const ui = new BookUI(page); await ui.ready();
+  await expect(ui.manuscript()).toHaveValue(''); await expect(page.locator('#sample-manuscript')).toBeVisible();
+  await context.setOffline(true); await page.locator('#sample-manuscript').click(); await ui.ready();
+  await expect(ui.manuscript()).toHaveValue(SAMPLE.source); await expect(page.locator('#sample-manuscript')).toBeHidden();
+  await expect(page.locator('#project-name')).toHaveText('ごん狐');
+  await expect(page.locator('#save-state')).toHaveText('保存済み');
+  await page.locator('#undo').click(); await ui.ready(); await expect(ui.manuscript()).toHaveValue(''); await expect(page.locator('#project-name')).toHaveText('無題');
+  await page.locator('#redo').click(); await ui.ready(); await expect(ui.manuscript()).toHaveValue(SAMPLE.source);
+  await expect(page.locator('#save-state')).toHaveText('保存済み'); await context.setOffline(false);
+  await page.reload(); await ui.ready(); await ui.tab('原稿'); await expect(ui.manuscript()).toHaveValue(SAMPLE.source);
+  const folder = absolute('output/sample/' + testInfo.project.name); await mkdir(folder, { recursive: true });
+  await page.screenshot({ path: folder + '/source.png' }); await ui.tab('プレビュー'); await ui.ready();
+  const count = await ui.pageCount(); expect(count).toBeGreaterThan(1);
+  await page.screenshot({ path: folder + '/preview.png' });
+  await ui.download('export-project', folder + '/book.json');
+  const saved = JSON.parse(await readFile(folder + '/book.json', 'utf8'));
+  expect(saved.source).toBe(SAMPLE.source); expect(saved.document.title).toBe('ごん狐'); expect(saved.document.author).toBe('新美南吉');
+  expect(saved.document.children).toHaveLength(6); expect(saved.metadata.filename).toBe('ごん狐');
+  await ui.download('export-png', folder + '/page.png'); await ui.download('export-pdf', folder + '/book.pdf');
+  const { PDFDocument } = await import('../../public/vendor/pdf-lib.js');
+  const pdf = await PDFDocument.load(await readFile(folder + '/book.pdf'), { updateMetadata: false }); expect(pdf.getPageCount()).toBe(count);
+  expect([...new Uint8Array(await readFile(folder + '/page.png')).subarray(0, 8)]).toEqual([137,80,78,71,13,10,26,10]);
+  expect(await page.evaluate(() => globalThis.document.documentElement.scrollWidth - globalThis.document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  expect(errors).toEqual([]);
+  await writeFile(folder + '/result.json', JSON.stringify({ project: testInfo.project.name, browser: browser.version(), pageCount: count, sourceFingerprint: await fingerprint(), offlineSample: true, undoRedo: true, sourceAndMetadataPreserved: true, pageErrors: errors }, null, 2) + '\n');
+});

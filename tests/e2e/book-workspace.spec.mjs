@@ -129,14 +129,15 @@ test('@flow PNG and JPEG originals survive insertion, reorder, duplicate, remova
 test('@visual revised workspace source, colophon, gallery and mobile context', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 }); await page.goto('/'); const ui = new BookUI(page);
   const { SAMPLE } = await import('../../dist/domain/sample.js');
-  await ui.paste(SAMPLE.replace('[見出し] 朝の余白', '# 朝の余白') + '\n:::colophon id="colophon-main"');
+  await ui.ready(); await page.locator('#sample-manuscript').click(); await ui.ready();
+  await ui.paste(SAMPLE.source + '\n:::colophon id="colophon-main"');
   await page.getByTestId('page-select').fill('2'); await page.locator('#close-right').click();
   await page.locator('#toggle-right').click();
   await expect(page.getByTestId('save-state')).toHaveAttribute('data-state', 'saved');
   await mkdir(absolute('output/book'), { recursive: true }); await page.screenshot({ path: absolute('output/book/01-source-spread.png') });
   await expect.soft(page).toHaveScreenshot('workspace-source.png', { animations: 'disabled', maxDiffPixels: 0 });
   await page.locator('#tab-structure').click(); await selectItem(page, 'colophon-main');
-  await page.getByTestId('special-title').fill('朝の余白'); await page.getByTestId('special-author').fill('試用作者'); await page.getByTestId('special-date').fill('2026年10月3日'); await page.getByTestId('special-note').fill('この本は組版確認用のサンプルです。');
+  await page.getByTestId('special-title').fill(SAMPLE.title); await page.getByTestId('special-author').fill(SAMPLE.author); await page.getByTestId('special-date').fill('2026年10月3日'); await page.getByTestId('special-note').fill('この本は組版確認用のサンプルです。');
   await page.getByTestId('view-single').click(); await ui.ready(); await expect(page.getByTestId('save-state')).toHaveAttribute('data-state', 'saved');
   await page.screenshot({ path: absolute('output/book/02-colophon-inspector.png') }); await expect.soft(page).toHaveScreenshot('workspace-colophon.png', { animations: 'disabled', maxDiffPixels: 0 });
   await page.getByTestId('view-gallery').click(); await page.getByLabel('通しページ1を追加選択', { exact: true }).check(); await page.getByLabel('通しページ3を追加選択', { exact: true }).check();

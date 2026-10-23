@@ -445,7 +445,11 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('[data-canvas-
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-canvas-add]')) button.addEventListener('click', () => { const p = result?.pages[selected - 1]; if (p?.kind !== 'layout') return; select({ kind: 'special', id: p.pageId }, false); inspectorMode = 'selection'; views.sync(true); el(`add-element-${button.dataset.canvasAdd}`).click(); });
 el('edit-selection').addEventListener('click', () => { if (selection.kind !== 'book') select(selection); });
 el('sample-manuscript').addEventListener('click', () => {
-  if (source || project.assets.length) return; snapshot(); project = asBook({ ...createPublication(SAMPLE, 'text'), style }); filename = '組版サンプル'; syncSource(); reflow(true); manuscript.focus();
+  if (source || project.assets.length) return;
+  snapshot();
+  const sample = createPublication(SAMPLE.source);
+  project = asBook({ ...sample, document: { ...sample.document, title: SAMPLE.title, author: SAMPLE.author }, style });
+  filename = SAMPLE.title; syncSource(); reflow(true); manuscript.focus();
 });
 el('expand-manuscript').addEventListener('click', () => {
   if (!editorWide) { normalWidth = workspace.style.getPropertyValue('--left-width') || `${el('left-source').parentElement!.getBoundingClientRect().width}px`; normalRightOpen = workspace.dataset.rightOpen !== 'false'; workspace.style.setProperty('--left-width', `${Math.min(860, Math.max(540, Math.round(workspace.clientWidth * .53)))}px`); openPane('right', false); }
