@@ -1,5 +1,5 @@
 import type { BookStyle, BookPage, FlowPage, FlowLine, Inline, RenderedPages, Diagnostic } from '../domain/contracts.js';
-import { advance, geometry, graphemes, pageMargins, validateStyle } from '../domain/style.js';
+import { advance, verticalAdvance, geometry, graphemes, pageMargins, validateStyle } from '../domain/style.js';
 import type { PaginationBlock } from './paginator.js';
 import { matchesPageStart, pageSide } from '../domain/page-order.js';
 import { imagePrintInfo } from '../domain/image-print.js';
@@ -13,12 +13,13 @@ function atoms(runs: readonly Inline[], style: BookStyle, scale: number, capacit
   for (const run of runs) {
     const size = run.fontPt ? run.fontPt * 25.4 / 72 : font * scale, factor = size / font, space = run.letterSpacingEm ?? 0;
     if (run.kind === 'ruby') {
+      const baseWidth=(s:string)=>graphemes(s).reduce((sum,g)=>sum+(style.writingMode==='vertical-rl'?verticalAdvance(g,run.orientation):advance(g)),0);
       const base = graphemes(run.base), reading = graphemes(run.reading); let start = 0;
       while (start < base.length) {
         let end = start + 1;
         const part = (to: number) => ({base:base.slice(start,to).join(''),reading:reading.slice(Math.floor(start*reading.length/base.length),Math.floor(to*reading.length/base.length)).join('')});
-        while (end < base.length) { const next = part(end+1); if (Math.max(width(next.base),width(next.reading)*.5)*factor>capacity) break; end++; }
-        if (end < base.length) warn('ruby-split'); const piece=part(end); out.push({...run,...piece,textFrom:textOffset,textTo:textOffset+piece.base.length,orientation:/^[0-9A-Za-z]+$/u.test(piece.base)?run.orientation??'mixed':'mixed',sizeMm:size,advanceEm:(Math.max(width(piece.base),width(piece.reading)*.5)+space)*factor}); textOffset+=piece.base.length; start=end;
+        while (end < base.length) { const next = part(end+1); if (Math.max(baseWidth(next.base),width(next.reading)*.5)*factor>capacity) break; end++; }
+        if (end < base.length) warn('ruby-split'); const piece=part(end); out.push({...run,...piece,textFrom:textOffset,textTo:textOffset+piece.base.length,orientation:/^[0-9A-Za-z]+$/u.test(piece.base)?run.orientation??'mixed':'mixed',sizeMm:size,advanceEm:(Math.max(baseWidth(piece.base),width(piece.reading)*.5)+space)*factor}); textOffset+=piece.base.length; start=end;
       }
       continue;
     }

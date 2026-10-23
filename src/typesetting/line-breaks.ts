@@ -1,3 +1,4 @@
+import { isDashText } from '../domain/text-symbols.js';
 import type { Inline } from '../domain/contracts.js';
 import { graphemes } from '../domain/style.js';
 import { Rules } from '../vendor/linebreak/index.js';
@@ -24,7 +25,7 @@ export function wrapRuns<T extends Inline & { advanceEm: number }>(atoms: readon
     if (!nextBreak.done && nextBreak.value.position === offset) {
       required[at] = Number(nextBreak.value.required);
       const previous = edge(atoms[at - 1], true), next = edge(atoms[at], false);
-      may[at] = Number(required[at] || !noEnd.has(previous) && !noStart.has(next) && !(previous === next && pairs.has(previous)));
+      may[at] = Number(required[at] || !noEnd.has(previous) && !noStart.has(next) && !(previous === next && pairs.has(previous)) && !(isDashText(previous) && isDashText(next)));
     }
   }
   const lines: { indentEm: number; runs: T[] }[] = []; let start = 0;

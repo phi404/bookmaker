@@ -40,6 +40,8 @@ Python 3.12、requirements-qa.txt、Popplerを用意してください。Python�
 
 不具合は再現する入力と修正前に失敗するテストを作ってから直します。検査の省略、skip、閾値の緩和、無条件の再試行で通さないでください。禁則の期待値は実装からコピーせず独立したものを使います。
 
+縦書き字形の生成は `node scripts/vertical-font.mjs`、照合は `node scripts/vertical-font.mjs --check`。fontkitは開発時だけ使います。
+
 テストはtests/product、tests/e2e、tests/compatibilityにあります。操作はtests/e2e/ui-driver.mjsへ集約しています。fixturesは合成した検証用原稿です。未公開の利用者原稿を追加しないでください。
 
 ## 配布
@@ -60,6 +62,7 @@ GitHubリポジトリはphi404/compholio、試用ページはhttps://phi404.gith
 | pdf-lib | [公式リポジトリ](https://github.com/Hopding/pdf-lib) / [MIT](../public/vendor/pdf-lib.LICENSE.md) |
 | PDF.js | [Mozilla](https://github.com/mozilla/pdf.js) / public/vendor/pdfjs/README.mdと同梱ライセンス |
 | fflate | [公式リポジトリ](https://github.com/101arrowz/fflate) / [MIT](../public/vendor/fflate.LICENSE.md) |
+| Unicode文字方向 | [Unicode 17](https://www.unicode.org/Public/17.0.0/ucd/VerticalOrientation.txt) / [Unicode-3.0](../fixtures/unicode/LICENSE.txt) |
 | Unicode改行 | [@cto.af/linebreak](https://www.npmjs.com/package/@cto.af/linebreak) / [manifest](../public/vendor/linebreak/manifest.json)・同梱MIT |
 | Lucide | [Lucide](https://lucide.dev/) / [ISC](../public/vendor/lucide/LICENSE) |
 

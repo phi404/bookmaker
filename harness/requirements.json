@@ -1218,6 +1218,26 @@
         "local-first"
       ],
       "specification": "docs/guide.md"
+    },
+    {
+      "id": "R-67",
+      "phase": "mvp",
+      "summary": "縦書きの約物・小書き文字・ルビ・圏点・ダッシュ・リーダーの字形と基準位置を端末間で揃え、タッチ操作と同じ紙面の保存を維持する",
+      "fixtures": [
+        "book-mobile-typography"
+      ],
+      "automated": [
+        "product",
+        "e2e",
+        "exports"
+      ],
+      "manual": [
+        "vertical-glyphs-and-spacing",
+        "mobile-usability",
+        "export-appearance",
+        "local-first"
+      ],
+      "specification": "docs/guide.md"
     }
   ]
 }

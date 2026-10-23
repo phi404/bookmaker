@@ -76,7 +76,7 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps firefox webkit
+      - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:compatibility
 
       - uses: actions/upload-artifact@v7

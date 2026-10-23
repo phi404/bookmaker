@@ -1,6 +1,7 @@
 import type { BookStyle, DecorationPosition, FolioRule, PageRange, RunningHead } from './contracts.js';
 import { pageSide } from './page-order.js';
 import { ASCII_ADVANCES } from './font-metrics.js';
+import { dashAdvance } from './text-symbols.js';
 import { decorationSide, folioNumber, headsForPage } from './decoration.js';
 
 export const PRESETS = {
@@ -35,7 +36,8 @@ export function presetStyle(name: Preset): BookStyle {
 }
 export const segmenter = new Intl.Segmenter('ja', { granularity: 'grapheme' });
 export const graphemes = (text: string): string[] => Array.from(segmenter.segment(text), item => item.segment);
-export const advance = (glyph: string): number => glyph === '\t' ? 4 : /^[\u200B\u200C\u200D\u2028\u2029\u2060\uFEFF]$/u.test(glyph) ? 0 : glyph === '\u00A0' ? ASCII_ADVANCES[' ']! : (ASCII_ADVANCES[glyph] ?? 1);
+export const advance = (glyph: string): number => glyph === '\t' ? 4 : /^[\u200B\u200C\u200D\u2028\u2029\u2060\uFEFF]$/u.test(glyph) ? 0 : glyph === '\u00A0' ? ASCII_ADVANCES[' ']! : (dashAdvance(glyph) ?? ASCII_ADVANCES[glyph] ?? 1);
+export const verticalAdvance=(glyph:string,orientation='mixed'):number=>orientation==='upright'&&/^[0-9A-Za-z]$/u.test(glyph)?1:advance(glyph);
 export function finite(value: unknown, label: string, min: number, max: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) throw new Error(`${label}の値を確認してください。`);
   return value;

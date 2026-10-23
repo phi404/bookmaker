@@ -80,6 +80,11 @@
       "id": "book-print",
       "file": "fixtures/book/print.md",
       "sourceSha256": "892bb5f55ffa13829a47cb57a79a85c8b7302eca855e02b13e65839e5d55e945"
+    },
+    {
+      "id": "book-mobile-typography",
+      "file": "fixtures/book/mobile-typography.md",
+      "sourceSha256": "efa0a4eff7ecc3bdb46b8ff2bb7fc8a589e0f1517e5e6d09721d95fe78a7a1a9"
     }
   ]
 }

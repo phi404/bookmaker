@@ -23,7 +23,7 @@ test('dash spans connect while prolonged sound marks retain their glyph', async 
   const a = await loadAdapter(), style = a.defaultStyle(), page = a.paginate(a.parse('―――コーヒー——。'), style).pages[0];
   const svg = a.renderSvg(page, style);
   assert.equal((svg.match(/data-dash=/gu) ?? []).length, 2);
-  assert.equal((svg.match(/>ー<\/text>/gu) ?? []).length, 2);
+  assert.equal((svg.match(/data-vertical-glyph="ー"/gu) ?? []).length, 2);
 });
 test('uniform pages do not mirror margins; folios and heads can be scoped', async () => {
   const a = await loadAdapter(), style = { ...a.defaultStyle(), pageLayout: 'uniform',

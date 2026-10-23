@@ -1,5 +1,6 @@
 import type { RenderElement } from '../domain/contracts.js';
 import { elementTextLines } from '../domain/element-layout.js';
+import { verticalText } from './text.js';
 /** Deterministic text boxes, shared by special-page preview and export. */
 export function renderElements(elements: readonly RenderElement[], escape: (s: string) => string, prefix: string): string {
   return elements.map((e, index) => {
@@ -12,7 +13,7 @@ export function renderElements(elements: readonly RenderElement[], escape: (s: s
       const size = (e.fontPt ?? 10) * 25.4 / 72, vertical = e.direction === 'vertical';
       const lines = elementTextLines(e.text ?? '', (vertical ? e.heightMm : e.widthMm) / size);
       content = lines.map((text, at) => {
-        if (vertical) return `<text x="${e.xMm + e.widthMm - size * .7 - at * size * 1.6}" y="${e.yMm}" font-size="${size}" font-weight="${e.fontWeight ?? 400}" writing-mode="vertical-rl" text-orientation="mixed" dominant-baseline="central">${escape(text)}</text>`;
+        if (vertical) return verticalText(text,e.xMm+e.widthMm-size*.7-at*size*1.6,e.yMm,size,escape,`font-weight="${e.fontWeight ?? 400}"`);
         const x = e.alignment === 'center' ? e.xMm + e.widthMm / 2 : e.alignment === 'end' ? e.xMm + e.widthMm : e.xMm;
         return `<text x="${x}" y="${e.yMm + size + at * size * 1.65}" font-size="${size}" font-weight="${e.fontWeight ?? 400}" text-anchor="${e.alignment === 'center' ? 'middle' : e.alignment === 'end' ? 'end' : 'start'}">${escape(text)}</text>`;
       }).join('');

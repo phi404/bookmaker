@@ -1,8 +1,11 @@
-import type { BookStyle, DecorationPosition, BookPage, Inline } from '../domain/contracts.js';
+import { isDashText } from '../domain/text-symbols.js';
+import type { BookStyle, DecorationPosition, BookPage } from '../domain/contracts.js';
 import { advance, geometry, graphemes, pageMargins } from '../domain/style.js';
 import { decorationSide, folioNumber, headsForPage } from '../domain/decoration.js';
 import { renderElements } from './elements.js';
 import { renderFlowLine } from './flow.js';
+import { verticalText } from './text.js';
+import { emphasisMarks as emphasis } from './emphasis.js';
 
 export function escapeXML(value: string): string {
   return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/gu, char => String.fromCodePoint(0x2400 + char.charCodeAt(0))).replace(/[\uFFFE\uFFFF\uD800-\uDFFF]/gu, '〓')
@@ -10,19 +13,7 @@ export function escapeXML(value: string): string {
 }
 const n = (value: number) => Number(value.toFixed(5));
 const width = (text: string) => graphemes(text).reduce((sum, g) => sum + advance(g), 0);
-function vertical(text: string, x: number, y: number, size: number, attr = ''): string {
-  return `<text ${attr} x="${n(x)}" y="${n(y)}" font-size="${n(size)}" writing-mode="vertical-rl" text-orientation="mixed" dominant-baseline="central">${escapeXML(text)}</text>`;
-}
-function emphasis(run: Inline, text: string, x: number, y: number, size: number): string {
-  if (!run.emphasis || run.emphasis === 'none') return '';
-  let offset = 0;
-  return graphemes(text).map(g => {
-    const center = y + (offset + advance(g) / 2) * size; offset += advance(g);
-    if (/^[\s　、。！？「」『』（）]/u.test(g)) return '';
-    const markX = x + (run.kind === 'ruby' ? -.72 : .7) * size;
-    return run.emphasis === 'dot' ? `<circle data-emphasis="dot" cx="${n(markX)}" cy="${n(center)}" r="${n(size * .075)}"/>` : `<ellipse data-emphasis="sesame" cx="${n(markX)}" cy="${n(center)}" rx="${n(size * .055)}" ry="${n(size * .12)}" transform="rotate(28 ${n(markX)} ${n(center)})"/>`;
-  }).join('');
-}
+const vertical=(text:string,x:number,y:number,size:number,attrs='')=>verticalText(text,x,y,size,escapeXML,attrs);
 function position(style: BookStyle, number: number, value: DecorationPosition, inset: number) {
   const margins = pageMargins(style, number), side = decorationSide(style.pageLayout, number, value, style.binding);
   return { x: side === 'center' ? style.page.widthMm / 2 : side === 'left' ? margins.left : style.page.widthMm - margins.right,
@@ -41,10 +32,10 @@ export function renderPageSVG(page: BookPage, style: BookStyle, fontData?: strin
     pieces.push(`<g data-block-id="${escapeXML(line.blockId)}">`);
     for (let i = 0; i < line.runs.length; i++) {
       const run = line.runs[i]!, span = run.advanceEm ?? width(run.kind === 'text' ? run.text : run.base);
-      if (run.kind === 'text' && /^[―—]+$/u.test(run.text)) {
+      if (run.kind === 'text' && isDashText(run.text)) {
         let length = span;
-        while (line.runs[i + 1]?.kind === 'text' && /^[―—]+$/u.test((line.runs[i + 1] as { text: string }).text) && line.runs[i + 1]!.emphasis === run.emphasis) length += line.runs[++i]!.advanceEm ?? 1;
-        pieces.push(`<line data-dash="continuous" x1="${n(x)}" x2="${n(x)}" y1="${n(y)}" y2="${n(y + length * size)}" stroke="currentColor" stroke-width="${n(size * .045)}"/>`);
+        while (line.runs[i + 1]?.kind === 'text' && isDashText((line.runs[i + 1] as { text: string }).text) && line.runs[i + 1]!.emphasis === run.emphasis && line.runs[i + 1]!.fontWeight === run.fontWeight) length += line.runs[++i]!.advanceEm ?? 1;
+        pieces.push(`<line data-dash="continuous" x1="${n(x)}" x2="${n(x)}" y1="${n(y)}" y2="${n(y + length * size)}" stroke="currentColor" stroke-width="${n(size * (run.fontWeight === 700 ? .06 : .045))}"/>`);
         pieces.push(emphasis(run, '―'.repeat(Math.round(length)), x, y, size)); y += length * size; continue;
       }
       if (run.kind === 'ruby') {
